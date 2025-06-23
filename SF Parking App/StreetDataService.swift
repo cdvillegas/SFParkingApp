@@ -54,27 +54,82 @@ struct SweepSchedule: Decodable {
     }
 }
 
+// Helper struct for line segment operations
+struct LineSegment {
+    let start: CLLocationCoordinate2D
+    let end: CLLocationCoordinate2D
+    
+    // Find the closest point on this line segment to a given point
+    func closestPoint(to point: CLLocationCoordinate2D) -> (point: CLLocationCoordinate2D, distance: Double) {
+        let A = point
+        let B = start
+        let C = end
+        
+        // Vector from B to C
+        let BCx = C.longitude - B.longitude
+        let BCy = C.latitude - B.latitude
+        
+        // Vector from B to A
+        let BAx = A.longitude - B.longitude
+        let BAy = A.latitude - B.latitude
+        
+        // Project BA onto BC
+        let dotProduct = BAx * BCx + BAy * BCy
+        let lengthSquared = BCx * BCx + BCy * BCy
+        
+        if lengthSquared == 0 {
+            // B and C are the same point
+            let distance = CLLocation(latitude: B.latitude, longitude: B.longitude)
+                .distance(from: CLLocation(latitude: A.latitude, longitude: A.longitude))
+            return (B, distance)
+        }
+        
+        let t = max(0, min(1, dotProduct / lengthSquared))
+        
+        let closestPoint = CLLocationCoordinate2D(
+            latitude: B.latitude + t * (C.latitude - B.latitude),
+            longitude: B.longitude + t * (C.longitude - B.longitude)
+        )
+        
+        let distance = CLLocation(latitude: closestPoint.latitude, longitude: closestPoint.longitude)
+            .distance(from: CLLocation(latitude: A.latitude, longitude: A.longitude))
+        
+        return (closestPoint, distance)
+    }
+}
+
 final class StreetDataService {
     static let shared = StreetDataService()
     private let session = URLSession.shared
     private let baseURL = "https://data.sfgov.org/resource/yhqp-riqs.json"
-    private let radiusFeet = 20 // 20 foot radius
+    private let maxDistance = 50.0 // 50 feet maximum distance
 
     private init() {}
 
-    func getSchedule(for coordinate: CLLocationCoordinate2D, completion: @escaping ([SweepSchedule]?) -> Void) {
-        print("Fetching schedules for \(coordinate.latitude), \(coordinate.longitude)")
+    func getClosestSchedule(for coordinate: CLLocationCoordinate2D, completion: @escaping (SweepSchedule?) -> Void) {
+        // Step 1: Get all schedules within 50 foot radius
+        getSchedulesWithinRadius(for: coordinate) { [weak self] schedules in
+            guard let self = self, let schedules = schedules, !schedules.isEmpty else {
+                completion(nil)
+                return
+            }
+            
+            // Step 2: Find the closest one
+            let closestSchedule = self.findClosestSchedule(from: coordinate, schedules: schedules)
+            completion(closestSchedule)
+        }
+    }
+    
+    private func getSchedulesWithinRadius(for coordinate: CLLocationCoordinate2D, completion: @escaping ([SweepSchedule]?) -> Void) {
+        // Convert 50 feet to degrees (approximate)
+        // 1 degree ≈ 364,000 feet, so 50 feet ≈ 0.000137 degrees
+        let radiusInDegrees = 50.0 / 364000.0
         
-        // Use a larger radius - the working example uses about 0.000061 degrees
-        // Let's use 0.000061 for consistency with the working example
-        let degreesOffset = 0.000061
+        let minLat = coordinate.latitude - radiusInDegrees
+        let maxLat = coordinate.latitude + radiusInDegrees
+        let minLng = coordinate.longitude - radiusInDegrees
+        let maxLng = coordinate.longitude + radiusInDegrees
         
-        let minLat = coordinate.latitude - degreesOffset
-        let maxLat = coordinate.latitude + degreesOffset
-        let minLng = coordinate.longitude - degreesOffset
-        let maxLng = coordinate.longitude + degreesOffset
-        
-        // Create polygon query (make sure coordinates are properly formatted)
         let polygon = String(format: "POLYGON ((%.6f %.6f, %.6f %.6f, %.6f %.6f, %.6f %.6f, %.6f %.6f))",
                             minLng, maxLat,
                             maxLng, maxLat,
@@ -86,15 +141,14 @@ final class StreetDataService {
         guard let query = "\(baseURL)?$where=\(whereClause)"
                 .addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
               let url = URL(string: query) else {
-            print("Failed to create URL")
             completion(nil)
             return
         }
         
         print("Query URL: \(query)")
-
+        
         let request = URLRequest(url: url)
-
+        
         session.dataTask(with: request) { data, response, error in
             if let error = error {
                 print("Network error: \(error)")
@@ -102,32 +156,55 @@ final class StreetDataService {
                 return
             }
             
-            if let httpResponse = response as? HTTPURLResponse {
-                print("Status: \(httpResponse.statusCode)")
-            }
-            
             guard let data = data else {
-                print("No data received")
                 completion(nil)
                 return
             }
             
-            // Print raw response for debugging
-            if let jsonString = String(data: data, encoding: .utf8) {
-                print("Raw response: \(jsonString.prefix(500))...")
-            }
-            
             do {
                 let schedules = try JSONDecoder().decode([SweepSchedule].self, from: data)
-                print("Found \(schedules.count) schedules")
+                print("Found \(schedules.count) schedules within radius")
                 completion(schedules)
             } catch {
                 print("Decoding error: \(error)")
-                if let decodingError = error as? DecodingError {
-                    print("Decoding error details: \(decodingError)")
-                }
                 completion(nil)
             }
         }.resume()
+    }
+    
+    private func findClosestSchedule(from point: CLLocationCoordinate2D, schedules: [SweepSchedule]) -> SweepSchedule? {
+        var closestSchedule: SweepSchedule?
+        var minDistance = Double.infinity
+        
+        for schedule in schedules {
+            guard let line = schedule.line else { continue }
+            
+            // Find the closest distance to this schedule's line
+            let coordinates = line.coordinates
+            var scheduleMinDistance = Double.infinity
+            
+            // Check distance to each line segment
+            for i in 0..<(coordinates.count - 1) {
+                let segment = LineSegment(
+                    start: CLLocationCoordinate2D(latitude: coordinates[i][1], longitude: coordinates[i][0]),
+                    end: CLLocationCoordinate2D(latitude: coordinates[i+1][1], longitude: coordinates[i+1][0])
+                )
+                
+                let (_, distance) = segment.closestPoint(to: point)
+                scheduleMinDistance = min(scheduleMinDistance, distance)
+            }
+            
+            // Only consider schedules within 50 feet and keep the closest one
+            if scheduleMinDistance <= maxDistance && scheduleMinDistance < minDistance {
+                minDistance = scheduleMinDistance
+                closestSchedule = schedule
+            }
+        }
+        
+        if let closest = closestSchedule {
+            print("Closest schedule: \(closest.streetName) at \(minDistance) feet")
+        }
+        
+        return closestSchedule
     }
 }

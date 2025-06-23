@@ -15,7 +15,7 @@ struct ParkingLocationView: View {
     @State private var mapPosition = MapCameraPosition.region(
         MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: 37.783759, longitude: -122.442232),
-            span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+            span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
         )
     )
     
@@ -44,14 +44,13 @@ struct ParkingLocationView: View {
                     Annotation("Parked Car", coordinate: ParkingLocation.sample.coordinate) {
                         ZStack {
                             // Red circular background
-                            Circle()
-                                .fill(Color.red)
-                                .frame(width: 28, height: 28)
-                            
-                            // White location pin icon
-                            Image(systemName: "location.fill")
+                            Image(systemName: "car.fill")
                                 .foregroundColor(.white)
                                 .font(.system(size: 12, weight: .medium))
+                                .frame(width: 32, height: 32)
+                                .background(Color.blue)
+                                .clipShape(Circle())
+                                .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
                         }
                         .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
                     }
@@ -62,7 +61,7 @@ struct ParkingLocationView: View {
                         withAnimation(.easeInOut(duration: 1.0)) {
                             mapPosition = .region(MKCoordinateRegion(
                                 center: location.coordinate,
-                                span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+                                span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
                             ))
                         }
                     }
@@ -80,15 +79,15 @@ struct ParkingLocationView: View {
                             withAnimation(.easeInOut(duration: 1.0)) {
                                 mapPosition = .region(MKCoordinateRegion(
                                     center: ParkingLocation.sample.coordinate,
-                                    span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+                                    span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
                                 ))
                             }
                         }) {
                             Image(systemName: "car.fill")
-                                .foregroundColor(.white)
+                                .foregroundColor(.blue)
                                 .font(.system(size: 16, weight: .medium))
                                 .frame(width: 44, height: 44)
-                                .background(Color.blue)
+                                .background(Color.white)
                                 .clipShape(Circle())
                                 .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
                         }
@@ -100,7 +99,7 @@ struct ParkingLocationView: View {
                                 withAnimation(.easeInOut(duration: 1.0)) {
                                     mapPosition = .region(MKCoordinateRegion(
                                         center: location.coordinate,
-                                        span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+                                        span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
                                     ))
                                 }
                             } else {
@@ -108,10 +107,10 @@ struct ParkingLocationView: View {
                             }
                         }) {
                             Image(systemName: "location.fill")
-                                .foregroundColor(.white)
+                                .foregroundColor(.blue)
                                 .font(.system(size: 16, weight: .medium))
                                 .frame(width: 44, height: 44)
-                                .background(Color.blue)
+                                .background(Color.white)
                                 .clipShape(Circle())
                                 .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
                         }
@@ -125,57 +124,6 @@ struct ParkingLocationView: View {
             
             // Bottom UI Section
             VStack(spacing: 0) {
-                // Last Parking Location Section
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack {
-                        Text("Last Parking Location")
-                            .font(.title3)
-                            .fontWeight(.bold)
-                            .foregroundColor(.primary)
-                        
-                        Spacer()
-                        
-                        Button(action: {}) {
-                            Text("View History")
-                                .font(.caption)
-                                .fontWeight(.medium)
-                                .foregroundColor(.blue)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(Color.blue.opacity(0.1))
-                                )
-                        }
-                    }
-                    
-                    HStack(alignment: .center, spacing: 12) {
-                        Image(systemName: "location.fill")
-                            .foregroundColor(.blue)
-                            .font(.body)
-                        
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("1530 Broderick Street, San Francisco, California, 94115")
-                                .font(.callout)
-                                .foregroundColor(.primary)
-                                .fixedSize(horizontal: false, vertical: true)
-                                .lineLimit(nil)
-                            
-                            Text("Parked Jun 21 at 12:12 PM  •  Manually Set")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 24)
-                .padding(.bottom, 20)
-                
-                // Divider
-                Divider()
-                    .padding(.horizontal, 20)
-                
                 // Upcoming Reminders Section
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
@@ -278,6 +226,59 @@ struct ParkingLocationView: View {
                 .padding(.top, 20)
                 .padding(.bottom, 24)
                 
+                Divider().padding(.horizontal, 20)
+                
+                // Last Parking Location Section
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        Text("Last Parking Location")
+                            .font(.title3)
+                            .fontWeight(.bold)
+                            .foregroundColor(.primary)
+                        
+                        Spacer()
+                        
+                        Button(action: {}) {
+                            Text("View History")
+                                .font(.caption)
+                                .fontWeight(.medium)
+                                .foregroundColor(.blue)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(Color.blue.opacity(0.1))
+                                )
+                        }
+                    }
+                    Button(action: {
+                        openInMaps(address: "1530 Broderick Street")
+                    }) {
+                        HStack(alignment: .center, spacing: 12) {
+                            Image(systemName: "location.fill")
+                                .foregroundColor(.blue)
+                                .font(.body)
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("1530 Broderick Street")
+                                    .font(.body)
+                                    .foregroundColor(.primary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                    .lineLimit(nil)
+                                
+                                Text("Parked Jun 21 at 12:12 PM  •  Manually Set")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 24)
+                .padding(.bottom, 40)
+
+                
                 // Update Button
                 Button(action: {
                     // Refresh street data when parking location is updated
@@ -311,11 +312,40 @@ struct ParkingLocationView: View {
             }
         }
     }
+    
+    // MARK: - Helper Functions
+
+    private func openInMaps(address: String) {
+        // Method 1: Using URL scheme to open in Maps app
+        let encodedAddress = address.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        
+        if let url = URL(string: "http://maps.apple.com/?address=\(encodedAddress)") {
+            UIApplication.shared.open(url)
+        }
+    }
+
+    // Alternative method using coordinates (more reliable):
+    private func openInMapsWithCoordinates() {
+        let coordinate = ParkingLocation.sample.coordinate
+        let url = URL(string: "http://maps.apple.com/?ll=\(coordinate.latitude),\(coordinate.longitude)")!
+        UIApplication.shared.open(url)
+    }
+
+    // Alternative method using MKMapItem (most robust):
+    private func openInMapsWithMapItem(address: String) {
+        let coordinate = ParkingLocation.sample.coordinate
+        let placemark = MKPlacemark(coordinate: coordinate)
+        let mapItem = MKMapItem(placemark: placemark)
+        mapItem.name = address
+        mapItem.openInMaps(launchOptions: [
+            MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving
+        ])
+    }
 }
 
 // MARK: - Street Data Manager
 class StreetDataManager: ObservableObject {
-    @Published var schedules: [SweepSchedule] = []
+    @Published var schedule: SweepSchedule?
     @Published var isLoading = false
     @Published var hasError = false
     @Published var nextUpcomingSchedule: UpcomingSchedule?
@@ -323,65 +353,62 @@ class StreetDataManager: ObservableObject {
     func fetchSchedules(for coordinate: CLLocationCoordinate2D) {
         isLoading = true
         hasError = false
+        nextUpcomingSchedule = nil
         
-        StreetDataService.shared.getSchedule(for: coordinate) { [weak self] schedules in
+        StreetDataService.shared.getClosestSchedule(for: coordinate) { [weak self] schedule in
             DispatchQueue.main.async {
                 self?.isLoading = false
                 
-                if let schedules = schedules {
-                    self?.schedules = schedules
-                    self?.processNextSchedule()
+                if let schedule = schedule {
+                    self?.schedule = schedule
+                    self?.processNextSchedule(for: schedule)
                     self?.hasError = false
                 } else {
                     self?.hasError = true
-                    self?.schedules = []
+                    self?.schedule = nil
                     self?.nextUpcomingSchedule = nil
                 }
             }
         }
     }
     
-    private func processNextSchedule() {
+    private func processNextSchedule(for schedule: SweepSchedule) {
         let now = Date()
-        let calendar = Calendar.current
         
-        // Find the next upcoming schedule
+        // Use the raw API fields, not the computed properties
+        guard let weekday = schedule.weekday,
+              let fromHour = schedule.fromhour,
+              let toHour = schedule.tohour else { return }
+        
+        // Convert day string to weekday number
+        let weekdayNum = dayStringToWeekday(weekday)
+        guard weekdayNum > 0 else { return }
+        
+        // Convert hour strings to integers
+        guard let startHour = Int(fromHour),
+              let endHour = Int(toHour) else { return }
+        
+        // Find all possible next occurrences for this schedule
+        let nextOccurrences = findNextOccurrences(weekday: weekdayNum, schedule: schedule, from: now)
+        
         var upcomingSchedules: [UpcomingSchedule] = []
         
-        for schedule in schedules {
-            // Use the raw API fields, not the computed properties
-            guard let weekday = schedule.weekday,
-                  let fromHour = schedule.fromhour,
-                  let toHour = schedule.tohour else { continue }
-            
-            // Convert day string to weekday number
-            let weekdayNum = dayStringToWeekday(weekday)
-            guard weekdayNum > 0 else { continue }
-            
-            // Convert hour strings to integers
-            guard let startHour = Int(fromHour),
-                  let endHour = Int(toHour) else { continue }
-            
-            // Find all possible next occurrences for this schedule
-            let nextOccurrences = findNextOccurrences(weekday: weekdayNum, schedule: schedule, from: now)
-            
-            for nextDate in nextOccurrences {
-                // Create full date with time
-                if let nextDateTime = createDateTime(date: nextDate, hour: startHour),
-                   let endDateTime = createDateTime(date: nextDate, hour: endHour),
-                   nextDateTime > now { // Only include future dates
-                    
-                    let upcomingSchedule = UpcomingSchedule(
-                        streetName: schedule.streetName,
-                        date: nextDateTime,
-                        endDate: endDateTime,
-                        dayOfWeek: weekday,
-                        startTime: schedule.startTime,
-                        endTime: schedule.endTime
-                    )
-                    
-                    upcomingSchedules.append(upcomingSchedule)
-                }
+        for nextDate in nextOccurrences {
+            // Create full date with time
+            if let nextDateTime = createDateTime(date: nextDate, hour: startHour),
+               let endDateTime = createDateTime(date: nextDate, hour: endHour),
+               nextDateTime > now { // Only include future dates
+                
+                let upcomingSchedule = UpcomingSchedule(
+                    streetName: schedule.streetName,
+                    date: nextDateTime,
+                    endDate: endDateTime,
+                    dayOfWeek: weekday,
+                    startTime: schedule.startTime,
+                    endTime: schedule.endTime
+                )
+                
+                upcomingSchedules.append(upcomingSchedule)
             }
         }
         
@@ -590,6 +617,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             }
         }
     }
+
 }
 
 // Supporting Models
@@ -600,8 +628,8 @@ struct ParkingLocation: Identifiable {
     let timestamp: Date
     
     static let sample = ParkingLocation(
-        coordinate: CLLocationCoordinate2D(latitude: 37.784009, longitude: -122.442300), // Coordinates with known street sweeping data
-        address: "1530 Broderick Street, San Francisco, California, 94115",
+        coordinate: CLLocationCoordinate2D(latitude: 37.784790, longitude: -122.441556),
+        address: "1530 Broderick Street",
         timestamp: Date()
     )
 }
