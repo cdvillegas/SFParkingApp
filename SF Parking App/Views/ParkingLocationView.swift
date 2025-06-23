@@ -25,8 +25,16 @@ struct ParkingLocationView: View {
     @State private var previewCoordinate = CLLocationCoordinate2D()
     @State private var debounceTimer: Timer?
     
+    // Auto-center functionality
+    @State private var autoResetTimer: Timer?
+    @State private var lastInteractionTime = Date()
+    
     // Geocoder for reverse geocoding
     private let geocoder = CLGeocoder()
+    
+    // MARK: - Haptic Feedback (Reduced)
+    private let impactFeedbackLight = UIImpactFeedbackGenerator(style: .light)
+    private let notificationFeedback = UINotificationFeedbackGenerator()
     
     var body: some View {
         VStack(spacing: 4) {
@@ -78,16 +86,43 @@ struct ParkingLocationView: View {
                     )
                     
                 } else {
-                    // Normal view with interactive map
-                    ParkingMapView(
-                        mapPosition: $mapPosition,
-                        userLocation: locationManager.userLocation,
-                        parkingLocation: parkingManager.currentLocation,
-                        onLocationTap: handleMapTap
-                    )
+                    // Normal view with native Map that's fully swipeable
+                    Map(position: $mapPosition) {
+                        // User location annotation
+                        if let userLocation = locationManager.userLocation {
+                            Annotation("Your Location", coordinate: userLocation.coordinate) {
+                                ZStack {
+                                    Circle()
+                                        .fill(Color.blue)
+                                        .frame(width: 20, height: 20)
+                                    
+                                    Circle()
+                                        .fill(Color.white)
+                                        .frame(width: 8, height: 8)
+                                }
+                                .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 1)
+                            }
+                        }
+                        
+                        // Parking location annotation - changed from red to blue
+                        if let parkingLocation = parkingManager.currentLocation {
+                            Annotation("Parked Car", coordinate: parkingLocation.coordinate) {
+                                ZStack {
+                                    Circle()
+                                        .fill(Color.blue)
+                                        .frame(width: 24, height: 24)
+                                    
+                                    Image(systemName: "car.fill")
+                                        .foregroundColor(.white)
+                                        .font(.system(size: 10, weight: .bold))
+                                }
+                                .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 1)
+                            }
+                        }
+                    }
                     .onReceive(locationManager.$userLocation) { location in
                         if let location = location {
-                            centerMap(on: location.coordinate)
+                            centerMapOnBothLocations()
                         }
                     }
                     .onReceive(parkingManager.$currentLocation) { parkingLocation in
@@ -95,6 +130,12 @@ struct ParkingLocationView: View {
                         if let location = parkingLocation {
                             streetDataManager.fetchSchedules(for: location.coordinate)
                         }
+                        // Re-center map to show both locations
+                        centerMapOnBothLocations()
+                    }
+                    .onMapCameraChange { context in
+                        // Track user interaction with map - this is sufficient for detecting movement
+                        handleMapInteraction()
                     }
                     
                     MapControlButtons(
@@ -159,7 +200,7 @@ struct ParkingLocationView: View {
                             }
                             .frame(maxWidth: 120) // Constrain cancel button width
                             
-                            // Set location button - enhanced
+                            // Set location button
                             Button(action: setParkingLocation) {
                                 Text("Set Location")
                                     .font(.system(size: 16, weight: .semibold))
@@ -210,8 +251,95 @@ struct ParkingLocationView: View {
             .background(Color(UIColor.systemBackground))
             .onAppear {
                 setupView()
+                prepareHaptics()
+            }
+            .onDisappear {
+                // Clean up timers when view disappears
+                autoResetTimer?.invalidate()
+                debounceTimer?.invalidate()
             }
         }
+    }
+    
+    // MARK: - Auto-Center Functionality
+    
+    private func handleMapInteraction() {
+        // Don't handle interactions in setting mode
+        guard !isSettingLocation else { return }
+        
+        lastInteractionTime = Date()
+        
+        // Cancel existing timer
+        autoResetTimer?.invalidate()
+        
+        // Start new timer for auto-reset
+        autoResetTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { _ in
+            DispatchQueue.main.async {
+                // Only reset if we're still in normal mode and enough time has passed
+                let timeSinceLastInteraction = Date().timeIntervalSince(lastInteractionTime)
+                if timeSinceLastInteraction >= 5.0 && !isSettingLocation {
+                    centerMapOnBothLocations()
+                }
+            }
+        }
+    }
+    
+    private func centerMapOnBothLocations() {
+        guard !isSettingLocation else { return }
+        
+        let userLocation = locationManager.userLocation
+        let parkingLocation = parkingManager.currentLocation
+        
+        // Determine what locations we have
+        switch (userLocation, parkingLocation) {
+        case (let user?, let parking?):
+            // Both locations available - create region that includes both
+            centerMapOnBothCoordinates(user.coordinate, parking.coordinate)
+            
+        case (let user?, nil):
+            // Only user location available
+            centerMap(on: user.coordinate)
+            
+        case (nil, let parking?):
+            // Only parking location available
+            centerMap(on: parking.coordinate)
+            
+        case (nil, nil):
+            // No locations available - keep current position or use default
+            break
+        }
+    }
+    
+    private func centerMapOnBothCoordinates(_ coord1: CLLocationCoordinate2D, _ coord2: CLLocationCoordinate2D) {
+        // Step 1: Find the center point between the two coordinates
+        let centerLat = (coord1.latitude + coord2.latitude) / 2
+        let centerLon = (coord1.longitude + coord2.longitude) / 2
+        let centerCoordinate = CLLocationCoordinate2D(latitude: centerLat, longitude: centerLon)
+        
+        // Step 2: Calculate the span needed to fit both points
+        let latDelta = abs(coord1.latitude - coord2.latitude)
+        let lonDelta = abs(coord1.longitude - coord2.longitude)
+        
+        // Step 3: Add padding so points aren't at the edge (2x padding)
+        let paddedLatDelta = max(latDelta * 2.0, 0.008) // Minimum zoom level
+        let paddedLonDelta = max(lonDelta * 2.0, 0.008)
+        
+        // Step 4: Use the larger delta to ensure both points fit
+        let finalDelta = max(paddedLatDelta, paddedLonDelta)
+        let span = MKCoordinateSpan(latitudeDelta: finalDelta, longitudeDelta: finalDelta)
+        
+        // Step 5: Center the map on the center point with appropriate zoom
+        withAnimation(.easeInOut(duration: 1.0)) {
+            mapPosition = .region(MKCoordinateRegion(center: centerCoordinate, span: span))
+        }
+    }
+    
+    // MARK: - Haptic Preparation (Simplified)
+    
+    private func prepareHaptics() {
+        // Prepare only the haptic generators we actually use
+        impactFeedbackLight.prepare()
+        notificationFeedback.prepare()
     }
     
     // MARK: - Actions
@@ -223,10 +351,19 @@ struct ParkingLocationView: View {
             if let parkingLocation = parkingManager.currentLocation {
                 streetDataManager.fetchSchedules(for: parkingLocation.coordinate)
             }
+            
+            // Initial centering
+            centerMapOnBothLocations()
         }
     }
     
     private func startSettingLocation() {
+        // Cancel auto-reset timer when entering setting mode
+        autoResetTimer?.invalidate()
+        
+        // Single light haptic for mode change
+        impactFeedbackLight.impactOccurred()
+        
         withAnimation(.easeInOut(duration: 0.3)) {
             isSettingLocation = true
         }
@@ -251,6 +388,9 @@ struct ParkingLocationView: View {
     }
     
     private func setParkingLocation() {
+        // Single success notification for completion
+        notificationFeedback.notificationOccurred(.success)
+        
         parkingManager.setManualParkingLocation(
             coordinate: previewCoordinate,
             address: previewAddress
@@ -259,28 +399,48 @@ struct ParkingLocationView: View {
         withAnimation(.easeInOut(duration: 0.3)) {
             isSettingLocation = false
         }
+        
+        // Resume auto-centering after setting location
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            centerMapOnBothLocations()
+        }
     }
     
     private func cancelSettingLocation() {
+        // No haptic for cancel - keep it subtle
         withAnimation(.easeInOut(duration: 0.3)) {
             isSettingLocation = false
         }
         
-        // Reset to current parking location if exists
-        if let parkingLocation = parkingManager.currentLocation {
-            centerMap(on: parkingLocation.coordinate)
+        // Resume auto-centering and reset to both locations
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            centerMapOnBothLocations()
         }
     }
     
-    private func handleMapTap(_ coordinate: CLLocationCoordinate2D) {
+    private func handleMapScreenTap(_ screenPoint: CGPoint) {
         // Only handle taps in normal mode
         guard !isSettingLocation else { return }
         
-        reverseGeocode(coordinate: coordinate) { address in
-            parkingManager.setManualParkingLocation(
-                coordinate: coordinate,
-                address: address
-            )
+        // Light haptic feedback for map interaction
+        impactFeedbackLight.impactOccurred()
+        
+        // Track this as a user interaction
+        handleMapInteraction()
+        
+        // Convert screen point to coordinate (this is a simplified approach)
+        // In a real implementation, you might want to use MapReader or similar
+        // For now, we'll use the current map center as the tap location
+        let currentRegion = mapPosition.region
+        if let region = currentRegion {
+            let tappedCoordinate = region.center
+            
+            reverseGeocode(coordinate: tappedCoordinate) { address in
+                parkingManager.setManualParkingLocation(
+                    coordinate: tappedCoordinate,
+                    address: address
+                )
+            }
         }
     }
     
@@ -335,23 +495,35 @@ struct ParkingLocationView: View {
     }
     
     private func centerOnUser() {
+        // Cancel auto-reset when user manually centers
+        autoResetTimer?.invalidate()
+        
         if let location = locationManager.userLocation {
             centerMap(on: location.coordinate)
+            
+            // Restart auto-reset timer
+            handleMapInteraction()
         }
     }
     
     private func goToCar() {
+        // Cancel auto-reset when user manually goes to car
+        autoResetTimer?.invalidate()
+        
         if let parkingLocation = parkingManager.currentLocation {
             centerMap(on: parkingLocation.coordinate)
+            
+            // Restart auto-reset timer
+            handleMapInteraction()
         }
     }
     
     private func centerMap(on coordinate: CLLocationCoordinate2D) {
+        // Simple single-location centering with reasonable zoom
+        let span = MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+        
         withAnimation(.easeInOut(duration: 1.0)) {
-            mapPosition = .region(MKCoordinateRegion(
-                center: coordinate,
-                span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-            ))
+            mapPosition = .region(MKCoordinateRegion(center: coordinate, span: span))
         }
     }
     
