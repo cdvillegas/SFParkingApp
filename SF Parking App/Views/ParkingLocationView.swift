@@ -9,10 +9,201 @@ import SwiftUI
 import _MapKit_SwiftUI
 import CoreLocation
 
+// MARK: - Geocoding Cache Manager
+class GeocodingCacheManager: ObservableObject {
+    static let shared = GeocodingCacheManager()
+    
+    private let geocoder = CLGeocoder()
+    private var cache: [String: CachedGeocodingResult] = [:]
+    private var pendingRequests: Set<String> = []
+    private let cacheExpirationInterval: TimeInterval = 3600 // 1 hour
+    private let minimumDistance: CLLocationDistance = 50 // 50 meters
+    
+    // Rate limiting
+    private var requestQueue: [GeocodingRequest] = []
+    private var lastRequestTime: Date = Date.distantPast
+    private let minimumRequestInterval: TimeInterval = 0.5 // 500ms between requests
+    private var requestTimer: Timer?
+    
+    private init() {}
+    
+    struct CachedGeocodingResult {
+        let address: String
+        let neighborhood: String?
+        let timestamp: Date
+        let coordinate: CLLocationCoordinate2D
+        
+        var isExpired: Bool {
+            Date().timeIntervalSince(timestamp) > 3600
+        }
+    }
+    
+    struct GeocodingRequest {
+        let coordinate: CLLocationCoordinate2D
+        let completion: (String, String?) -> Void
+        let id: String
+    }
+    
+    private func cacheKey(for coordinate: CLLocationCoordinate2D) -> String {
+        // Round to ~25m precision to improve cache hits
+        let lat = round(coordinate.latitude * 10000) / 10000
+        let lon = round(coordinate.longitude * 10000) / 10000
+        return "\(lat),\(lon)"
+    }
+    
+    func reverseGeocode(coordinate: CLLocationCoordinate2D, completion: @escaping (String, String?) -> Void) {
+        let key = cacheKey(for: coordinate)
+        
+        // Check cache first
+        if let cached = cache[key], !cached.isExpired {
+            // Verify the cached result is close enough to the requested coordinate
+            let cachedLocation = CLLocation(latitude: cached.coordinate.latitude, longitude: cached.coordinate.longitude)
+            let requestedLocation = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+            
+            if cachedLocation.distance(from: requestedLocation) < minimumDistance {
+                DispatchQueue.main.async {
+                    completion(cached.address, cached.neighborhood)
+                }
+                return
+            }
+        }
+        
+        // Don't make duplicate requests
+        guard !pendingRequests.contains(key) else { return }
+        
+        // Add to queue
+        let request = GeocodingRequest(
+            coordinate: coordinate,
+            completion: completion,
+            id: key
+        )
+        
+        requestQueue.append(request)
+        pendingRequests.insert(key)
+        
+        processQueue()
+    }
+    
+    private func processQueue() {
+        guard !requestQueue.isEmpty else { return }
+        guard requestTimer == nil else { return } // Already processing
+        
+        let now = Date()
+        let timeSinceLastRequest = now.timeIntervalSince(lastRequestTime)
+        
+        if timeSinceLastRequest >= minimumRequestInterval {
+            executeNextRequest()
+        } else {
+            // Schedule the next request
+            let delay = minimumRequestInterval - timeSinceLastRequest
+            requestTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { _ in
+                self.requestTimer = nil
+                self.executeNextRequest()
+            }
+        }
+    }
+    
+    private func executeNextRequest() {
+        guard let request = requestQueue.first else { return }
+        requestQueue.removeFirst()
+        
+        lastRequestTime = Date()
+        
+        let location = CLLocation(latitude: request.coordinate.latitude, longitude: request.coordinate.longitude)
+        
+        geocoder.reverseGeocodeLocation(location) { [weak self] placemarks, error in
+            DispatchQueue.main.async {
+                self?.pendingRequests.remove(request.id)
+                
+                if let error = error {
+                    print("Geocoding error: \(error.localizedDescription)")
+                    // Return fallback for failed requests
+                    request.completion("Selected Location", nil)
+                } else if let placemark = placemarks?.first {
+                    let address = self?.formatAddress(from: placemark) ?? "Selected Location"
+                    let neighborhood = self?.formatNeighborhood(from: placemark)
+                    
+                    // Cache the result
+                    self?.cache[request.id] = CachedGeocodingResult(
+                        address: address,
+                        neighborhood: neighborhood,
+                        timestamp: Date(),
+                        coordinate: request.coordinate
+                    )
+                    
+                    request.completion(address, neighborhood)
+                } else {
+                    request.completion("Selected Location", nil)
+                }
+                
+                // Continue processing queue
+                self?.processQueue()
+            }
+        }
+    }
+    
+    private func formatAddress(from placemark: CLPlacemark) -> String {
+        if let streetNumber = placemark.subThoroughfare,
+           let streetName = placemark.thoroughfare {
+            return "\(streetNumber) \(streetName)"
+        } else if let streetName = placemark.thoroughfare {
+            return streetName
+        }
+        
+        if let name = placemark.name {
+            return name
+        }
+        
+        return "Selected Location"
+    }
+    
+    private func formatNeighborhood(from placemark: CLPlacemark) -> String? {
+        var components: [String] = []
+        
+        if let subLocality = placemark.subLocality, !subLocality.isEmpty {
+            components.append(subLocality)
+        }
+        
+        if let locality = placemark.locality, !locality.isEmpty {
+            components.append(locality)
+        }
+        
+        return components.isEmpty ? nil : components.joined(separator: ", ")
+    }
+    
+    func clearExpiredCache() {
+        cache = cache.filter { !$0.value.isExpired }
+    }
+}
+
+// MARK: - Debounced Geocoding Handler
+class DebouncedGeocodingHandler: ObservableObject {
+    private var debounceTimer: Timer?
+    private let debounceInterval: TimeInterval = 0.8 // Increased from 0.5s
+    
+    func reverseGeocode(coordinate: CLLocationCoordinate2D, completion: @escaping (String, String?) -> Void) {
+        debounceTimer?.invalidate()
+        
+        debounceTimer = Timer.scheduledTimer(withTimeInterval: debounceInterval, repeats: false) { _ in
+            GeocodingCacheManager.shared.reverseGeocode(coordinate: coordinate, completion: completion)
+        }
+    }
+    
+    func cancel() {
+        debounceTimer?.invalidate()
+        debounceTimer = nil
+    }
+    
+    deinit {
+        debounceTimer?.invalidate()
+    }
+}
+
 struct ParkingLocationView: View {
     @StateObject private var locationManager = LocationManager()
     @StateObject private var streetDataManager = StreetDataManager()
     @StateObject private var parkingManager = ParkingLocationManager()
+    @StateObject private var debouncedGeocoder = DebouncedGeocodingHandler()
     
     @State private var mapPosition = MapCameraPosition.region(
         MKCoordinateRegion(
@@ -22,17 +213,14 @@ struct ParkingLocationView: View {
     )
     @State private var isSettingLocation = false
     @State private var previewAddress = ""
+    @State private var previewNeighborhood: String?
     @State private var previewCoordinate = CLLocationCoordinate2D()
-    @State private var debounceTimer: Timer?
     
     // Auto-center functionality
     @State private var autoResetTimer: Timer?
     @State private var lastInteractionTime = Date()
     
-    // Geocoder for reverse geocoding
-    private let geocoder = CLGeocoder()
-    
-    // MARK: - Haptic Feedback (Reduced)
+    // MARK: - Haptic Feedback
     private let impactFeedbackLight = UIImpactFeedbackGenerator(style: .light)
     private let notificationFeedback = UINotificationFeedbackGenerator()
     
@@ -60,8 +248,16 @@ struct ParkingLocationView: View {
                         }
                     }
                     .onMapCameraChange { context in
-                        previewCoordinate = context.camera.centerCoordinate
-                        reverseGeocodeDebounced(coordinate: previewCoordinate)
+                        let newCoordinate = context.camera.centerCoordinate
+                        previewCoordinate = newCoordinate
+                        
+                        // Use debounced geocoding
+                        debouncedGeocoder.reverseGeocode(coordinate: newCoordinate) { address, neighborhood in
+                            DispatchQueue.main.async {
+                                previewAddress = address
+                                previewNeighborhood = neighborhood
+                            }
+                        }
                     }
                     
                     // Fixed center pin
@@ -69,7 +265,7 @@ struct ParkingLocationView: View {
                         Image(systemName: "car.fill")
                             .foregroundColor(.white)
                             .font(.system(size: 12, weight: .medium))
-                            .frame(width: 32, height: 32)
+                            .frame(width: 24, height: 24)
                             .background(Color.blue)
                             .clipShape(Circle())
                             .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
@@ -94,7 +290,7 @@ struct ParkingLocationView: View {
                                 ZStack {
                                     Circle()
                                         .fill(Color.blue)
-                                        .frame(width: 20, height: 20)
+                                        .frame(width: 24, height: 24)
                                     
                                     Circle()
                                         .fill(Color.white)
@@ -104,7 +300,7 @@ struct ParkingLocationView: View {
                             }
                         }
                         
-                        // Parking location annotation - changed from red to blue
+                        // Parking location annotation
                         if let parkingLocation = parkingManager.currentLocation {
                             Annotation("Parked Car", coordinate: parkingLocation.coordinate) {
                                 ZStack {
@@ -114,7 +310,7 @@ struct ParkingLocationView: View {
                                     
                                     Image(systemName: "car.fill")
                                         .foregroundColor(.white)
-                                        .font(.system(size: 10, weight: .bold))
+                                        .font(.system(size: 8, weight: .bold))
                                 }
                                 .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 1)
                             }
@@ -134,7 +330,7 @@ struct ParkingLocationView: View {
                         centerMapOnBothLocations()
                     }
                     .onMapCameraChange { context in
-                        // Track user interaction with map - this is sufficient for detecting movement
+                        // Track user interaction with map
                         handleMapInteraction()
                     }
                     
@@ -151,12 +347,13 @@ struct ParkingLocationView: View {
             // Bottom UI Section
             VStack(spacing: 4) {
                 if isSettingLocation {
-                    // Setting mode UI - just show current selection
+                    // Setting mode UI
                     LocationSection(
                         parkingLocation: nil,
                         onLocationTap: openInMaps,
                         isPreviewMode: true,
                         previewAddress: previewAddress,
+                        previewNeighborhood: previewNeighborhood,
                         previewCoordinate: previewCoordinate
                     )
                 } else {
@@ -173,75 +370,58 @@ struct ParkingLocationView: View {
                         onLocationTap: openInMaps,
                         isPreviewMode: false,
                         previewAddress: nil,
+                        previewNeighborhood: nil,
                         previewCoordinate: nil
                     )
                 }
                 
-                // Button Section with improved styling
+                // Button Section
                 VStack(spacing: 16) {
-                    if isSettingLocation {
-                        // Two-button layout when setting location
-                        HStack(spacing: 12) {
-                            // Cancel button - improved design
-                            Button(action: cancelSettingLocation) {
-                                Text("Cancel")
-                                    .font(.system(size: 16, weight: .medium))
-                                    .foregroundColor(.secondary)
-                                    .frame(height: 52)
-                                    .frame(maxWidth: .infinity)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 26)
-                                            .fill(Color(UIColor.secondarySystemBackground))
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 26)
-                                                    .stroke(Color(UIColor.separator), lineWidth: 0.5)
-                                            )
-                                    )
-                            }
-                            .frame(maxWidth: 120) // Constrain cancel button width
-                            
-                            // Set location button
-                            Button(action: setParkingLocation) {
-                                Text("Set Location")
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(.white)
-                                    .frame(height: 52)
-                                    .frame(maxWidth: .infinity)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 26)
-                                            .fill(
-                                                LinearGradient(
-                                                    colors: [Color.green, Color.green.opacity(0.8)],
-                                                    startPoint: .top,
-                                                    endPoint: .bottom
-                                                )
-                                            )
-                                            .shadow(color: Color.green.opacity(0.3), radius: 8, x: 0, y: 4)
-                                    )
-                            }
+                    HStack(spacing: 12) {
+                        // Left button - changes based on state
+                        Button(action: isSettingLocation ? cancelSettingLocation : startSettingLocation) {
+                            Image(systemName: isSettingLocation ? "xmark" : "bell.fill")
+                                .font(.system(size: 20, weight: .medium))
+                                .foregroundColor(.white)
+                                .frame(width: 52, height: 52)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 26)
+                                        .fill(Color.gray.opacity(0.8))
+                                )
                         }
-                    } else {
-                        // Single button layout for normal mode
-                        Button(action: startSettingLocation) {
-                            Text("Update Parking Location")
+                        .frame(maxWidth: 52)
+                        .scaleEffect(1.0)
+                        .animation(.easeInOut(duration: 0.1), value: isSettingLocation)
+                        
+                        // Right button - changes based on state
+                        Button(action: isSettingLocation ? setParkingLocation : startSettingLocation) {
+                            Text(isSettingLocation ? "Set Location" : "Update Parking Location")
                                 .font(.system(size: 17, weight: .semibold))
                                 .foregroundColor(.white)
-                                .frame(height: 56)
+                                .frame(height: 52)
                                 .frame(maxWidth: .infinity)
                                 .background(
                                     RoundedRectangle(cornerRadius: 28)
                                         .fill(
                                             LinearGradient(
-                                                colors: [Color.blue, Color.blue.opacity(0.8)],
+                                                colors: isSettingLocation ?
+                                                    [Color.green, Color.green.opacity(0.8)] :
+                                                    [Color.blue, Color.blue.opacity(0.8)],
                                                 startPoint: .top,
                                                 endPoint: .bottom
                                             )
                                         )
-                                        .shadow(color: Color.blue.opacity(0.3), radius: 10, x: 0, y: 5)
+                                        .shadow(
+                                            color: isSettingLocation ?
+                                                Color.green.opacity(0.3) :
+                                                Color.blue.opacity(0.3),
+                                            radius: 10,
+                                            x: 0,
+                                            y: 5
+                                        )
                                 )
                         }
-                        .scaleEffect(1.0) // Add subtle press animation
-                        .animation(.easeInOut(duration: 0.1), value: isSettingLocation)
+                        .scaleEffect(1.0)
                     }
                 }
                 .padding(.horizontal, 20)
@@ -254,9 +434,12 @@ struct ParkingLocationView: View {
                 prepareHaptics()
             }
             .onDisappear {
-                // Clean up timers when view disappears
+                // Clean up timers and cancel pending requests
                 autoResetTimer?.invalidate()
-                debounceTimer?.invalidate()
+                debouncedGeocoder.cancel()
+                
+                // Clean up expired cache entries
+                GeocodingCacheManager.shared.clearExpiredCache()
             }
         }
     }
@@ -264,18 +447,13 @@ struct ParkingLocationView: View {
     // MARK: - Auto-Center Functionality
     
     private func handleMapInteraction() {
-        // Don't handle interactions in setting mode
         guard !isSettingLocation else { return }
         
         lastInteractionTime = Date()
-        
-        // Cancel existing timer
         autoResetTimer?.invalidate()
         
-        // Start new timer for auto-reset
         autoResetTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { _ in
             DispatchQueue.main.async {
-                // Only reset if we're still in normal mode and enough time has passed
                 let timeSinceLastInteraction = Date().timeIntervalSince(lastInteractionTime)
                 if timeSinceLastInteraction >= 5.0 && !isSettingLocation {
                     centerMapOnBothLocations()
@@ -290,54 +468,41 @@ struct ParkingLocationView: View {
         let userLocation = locationManager.userLocation
         let parkingLocation = parkingManager.currentLocation
         
-        // Determine what locations we have
         switch (userLocation, parkingLocation) {
         case (let user?, let parking?):
-            // Both locations available - create region that includes both
             centerMapOnBothCoordinates(user.coordinate, parking.coordinate)
-            
         case (let user?, nil):
-            // Only user location available
             centerMap(on: user.coordinate)
-            
         case (nil, let parking?):
-            // Only parking location available
             centerMap(on: parking.coordinate)
-            
         case (nil, nil):
-            // No locations available - keep current position or use default
             break
         }
     }
     
     private func centerMapOnBothCoordinates(_ coord1: CLLocationCoordinate2D, _ coord2: CLLocationCoordinate2D) {
-        // Step 1: Find the center point between the two coordinates
         let centerLat = (coord1.latitude + coord2.latitude) / 2
         let centerLon = (coord1.longitude + coord2.longitude) / 2
         let centerCoordinate = CLLocationCoordinate2D(latitude: centerLat, longitude: centerLon)
         
-        // Step 2: Calculate the span needed to fit both points
         let latDelta = abs(coord1.latitude - coord2.latitude)
         let lonDelta = abs(coord1.longitude - coord2.longitude)
         
-        // Step 3: Add padding so points aren't at the edge (2x padding)
-        let paddedLatDelta = max(latDelta * 2.0, 0.008) // Minimum zoom level
-        let paddedLonDelta = max(lonDelta * 2.0, 0.008)
+        // Reduced minimum delta for closer zoom
+        let paddedLatDelta = max(latDelta * 1.8, 0.001)
+        let paddedLonDelta = max(lonDelta * 1.8, 0.001)
         
-        // Step 4: Use the larger delta to ensure both points fit
         let finalDelta = max(paddedLatDelta, paddedLonDelta)
         let span = MKCoordinateSpan(latitudeDelta: finalDelta, longitudeDelta: finalDelta)
         
-        // Step 5: Center the map on the center point with appropriate zoom
         withAnimation(.easeInOut(duration: 1.0)) {
             mapPosition = .region(MKCoordinateRegion(center: centerCoordinate, span: span))
         }
     }
     
-    // MARK: - Haptic Preparation (Simplified)
+    // MARK: - Haptic Preparation
     
     private func prepareHaptics() {
-        // Prepare only the haptic generators we actually use
         impactFeedbackLight.prepare()
         notificationFeedback.prepare()
     }
@@ -352,43 +517,45 @@ struct ParkingLocationView: View {
                 streetDataManager.fetchSchedules(for: parkingLocation.coordinate)
             }
             
-            // Initial centering
             centerMapOnBothLocations()
         }
     }
     
     private func startSettingLocation() {
-        // Cancel auto-reset timer when entering setting mode
         autoResetTimer?.invalidate()
-        
-        // Single light haptic for mode change
         impactFeedbackLight.impactOccurred()
         
         withAnimation(.easeInOut(duration: 0.3)) {
             isSettingLocation = true
         }
         
-        // Start from current parking location or user location
         let startCoordinate: CLLocationCoordinate2D
         if let parkingLocation = parkingManager.currentLocation {
             startCoordinate = parkingLocation.coordinate
             previewAddress = parkingLocation.address
+            previewNeighborhood = nil
         } else if let userLocation = locationManager.userLocation {
             startCoordinate = userLocation.coordinate
-            reverseGeocode(coordinate: startCoordinate) { address in
-                previewAddress = address
+            previewAddress = "Loading..."
+            previewNeighborhood = nil
+            
+            GeocodingCacheManager.shared.reverseGeocode(coordinate: startCoordinate) { address, neighborhood in
+                DispatchQueue.main.async {
+                    previewAddress = address
+                    previewNeighborhood = neighborhood
+                }
             }
         } else {
             startCoordinate = CLLocationCoordinate2D(latitude: 37.783759, longitude: -122.442232)
             previewAddress = "San Francisco, CA"
+            previewNeighborhood = nil
         }
         
         previewCoordinate = startCoordinate
-        centerMap(on: startCoordinate)
+        centerMap(on: startCoordinate, zoomLevel: .close)
     }
     
     private func setParkingLocation() {
-        // Single success notification for completion
         notificationFeedback.notificationOccurred(.success)
         
         parkingManager.setManualParkingLocation(
@@ -400,127 +567,43 @@ struct ParkingLocationView: View {
             isSettingLocation = false
         }
         
-        // Resume auto-centering after setting location
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             centerMapOnBothLocations()
         }
     }
     
     private func cancelSettingLocation() {
-        // No haptic for cancel - keep it subtle
+        debouncedGeocoder.cancel()
+        
         withAnimation(.easeInOut(duration: 0.3)) {
             isSettingLocation = false
         }
         
-        // Resume auto-centering and reset to both locations
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             centerMapOnBothLocations()
         }
     }
     
-    private func handleMapScreenTap(_ screenPoint: CGPoint) {
-        // Only handle taps in normal mode
-        guard !isSettingLocation else { return }
-        
-        // Light haptic feedback for map interaction
-        impactFeedbackLight.impactOccurred()
-        
-        // Track this as a user interaction
-        handleMapInteraction()
-        
-        // Convert screen point to coordinate (this is a simplified approach)
-        // In a real implementation, you might want to use MapReader or similar
-        // For now, we'll use the current map center as the tap location
-        let currentRegion = mapPosition.region
-        if let region = currentRegion {
-            let tappedCoordinate = region.center
-            
-            reverseGeocode(coordinate: tappedCoordinate) { address in
-                parkingManager.setManualParkingLocation(
-                    coordinate: tappedCoordinate,
-                    address: address
-                )
-            }
-        }
-    }
-    
-    // MARK: - Reverse Geocoding
-    
-    private func reverseGeocodeDebounced(coordinate: CLLocationCoordinate2D) {
-        debounceTimer?.invalidate()
-        debounceTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { _ in
-            reverseGeocode(coordinate: coordinate) { address in
-                previewAddress = address
-            }
-        }
-    }
-    
-    private func reverseGeocode(coordinate: CLLocationCoordinate2D, completion: @escaping (String) -> Void) {
-        let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
-        
-        geocoder.reverseGeocodeLocation(location) { placemarks, error in
-            DispatchQueue.main.async {
-                if let error = error {
-                    print("Reverse geocoding error: \(error.localizedDescription)")
-                    completion("Selected Location")
-                    return
-                }
-                
-                guard let placemark = placemarks?.first else {
-                    completion("Selected Location")
-                    return
-                }
-                
-                let address = formatAddress(from: placemark)
-                completion(address)
-            }
-        }
-    }
-    
-    private func formatAddress(from placemark: CLPlacemark) -> String {
-        // Only return street address (number + street name)
-        if let streetNumber = placemark.subThoroughfare,
-           let streetName = placemark.thoroughfare {
-            return "\(streetNumber) \(streetName)"
-        } else if let streetName = placemark.thoroughfare {
-            return streetName
-        }
-        
-        // Fallback to name if no street info available
-        if let name = placemark.name {
-            return name
-        }
-        
-        return "Selected Location"
-    }
-    
     private func centerOnUser() {
-        // Cancel auto-reset when user manually centers
         autoResetTimer?.invalidate()
         
         if let location = locationManager.userLocation {
             centerMap(on: location.coordinate)
-            
-            // Restart auto-reset timer
             handleMapInteraction()
         }
     }
     
     private func goToCar() {
-        // Cancel auto-reset when user manually goes to car
         autoResetTimer?.invalidate()
         
         if let parkingLocation = parkingManager.currentLocation {
             centerMap(on: parkingLocation.coordinate)
-            
-            // Restart auto-reset timer
             handleMapInteraction()
         }
     }
     
-    private func centerMap(on coordinate: CLLocationCoordinate2D) {
-        // Simple single-location centering with reasonable zoom
-        let span = MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+    private func centerMap(on coordinate: CLLocationCoordinate2D, zoomLevel: MapZoomLevel = .medium) {
+        let span = zoomLevel.span
         
         withAnimation(.easeInOut(duration: 1.0)) {
             mapPosition = .region(MKCoordinateRegion(center: coordinate, span: span))
@@ -533,16 +616,48 @@ struct ParkingLocationView: View {
             UIApplication.shared.open(url)
         }
     }
+    
+    enum MapZoomLevel {
+        case veryClose   // 0.0005
+        case close       // 0.002
+        case medium      // 0.01
+        case far         // 0.03
+        case veryFar     // 0.1
+        
+        var span: MKCoordinateSpan {
+            switch self {
+            case .veryClose:
+                return MKCoordinateSpan(latitudeDelta: 0.0005, longitudeDelta: 0.0005)
+            case .close:
+                return MKCoordinateSpan(latitudeDelta: 0.002, longitudeDelta: 0.002)
+            case .medium:
+                return MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+            case .far:
+                return MKCoordinateSpan(latitudeDelta: 0.03, longitudeDelta: 0.03)
+            case .veryFar:
+                return MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
+            }
+        }
+    }
 }
 
-// MARK: - Combined Location Section
+// MARK: - Location Section
+
+extension CLLocationCoordinate2D: Equatable {
+    public static func == (lhs: CLLocationCoordinate2D, rhs: CLLocationCoordinate2D) -> Bool {
+        return lhs.latitude == rhs.latitude && lhs.longitude == rhs.longitude
+    }
+}
 
 struct LocationSection: View {
     let parkingLocation: ParkingLocation?
     let onLocationTap: (String) -> Void
     let isPreviewMode: Bool
     let previewAddress: String?
+    let previewNeighborhood: String?
     let previewCoordinate: CLLocationCoordinate2D?
+    
+    @State private var cachedNeighborhood: String?
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -554,21 +669,24 @@ struct LocationSection: View {
             if isPreviewMode {
                 // Preview mode content
                 HStack(alignment: .center, spacing: 12) {
-                    Image(systemName: "location.fill")
+                    Image(systemName: "car.fill")
                         .foregroundColor(.blue)
                         .font(.body)
                     
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(previewAddress ?? "Selected Location")
-                            .font(.body)
-                            .foregroundColor(.primary)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .lineLimit(nil)
+                        if let address = previewAddress {
+                            Text(address)
+                                .font(.body)
+                                .foregroundColor(.primary)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .lineLimit(nil)
+                        }
                         
-                        if let coordinate = previewCoordinate {
-                            Text("Lat: \(coordinate.latitude, specifier: "%.6f"), Lon: \(coordinate.longitude, specifier: "%.6f")")
+                        if let neighborhood = previewNeighborhood {
+                            Text(neighborhood)
                                 .font(.caption)
                                 .foregroundColor(.secondary)
+                                .transition(.opacity.combined(with: .move(edge: .top)))
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -589,9 +707,16 @@ struct LocationSection: View {
                                     .fixedSize(horizontal: false, vertical: true)
                                     .lineLimit(nil)
                                 
-                                Text("Tap to open in Maps")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
+                                if let neighborhood = cachedNeighborhood {
+                                    Text(neighborhood)
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                        .transition(.opacity)
+                                } else {
+                                    Text("Tap to open in Maps")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
                             
@@ -601,6 +726,18 @@ struct LocationSection: View {
                         }
                     }
                     .buttonStyle(PlainButtonStyle())
+                    .onAppear {
+                        // Only fetch neighborhood info once for the current location
+                        if cachedNeighborhood == nil {
+                            GeocodingCacheManager.shared.reverseGeocode(coordinate: location.coordinate) { _, neighborhood in
+                                DispatchQueue.main.async {
+                                    withAnimation(.easeInOut(duration: 0.3)) {
+                                        cachedNeighborhood = neighborhood
+                                    }
+                                }
+                            }
+                        }
+                    }
                 } else {
                     HStack(alignment: .center, spacing: 12) {
                         Image(systemName: "car")

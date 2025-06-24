@@ -12,48 +12,45 @@ struct UpcomingRemindersSection: View {
     let parkingLocation: ParkingLocation?
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 0) {
             HStack {
-                Text("Upcoming Reminders")
-                    .font(.title3)
-                    .fontWeight(.bold)
-                    .foregroundColor(.primary)
+                // Content based on street data state
+                Group {
+                    if streetDataManager.isLoading {
+                        LoadingReminderView()
+                    } else if let nextSchedule = streetDataManager.nextUpcomingSchedule {
+                        ActiveReminderView(schedule: nextSchedule)
+                    } else if streetDataManager.hasError {
+                        ErrorReminderView {
+                            if let location = parkingLocation {
+                                streetDataManager.fetchSchedules(for: location.coordinate)
+                            }
+                        }
+                    } else {
+                        NoRemindersView()
+                    }
+                }
                 
                 Spacer()
-                
-                Button(action: {}) {
-                    Text("View All")
-                        .font(.caption)
-                        .fontWeight(.medium)
-                        .foregroundColor(.blue)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color.blue.opacity(0.1))
-                        )
-                }
-            }
-            
-            // Content based on street data state
-            Group {
-                if streetDataManager.isLoading {
-                    LoadingReminderView()
-                } else if let nextSchedule = streetDataManager.nextUpcomingSchedule {
-                    ActiveReminderView(schedule: nextSchedule)
-                } else if streetDataManager.hasError {
-                    ErrorReminderView {
-                        if let location = parkingLocation {
-                            streetDataManager.fetchSchedules(for: location.coordinate)
-                        }
-                    }
-                } else {
-                    NoRemindersView()
-                }
             }
         }
         .padding(.horizontal, 20)
-        .padding(.top, 20)
-        .padding(.bottom, 24)
+        .padding(.top, 16)
+        .padding(.bottom, 16)
     }
+}
+
+
+#Preview {
+    ParkingLocationView()
+}
+
+#Preview("Light Mode") {
+    ParkingLocationView()
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark Mode") {
+    ParkingLocationView()
+        .preferredColorScheme(.dark)
 }

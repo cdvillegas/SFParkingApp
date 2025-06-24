@@ -14,8 +14,8 @@ struct LoadingReminderView: View {
                 .scaleEffect(0.8)
             
             VStack(alignment: .leading, spacing: 4) {
-                Text("Loading street sweeping data...")
-                    .font(.body)
+                Text("Loading...")
+                    .font(.subheadline)
                     .foregroundColor(.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -33,19 +33,15 @@ struct ActiveReminderView: View {
                 .font(.body)
             
             VStack(alignment: .leading, spacing: 4) {
-                Text("Street Sweeping - \(schedule.streetName)")
+                Text(schedule.relativeTimeString)  // Changed this line
                     .font(.body)
                     .fontWeight(.medium)
                     .foregroundColor(.primary)
                 
                 Text(schedule.formattedDate)
-                    .font(.body)
+                    .font(.subheadline)
                     .foregroundColor(.secondary)
                     .padding(.bottom, 4)
-                
-                Text("Auto-detected from location")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -96,3 +92,18 @@ struct NoRemindersView: View {
         }
     }
 }
+
+#Preview {
+    ParkingLocationView()
+}
+
+#Preview("Light Mode") {
+    ParkingLocationView()
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark Mode") {
+    ParkingLocationView()
+        .preferredColorScheme(.dark)
+}
+
