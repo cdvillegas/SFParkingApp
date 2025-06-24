@@ -49,6 +49,10 @@ struct ParkingLocation: Identifiable, Codable {
         case coordinate, address, timestamp, source
     }
     
+    enum LegacyCodingKeys: String, CodingKey {
+        case isManuallySet
+    }
+    
     enum CoordinateKeys: String, CodingKey {
         case latitude, longitude
     }
@@ -65,7 +69,8 @@ struct ParkingLocation: Identifiable, Codable {
         self.timestamp = try container.decode(Date.self, forKey: .timestamp)
         
         // Handle migration from old isManuallySet to new source
-        if let isManuallySet = try? container.decode(Bool.self, forKey: .isManuallySet) {
+        if let legacyContainer = try? decoder.container(keyedBy: LegacyCodingKeys.self),
+           let isManuallySet = try? legacyContainer.decode(Bool.self, forKey: .isManuallySet) {
             self.source = isManuallySet ? .manual : .motionActivity
         } else {
             self.source = try container.decode(ParkingSource.self, forKey: .source)
