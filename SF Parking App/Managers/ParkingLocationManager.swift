@@ -39,7 +39,7 @@ class ParkingLocationManager: ObservableObject {
         let location = ParkingLocation(
             coordinate: coordinate,
             address: address,
-            isManuallySet: false
+            source: .motionActivity
         )
         updateParkingLocation(location)
     }
@@ -48,7 +48,25 @@ class ParkingLocationManager: ObservableObject {
         let location = ParkingLocation(
             coordinate: coordinate,
             address: address,
-            isManuallySet: true
+            source: .manual
+        )
+        updateParkingLocation(location)
+    }
+    
+    func setMotionDetectedParking(coordinate: CLLocationCoordinate2D, address: String) {
+        let location = ParkingLocation(
+            coordinate: coordinate,
+            address: address,
+            source: .motionActivity
+        )
+        updateParkingLocation(location)
+    }
+    
+    func setCarDisconnectParking(coordinate: CLLocationCoordinate2D, address: String) {
+        let location = ParkingLocation(
+            coordinate: coordinate,
+            address: address,
+            source: .carDisconnect
         )
         updateParkingLocation(location)
     }

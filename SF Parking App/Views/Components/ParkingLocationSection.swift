@@ -71,7 +71,6 @@ struct ParkingLocationSection: View {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMM d 'at' h:mm a"
         let timeString = formatter.string(from: location.timestamp)
-        let methodString = location.isManuallySet ? "Manually Set" : "Auto-detected"
-        return "Parked \(timeString) • \(methodString)"
+        return "Parked \(timeString) • \(location.source.displayName)"
     }
 }

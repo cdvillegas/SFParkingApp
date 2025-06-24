@@ -204,6 +204,8 @@ struct ParkingLocationView: View {
     @StateObject private var streetDataManager = StreetDataManager()
     @StateObject private var parkingManager = ParkingLocationManager()
     @StateObject private var debouncedGeocoder = DebouncedGeocodingHandler()
+    @StateObject private var motionActivityManager = MotionActivityManager()
+    @StateObject private var bluetoothManager = BluetoothManager()
     
     @State private var mapPosition = MapCameraPosition.region(
         MKCoordinateRegion(
@@ -512,6 +514,15 @@ struct ParkingLocationView: View {
     private func setupView() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             locationManager.requestLocationPermission()
+            
+            // Link managers together
+            motionActivityManager.parkingLocationManager = parkingManager
+            motionActivityManager.locationManager = locationManager
+            bluetoothManager.parkingLocationManager = parkingManager
+            bluetoothManager.locationManager = locationManager
+            
+            // Request motion permission
+            motionActivityManager.requestMotionPermission()
             
             if let parkingLocation = parkingManager.currentLocation {
                 streetDataManager.fetchSchedules(for: parkingLocation.coordinate)
