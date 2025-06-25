@@ -74,7 +74,8 @@ struct ParkingLocationView: View {
                     onLocationTap: openInMaps,
                     isSettingMode: isSettingLocation,
                     settingAddress: settingAddress,
-                    settingNeighborhood: settingNeighborhood
+                    settingNeighborhood: settingNeighborhood,
+                    settingCoordinate: isSettingLocation ? settingCoordinate : nil
                 )
                 
                 // Button Section
@@ -633,12 +634,14 @@ struct ParkingLocationView: View {
         }
     }
     
-    private func openInMaps(address: String) {
-        let encodedAddress = address.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-        if let url = URL(string: "http://maps.apple.com/?address=\(encodedAddress)") {
-            UIApplication.shared.open(url)
-        }
+    private func openInMaps(coordinate: CLLocationCoordinate2D) {
+        let destination = MKMapItem(placemark: MKPlacemark(coordinate: coordinate))
+        destination.name = "Parked Car"
+        destination.openInMaps(launchOptions: [
+            MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeWalking
+        ])
     }
+
     
     enum MapZoomLevel {
         case veryClose   // 0.0005

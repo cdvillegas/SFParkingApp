@@ -18,31 +18,34 @@ extension CLLocationCoordinate2D: @retroactive Equatable {
 
 struct ParkingLocationSection: View {
     let parkingLocation: ParkingLocation?
-    let onLocationTap: (String) -> Void
+    let onLocationTap: (CLLocationCoordinate2D) -> Void
     
     // Setting mode properties
     let isSettingMode: Bool
     let settingAddress: String?
     let settingNeighborhood: String?
+    let settingCoordinate: CLLocationCoordinate2D?
     
     init(
         parkingLocation: ParkingLocation?,
-        onLocationTap: @escaping (String) -> Void,
+        onLocationTap: @escaping (CLLocationCoordinate2D) -> Void,
         isSettingMode: Bool = false,
         settingAddress: String? = nil,
-        settingNeighborhood: String? = nil
+        settingNeighborhood: String? = nil,
+        settingCoordinate: CLLocationCoordinate2D? = nil
     ) {
         self.parkingLocation = parkingLocation
         self.onLocationTap = onLocationTap
         self.isSettingMode = isSettingMode
         self.settingAddress = settingAddress
         self.settingNeighborhood = settingNeighborhood
+        self.settingCoordinate = settingCoordinate
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 12) {
             Text("Parking Location")
-                .font(.title2)
+                .font(.title3)
                 .fontWeight(.bold)
                 .foregroundColor(.primary)
             
@@ -62,8 +65,8 @@ struct ParkingLocationSection: View {
     
     private var settingModeView: some View {
         Button(action: {
-            if let address = settingAddress {
-                onLocationTap(address)
+            if let coordinate = settingCoordinate {
+                onLocationTap(coordinate)
             }
         }) {
             HStack(alignment: .center, spacing: 12) {
@@ -102,7 +105,7 @@ struct ParkingLocationSection: View {
     private var normalModeView: some View {
         Group {
             if let location = parkingLocation {
-                Button(action: { onLocationTap(location.address) }) {
+                Button(action: { onLocationTap(location.coordinate) }) {
                     HStack(alignment: .center, spacing: 12) {
                         Image(systemName: "car.fill")
                             .foregroundColor(.blue)
@@ -143,20 +146,4 @@ struct ParkingLocationSection: View {
             }
         }
     }
-}
-
-
-
-#Preview {
-    ParkingLocationView()
-}
-
-#Preview("Light Mode") {
-    ParkingLocationView()
-        .preferredColorScheme(.light)
-}
-
-#Preview("Dark Mode") {
-    ParkingLocationView()
-        .preferredColorScheme(.dark)
 }
