@@ -9,196 +9,6 @@ import SwiftUI
 import _MapKit_SwiftUI
 import CoreLocation
 
-// MARK: - Geocoding Cache Manager
-class GeocodingCacheManager: ObservableObject {
-    static let shared = GeocodingCacheManager()
-    
-    private let geocoder = CLGeocoder()
-    private var cache: [String: CachedGeocodingResult] = [:]
-    private var pendingRequests: Set<String> = []
-    private let cacheExpirationInterval: TimeInterval = 3600 // 1 hour
-    private let minimumDistance: CLLocationDistance = 50 // 50 meters
-    
-    // Rate limiting
-    private var requestQueue: [GeocodingRequest] = []
-    private var lastRequestTime: Date = Date.distantPast
-    private let minimumRequestInterval: TimeInterval = 0.5 // 500ms between requests
-    private var requestTimer: Timer?
-    
-    private init() {}
-    
-    struct CachedGeocodingResult {
-        let address: String
-        let neighborhood: String?
-        let timestamp: Date
-        let coordinate: CLLocationCoordinate2D
-        
-        var isExpired: Bool {
-            Date().timeIntervalSince(timestamp) > 3600
-        }
-    }
-    
-    struct GeocodingRequest {
-        let coordinate: CLLocationCoordinate2D
-        let completion: (String, String?) -> Void
-        let id: String
-    }
-    
-    private func cacheKey(for coordinate: CLLocationCoordinate2D) -> String {
-        // Round to ~25m precision to improve cache hits
-        let lat = round(coordinate.latitude * 10000) / 10000
-        let lon = round(coordinate.longitude * 10000) / 10000
-        return "\(lat),\(lon)"
-    }
-    
-    func reverseGeocode(coordinate: CLLocationCoordinate2D, completion: @escaping (String, String?) -> Void) {
-        let key = cacheKey(for: coordinate)
-        
-        // Check cache first
-        if let cached = cache[key], !cached.isExpired {
-            // Verify the cached result is close enough to the requested coordinate
-            let cachedLocation = CLLocation(latitude: cached.coordinate.latitude, longitude: cached.coordinate.longitude)
-            let requestedLocation = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
-            
-            if cachedLocation.distance(from: requestedLocation) < minimumDistance {
-                DispatchQueue.main.async {
-                    completion(cached.address, cached.neighborhood)
-                }
-                return
-            }
-        }
-        
-        // Don't make duplicate requests
-        guard !pendingRequests.contains(key) else { return }
-        
-        // Add to queue
-        let request = GeocodingRequest(
-            coordinate: coordinate,
-            completion: completion,
-            id: key
-        )
-        
-        requestQueue.append(request)
-        pendingRequests.insert(key)
-        
-        processQueue()
-    }
-    
-    private func processQueue() {
-        guard !requestQueue.isEmpty else { return }
-        guard requestTimer == nil else { return } // Already processing
-        
-        let now = Date()
-        let timeSinceLastRequest = now.timeIntervalSince(lastRequestTime)
-        
-        if timeSinceLastRequest >= minimumRequestInterval {
-            executeNextRequest()
-        } else {
-            // Schedule the next request
-            let delay = minimumRequestInterval - timeSinceLastRequest
-            requestTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { _ in
-                self.requestTimer = nil
-                self.executeNextRequest()
-            }
-        }
-    }
-    
-    private func executeNextRequest() {
-        guard let request = requestQueue.first else { return }
-        requestQueue.removeFirst()
-        
-        lastRequestTime = Date()
-        
-        let location = CLLocation(latitude: request.coordinate.latitude, longitude: request.coordinate.longitude)
-        
-        geocoder.reverseGeocodeLocation(location) { [weak self] placemarks, error in
-            DispatchQueue.main.async {
-                self?.pendingRequests.remove(request.id)
-                
-                if let error = error {
-                    print("Geocoding error: \(error.localizedDescription)")
-                    // Return fallback for failed requests
-                    request.completion("Selected Location", nil)
-                } else if let placemark = placemarks?.first {
-                    let address = self?.formatAddress(from: placemark) ?? "Selected Location"
-                    let neighborhood = self?.formatNeighborhood(from: placemark)
-                    
-                    // Cache the result
-                    self?.cache[request.id] = CachedGeocodingResult(
-                        address: address,
-                        neighborhood: neighborhood,
-                        timestamp: Date(),
-                        coordinate: request.coordinate
-                    )
-                    
-                    request.completion(address, neighborhood)
-                } else {
-                    request.completion("Selected Location", nil)
-                }
-                
-                // Continue processing queue
-                self?.processQueue()
-            }
-        }
-    }
-    
-    private func formatAddress(from placemark: CLPlacemark) -> String {
-        if let streetNumber = placemark.subThoroughfare,
-           let streetName = placemark.thoroughfare {
-            return "\(streetNumber) \(streetName)"
-        } else if let streetName = placemark.thoroughfare {
-            return streetName
-        }
-        
-        if let name = placemark.name {
-            return name
-        }
-        
-        return "Selected Location"
-    }
-    
-    private func formatNeighborhood(from placemark: CLPlacemark) -> String? {
-        var components: [String] = []
-        
-        if let subLocality = placemark.subLocality, !subLocality.isEmpty {
-            components.append(subLocality)
-        }
-        
-        if let locality = placemark.locality, !locality.isEmpty {
-            components.append(locality)
-        }
-        
-        return components.isEmpty ? nil : components.joined(separator: ", ")
-    }
-    
-    func clearExpiredCache() {
-        cache = cache.filter { !$0.value.isExpired }
-    }
-}
-
-// MARK: - Debounced Geocoding Handler
-class DebouncedGeocodingHandler: ObservableObject {
-    private var debounceTimer: Timer?
-    private let debounceInterval: TimeInterval = 0.8 // Increased from 0.5s
-    
-    func reverseGeocode(coordinate: CLLocationCoordinate2D, completion: @escaping (String, String?) -> Void) {
-        debounceTimer?.invalidate()
-        
-        debounceTimer = Timer.scheduledTimer(withTimeInterval: debounceInterval, repeats: false) { _ in
-            GeocodingCacheManager.shared.reverseGeocode(coordinate: coordinate, completion: completion)
-        }
-    }
-    
-    func cancel() {
-        debounceTimer?.invalidate()
-        debounceTimer = nil
-    }
-    
-    deinit {
-        debounceTimer?.invalidate()
-    }
-}
-
 struct ParkingLocationView: View {
     @StateObject private var locationManager = LocationManager()
     @StateObject private var streetDataManager = StreetDataManager()
@@ -206,6 +16,7 @@ struct ParkingLocationView: View {
     @StateObject private var debouncedGeocoder = DebouncedGeocodingHandler()
     @StateObject private var motionActivityManager = MotionActivityManager()
     @StateObject private var bluetoothManager = BluetoothManager()
+    @StateObject private var notificationManager = NotificationManager.shared
     
     @State private var mapPosition = MapCameraPosition.region(
         MKCoordinateRegion(
@@ -221,6 +32,13 @@ struct ParkingLocationView: View {
     // Auto-center functionality
     @State private var autoResetTimer: Timer?
     @State private var lastInteractionTime = Date()
+    
+    // Notification permission tracking
+    @State private var showingNotificationPermissionAlert = false
+    
+    // Add tracking for notification scheduling
+    @State private var lastNotificationLocationId: UUID?
+    @State private var hasScheduledNotifications = false
     
     // MARK: - Haptic Feedback
     private let impactFeedbackLight = UIImpactFeedbackGenerator(style: .light)
@@ -319,14 +137,19 @@ struct ParkingLocationView: View {
                         }
                     }
                     .onReceive(locationManager.$userLocation) { location in
-                        if let location = location {
+                        if location != nil {
                             centerMapOnBothLocations()
                         }
                     }
                     .onReceive(parkingManager.$currentLocation) { parkingLocation in
-                        // Fetch street data whenever parking location changes
-                        if let location = parkingLocation {
+                        // Only fetch street data if location actually changed
+                        if let location = parkingLocation,
+                           lastNotificationLocationId != location.id {
+                            
+                            print("🚗 Parking location changed, fetching schedules...")
                             streetDataManager.fetchSchedules(for: location.coordinate)
+                            lastNotificationLocationId = location.id
+                            hasScheduledNotifications = false
                         }
                         // Re-center map to show both locations
                         centerMapOnBothLocations()
@@ -381,14 +204,14 @@ struct ParkingLocationView: View {
                 VStack(spacing: 16) {
                     HStack(spacing: 12) {
                         // Left button - changes based on state
-                        Button(action: isSettingLocation ? cancelSettingLocation : startSettingLocation) {
-                            Image(systemName: isSettingLocation ? "xmark" : "bell.fill")
+                        Button(action: isSettingLocation ? cancelSettingLocation : handleNotificationAction) {
+                            Image(systemName: isSettingLocation ? "xmark" : (notificationManager.notificationPermissionStatus == .authorized ? "bell.fill" : "bell.badge.fill"))
                                 .font(.system(size: 20, weight: .medium))
                                 .foregroundColor(.white)
                                 .frame(width: 52, height: 52)
                                 .background(
                                     RoundedRectangle(cornerRadius: 26)
-                                        .fill(Color.gray.opacity(0.8))
+                                        .fill(notificationManager.notificationPermissionStatus == .denied ? Color.orange.opacity(0.8) : Color.gray.opacity(0.8))
                                 )
                         }
                         .frame(maxWidth: 52)
@@ -427,22 +250,168 @@ struct ParkingLocationView: View {
                     }
                 }
                 .padding(.horizontal, 20)
-                .padding(.bottom, max(8, UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0))
+                .padding(.bottom, max(8, UIApplication.shared.connectedScenes
+                    .compactMap { $0 as? UIWindowScene }
+                    .first?.windows
+                    .first?.safeAreaInsets.bottom ?? 0))
             }
             .ignoresSafeArea(.all, edges: .top)
             .background(Color(UIColor.systemBackground))
             .onAppear {
                 setupView()
                 prepareHaptics()
+                setupNotificationHandling()
             }
             .onDisappear {
-                // Clean up timers and cancel pending requests
-                autoResetTimer?.invalidate()
-                debouncedGeocoder.cancel()
-                
-                // Clean up expired cache entries
-                GeocodingCacheManager.shared.clearExpiredCache()
+                cleanupResources()
             }
+            .alert("Enable Notifications", isPresented: $showingNotificationPermissionAlert) {
+                Button("Settings") {
+                    if let settingsUrl = URL(string: UIApplication.openSettingsURLString) {
+                        UIApplication.shared.open(settingsUrl)
+                    }
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("Enable notifications in Settings to receive street cleaning reminders for your parked car.")
+            }
+            .onReceive(streetDataManager.$schedule) { schedule in
+                // Only schedule notifications once per location change
+                if let schedule = schedule,
+                   let parkingLocation = parkingManager.currentLocation,
+                   !hasScheduledNotifications,
+                   notificationManager.notificationPermissionStatus == .authorized {
+                    
+                    print("📅 Scheduling notifications for new schedule...")
+                    scheduleNotificationsIfNeeded(schedule: schedule)
+                    hasScheduledNotifications = true
+                }
+            }
+        }
+    }
+    
+    // MARK: - Resource Cleanup
+    
+    private func cleanupResources() {
+        // Clean up timers and cancel pending requests
+        autoResetTimer?.invalidate()
+        autoResetTimer = nil
+        
+        debouncedGeocoder.cancel()
+        
+        // Clean up expired cache entries
+        GeocodingCacheManager.shared.clearExpiredCache()
+        
+        // Remove notification observers
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    // MARK: - Notification Handling
+    
+    private func setupNotificationHandling() {
+        // Listen for notification taps
+        NotificationCenter.default.addObserver(
+            forName: .streetCleaningNotificationTapped,
+            object: nil,
+            queue: .main
+        ) { notification in
+            handleNotificationTap(notification.userInfo)
+        }
+        
+        // Request notification permission on first launch if we have a parking location
+        if notificationManager.notificationPermissionStatus == .notDetermined,
+           parkingManager.currentLocation != nil {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                notificationManager.requestNotificationPermission()
+            }
+        }
+    }
+    
+    private func handleNotificationAction() {
+        switch notificationManager.notificationPermissionStatus {
+        case .notDetermined:
+            notificationManager.requestNotificationPermission()
+        case .denied:
+            showingNotificationPermissionAlert = true
+        case .authorized, .provisional:
+            // Show notification status or allow user to manage notifications
+            notificationManager.getPendingNotifications()
+        case .ephemeral:
+            // Handle ephemeral authorization if needed
+            notificationManager.getPendingNotifications()
+        @unknown default:
+            break
+        }
+    }
+    
+    private func formatScheduleDescription(_ schedule: SweepSchedule) -> String {
+        guard let weekday = schedule.weekday,
+              let startTime = schedule.fromhour,
+              let endTime = schedule.tohour,
+              !weekday.isEmpty,
+              !startTime.isEmpty,
+              !endTime.isEmpty else {
+            return "Street Cleaning"
+        }
+        
+        let dayAbbrev = weekday.prefix(3).uppercased()
+        return "\(dayAbbrev) \(startTime)-\(endTime)"
+    }
+
+    private func scheduleNotificationsIfNeeded(schedule: SweepSchedule) {
+        guard let parkingLocation = parkingManager.currentLocation,
+              notificationManager.notificationPermissionStatus == .authorized,
+              let weekday = schedule.weekday,
+              let startTime = schedule.fromhour,
+              let endTime = schedule.tohour else {
+            return
+        }
+        
+        // Cancel existing notifications for this location before scheduling new ones
+        notificationManager.cancelNotifications(for: parkingLocation)
+        
+        let streetCleaningSchedule = StreetCleaningSchedule(
+            id: "\(schedule.fullname ?? "unknown")_\(weekday)",
+            description: formatScheduleDescription(schedule),
+            dayOfWeek: dayStringToWeekday(weekday),
+            startTime: startTime,
+            endTime: endTime
+        )
+        
+        notificationManager.scheduleStreetCleaningNotifications(
+            for: parkingLocation,
+            schedules: [streetCleaningSchedule]
+        )
+        
+        print("✅ Scheduled notifications for parking location: \(parkingLocation.address)")
+    }
+    
+    private func dayStringToWeekday(_ dayString: String) -> Int {
+        let normalizedDay = dayString.lowercased().trimmingCharacters(in: .whitespaces)
+        
+        switch normalizedDay {
+        case "sun", "sunday": return 1
+        case "mon", "monday": return 2
+        case "tue", "tues", "tuesday": return 3
+        case "wed", "wednesday": return 4
+        case "thu", "thur", "thursday": return 5
+        case "fri", "friday": return 6
+        case "sat", "saturday": return 7
+        default: return 2 // Default to Monday
+        }
+    }
+    
+    private func handleNotificationTap(_ userInfo: [AnyHashable: Any]?) {
+        guard let userInfo = userInfo,
+              let locationIdString = userInfo["locationId"] as? String,
+              let locationId = UUID(uuidString: locationIdString) else {
+            return
+        }
+        
+        // Center map on the parking location if it matches
+        if let parkingLocation = parkingManager.currentLocation,
+           parkingLocation.id == locationId {
+            centerMap(on: parkingLocation.coordinate, zoomLevel: .close)
         }
     }
     
@@ -524,7 +493,9 @@ struct ParkingLocationView: View {
             // Request motion permission
             motionActivityManager.requestMotionPermission()
             
+            // Only fetch schedules if we have a parking location and haven't already done so
             if let parkingLocation = parkingManager.currentLocation {
+                lastNotificationLocationId = parkingLocation.id
                 streetDataManager.fetchSchedules(for: parkingLocation.coordinate)
             }
             
@@ -569,10 +540,24 @@ struct ParkingLocationView: View {
     private func setParkingLocation() {
         notificationFeedback.notificationOccurred(.success)
         
+        // Cancel existing notifications for the old location
+        if let oldLocation = parkingManager.currentLocation {
+            notificationManager.cancelNotifications(for: oldLocation)
+        }
+        
+        // Reset notification tracking
+        hasScheduledNotifications = false
+        
+        // Set the new parking location
         parkingManager.setManualParkingLocation(
             coordinate: previewCoordinate,
             address: previewAddress
         )
+        
+        // Request notification permission if not already granted
+        if notificationManager.notificationPermissionStatus == .notDetermined {
+            notificationManager.requestNotificationPermission()
+        }
         
         withAnimation(.easeInOut(duration: 0.3)) {
             isSettingLocation = false
@@ -580,6 +565,8 @@ struct ParkingLocationView: View {
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             centerMapOnBothLocations()
+            
+            // Note: Street data will be fetched automatically via the onReceive handler
         }
     }
     
@@ -654,7 +641,7 @@ struct ParkingLocationView: View {
 
 // MARK: - Location Section
 
-extension CLLocationCoordinate2D: Equatable {
+extension CLLocationCoordinate2D: @retroactive Equatable {
     public static func == (lhs: CLLocationCoordinate2D, rhs: CLLocationCoordinate2D) -> Bool {
         return lhs.latitude == rhs.latitude && lhs.longitude == rhs.longitude
     }
@@ -748,6 +735,10 @@ struct LocationSection: View {
                                 }
                             }
                         }
+                    }
+                    .onChange(of: location.id) { _ in
+                        // Reset cached neighborhood when location changes
+                        cachedNeighborhood = nil
                     }
                 } else {
                     HStack(alignment: .center, spacing: 12) {

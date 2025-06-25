@@ -15,21 +15,25 @@ class StreetDataManager: ObservableObject {
     @Published var hasError = false
     @Published var nextUpcomingSchedule: UpcomingSchedule?
     
+    // Add debouncing to prevent repeated API calls
+    private var lastFetchedCoordinate: CLLocationCoordinate2D?
+    private var lastFetchTime: Date?
+    private let minimumFetchInterval: TimeInterval = 5.0 // 5 seconds
+    private let coordinateThreshold: Double = 0.0001 // ~10 meters
+    
     func fetchSchedules(for coordinate: CLLocationCoordinate2D) {
-        // Debug: Convert coordinate to address
-        let geocoder = CLGeocoder()
-        let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
-        
-        geocoder.reverseGeocodeLocation(location) { placemarks, error in
-            DispatchQueue.main.async {
-                if let placemark = placemarks?.first {
-                    let address = self.formatAddress(from: placemark)
-                    print("Fetching schedules for address: \(address)")
-                } else {
-                    print("Fetching schedules for coordinate: \(coordinate) (address lookup failed)")
-                }
-            }
+        // Check if we should skip this fetch due to debouncing
+        if shouldSkipFetch(for: coordinate) {
+            print("⏭️ Skipping fetch - too recent or too close to previous location")
+            return
         }
+        
+        // Debug: Convert coordinate to address (only once per fetch)
+        reverseGeocodeForDebug(coordinate: coordinate)
+        
+        // Update tracking variables
+        lastFetchedCoordinate = coordinate
+        lastFetchTime = Date()
         
         isLoading = true
         hasError = false
@@ -61,8 +65,44 @@ class StreetDataManager: ObservableObject {
             }
         }
     }
+    
+    // Helper to determine if we should skip the fetch
+    private func shouldSkipFetch(for coordinate: CLLocationCoordinate2D) -> Bool {
+        // Check if we have a recent fetch
+        if let lastFetch = lastFetchTime,
+           Date().timeIntervalSince(lastFetch) < minimumFetchInterval {
+            return true
+        }
+        
+        // Check if the coordinate is too close to the last one
+        if let lastCoordinate = lastFetchedCoordinate {
+            let latDiff = abs(coordinate.latitude - lastCoordinate.latitude)
+            let lonDiff = abs(coordinate.longitude - lastCoordinate.longitude)
+            
+            if latDiff < coordinateThreshold && lonDiff < coordinateThreshold {
+                return true
+            }
+        }
+        
+        return false
+    }
+    
+    // Separate geocoding for debug to avoid conflicts
+    private func reverseGeocodeForDebug(coordinate: CLLocationCoordinate2D) {
+        let geocoder = CLGeocoder()
+        let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+        
+        geocoder.reverseGeocodeLocation(location) { placemarks, error in
+            if let placemark = placemarks?.first {
+                let address = self.formatAddress(from: placemark)
+                print("🔍 Fetching schedules for address: \(address)")
+            } else {
+                print("🔍 Fetching schedules for coordinate: \(coordinate) (address lookup failed)")
+            }
+        }
+    }
 
-    // Helper function to format address (add this to your StreetDataManager)
+    // Helper function to format address
     private func formatAddress(from placemark: CLPlacemark) -> String {
         var addressComponents: [String] = []
         
@@ -193,5 +233,15 @@ class StreetDataManager: ObservableObject {
     private func createDateTime(date: Date, hour: Int) -> Date? {
         let calendar = Calendar.current
         return calendar.date(bySettingHour: hour, minute: 0, second: 0, of: date)
+    }
+    
+    // Clean up method to reset state when needed
+    func reset() {
+        lastFetchedCoordinate = nil
+        lastFetchTime = nil
+        schedule = nil
+        nextUpcomingSchedule = nil
+        isLoading = false
+        hasError = false
     }
 }
