@@ -24,10 +24,12 @@ struct ParkingLocationView: View {
             span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
         )
     )
+    
+    // MARK: - Setting Location State
     @State private var isSettingLocation = false
-    @State private var previewAddress = ""
-    @State private var previewNeighborhood: String?
-    @State private var previewCoordinate = CLLocationCoordinate2D()
+    @State private var settingAddress: String?
+    @State private var settingNeighborhood: String?
+    @State private var settingCoordinate = CLLocationCoordinate2D()
     
     // Auto-center functionality
     @State private var autoResetTimer: Timer?
@@ -49,211 +51,34 @@ struct ParkingLocationView: View {
             // Map Section
             ZStack {
                 if isSettingLocation {
-                    // Setting mode map with fixed center pin and user location
-                    Map(position: $mapPosition) {
-                        // User location annotation
-                        if let userLocation = locationManager.userLocation {
-                            Annotation("Your Location", coordinate: userLocation.coordinate) {
-                                ZStack {
-                                    Circle()
-                                        .fill(Color.blue)
-                                        .frame(width: 20, height: 20)
-                                    
-                                    Circle()
-                                        .fill(Color.white)
-                                        .frame(width: 8, height: 8)
-                                }
-                                .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 1)
-                            }
-                        }
-                    }
-                    .onMapCameraChange { context in
-                        let newCoordinate = context.camera.centerCoordinate
-                        previewCoordinate = newCoordinate
-                        
-                        // Use debounced geocoding
-                        debouncedGeocoder.reverseGeocode(coordinate: newCoordinate) { address, neighborhood in
-                            DispatchQueue.main.async {
-                                previewAddress = address
-                                previewNeighborhood = neighborhood
-                            }
-                        }
-                    }
-                    
-                    // Fixed center pin
-                    ZStack {
-                        Image(systemName: "car.fill")
-                            .foregroundColor(.white)
-                            .font(.system(size: 12, weight: .medium))
-                            .frame(width: 24, height: 24)
-                            .background(Color.blue)
-                            .clipShape(Circle())
-                            .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
-                    }
-                    .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
-                    
-                    // Map control buttons for edit mode
-                    MapControlButtons(
-                        userLocation: locationManager.userLocation,
-                        parkingLocation: parkingManager.currentLocation,
-                        onCenterOnUser: centerOnUser,
-                        onGoToCar: goToCar,
-                        onLocationRequest: { locationManager.requestLocation() }
-                    )
-                    
+                    settingModeMap
                 } else {
-                    // Normal view with native Map that's fully swipeable
-                    Map(position: $mapPosition) {
-                        // User location annotation
-                        if let userLocation = locationManager.userLocation {
-                            Annotation("Your Location", coordinate: userLocation.coordinate) {
-                                ZStack {
-                                    Circle()
-                                        .fill(Color.blue)
-                                        .frame(width: 24, height: 24)
-                                    
-                                    Circle()
-                                        .fill(Color.white)
-                                        .frame(width: 8, height: 8)
-                                }
-                                .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 1)
-                            }
-                        }
-                        
-                        // Parking location annotation
-                        if let parkingLocation = parkingManager.currentLocation {
-                            Annotation("Parked Car", coordinate: parkingLocation.coordinate) {
-                                ZStack {
-                                    Circle()
-                                        .fill(Color.blue)
-                                        .frame(width: 24, height: 24)
-                                    
-                                    Image(systemName: "car.fill")
-                                        .foregroundColor(.white)
-                                        .font(.system(size: 8, weight: .bold))
-                                }
-                                .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 1)
-                            }
-                        }
-                    }
-                    .onReceive(locationManager.$userLocation) { location in
-                        if location != nil {
-                            centerMapOnBothLocations()
-                        }
-                    }
-                    .onReceive(parkingManager.$currentLocation) { parkingLocation in
-                        // Only fetch street data if location actually changed
-                        if let location = parkingLocation,
-                           lastNotificationLocationId != location.id {
-                            
-                            print("🚗 Parking location changed, fetching schedules...")
-                            streetDataManager.fetchSchedules(for: location.coordinate)
-                            lastNotificationLocationId = location.id
-                            hasScheduledNotifications = false
-                        }
-                        // Re-center map to show both locations
-                        centerMapOnBothLocations()
-                    }
-                    .onMapCameraChange { context in
-                        // Track user interaction with map
-                        handleMapInteraction()
-                    }
-                    
-                    MapControlButtons(
-                        userLocation: locationManager.userLocation,
-                        parkingLocation: parkingManager.currentLocation,
-                        onCenterOnUser: centerOnUser,
-                        onGoToCar: goToCar,
-                        onLocationRequest: { locationManager.requestLocation() }
-                    )
+                    normalModeMap
                 }
             }
             
             // Bottom UI Section
             VStack(spacing: 4) {
-                if isSettingLocation {
-                    // Setting mode UI
-                    LocationSection(
-                        parkingLocation: nil,
-                        onLocationTap: openInMaps,
-                        isPreviewMode: true,
-                        previewAddress: previewAddress,
-                        previewNeighborhood: previewNeighborhood,
-                        previewCoordinate: previewCoordinate
-                    )
-                } else {
-                    // Normal mode UI
+                if !isSettingLocation {
                     UpcomingRemindersSection(
                         streetDataManager: streetDataManager,
                         parkingLocation: parkingManager.currentLocation
                     )
                     
                     Divider().padding(.horizontal, 20)
-                    
-                    LocationSection(
-                        parkingLocation: parkingManager.currentLocation,
-                        onLocationTap: openInMaps,
-                        isPreviewMode: false,
-                        previewAddress: nil,
-                        previewNeighborhood: nil,
-                        previewCoordinate: nil
-                    )
                 }
                 
+                // Parking Location Section - unified interface
+                ParkingLocationSection(
+                    parkingLocation: parkingManager.currentLocation,
+                    onLocationTap: openInMaps,
+                    isSettingMode: isSettingLocation,
+                    settingAddress: settingAddress,
+                    settingNeighborhood: settingNeighborhood
+                )
+                
                 // Button Section
-                VStack(spacing: 16) {
-                    HStack(spacing: 12) {
-                        // Left button - changes based on state
-                        Button(action: isSettingLocation ? cancelSettingLocation : handleNotificationAction) {
-                            Image(systemName: isSettingLocation ? "xmark" : (notificationManager.notificationPermissionStatus == .authorized ? "bell.fill" : "bell.badge.fill"))
-                                .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(.white)
-                                .frame(width: 52, height: 52)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 26)
-                                        .fill(notificationManager.notificationPermissionStatus == .denied ? Color.orange.opacity(0.8) : Color.gray.opacity(0.8))
-                                )
-                        }
-                        .frame(maxWidth: 52)
-                        .scaleEffect(1.0)
-                        .animation(.easeInOut(duration: 0.1), value: isSettingLocation)
-                        
-                        // Right button - changes based on state
-                        Button(action: isSettingLocation ? setParkingLocation : startSettingLocation) {
-                            Text(isSettingLocation ? "Set Location" : "Update Parking Location")
-                                .font(.system(size: 17, weight: .semibold))
-                                .foregroundColor(.white)
-                                .frame(height: 52)
-                                .frame(maxWidth: .infinity)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 28)
-                                        .fill(
-                                            LinearGradient(
-                                                colors: isSettingLocation ?
-                                                    [Color.green, Color.green.opacity(0.8)] :
-                                                    [Color.blue, Color.blue.opacity(0.8)],
-                                                startPoint: .top,
-                                                endPoint: .bottom
-                                            )
-                                        )
-                                        .shadow(
-                                            color: isSettingLocation ?
-                                                Color.green.opacity(0.3) :
-                                                Color.blue.opacity(0.3),
-                                            radius: 10,
-                                            x: 0,
-                                            y: 5
-                                        )
-                                )
-                        }
-                        .scaleEffect(1.0)
-                    }
-                }
-                .padding(.horizontal, 20)
-                .padding(.bottom, max(8, UIApplication.shared.connectedScenes
-                    .compactMap { $0 as? UIWindowScene }
-                    .first?.windows
-                    .first?.safeAreaInsets.bottom ?? 0))
+                buttonSection
             }
             .ignoresSafeArea(.all, edges: .top)
             .background(Color(UIColor.systemBackground))
@@ -278,7 +103,7 @@ struct ParkingLocationView: View {
             .onReceive(streetDataManager.$schedule) { schedule in
                 // Only schedule notifications once per location change
                 if let schedule = schedule,
-                   let parkingLocation = parkingManager.currentLocation,
+                   let _ = parkingManager.currentLocation,
                    !hasScheduledNotifications,
                    notificationManager.notificationPermissionStatus == .authorized {
                     
@@ -288,6 +113,189 @@ struct ParkingLocationView: View {
                 }
             }
         }
+    }
+    
+    // MARK: - Map Views
+    
+    private var settingModeMap: some View {
+        Map(position: $mapPosition) {
+            // User location annotation
+            if let userLocation = locationManager.userLocation {
+                Annotation("Your Location", coordinate: userLocation.coordinate) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.blue)
+                            .frame(width: 20, height: 20)
+                        
+                        Circle()
+                            .fill(Color.white)
+                            .frame(width: 8, height: 8)
+                    }
+                    .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 1)
+                }
+            }
+        }
+        .onMapCameraChange { context in
+            let newCoordinate = context.camera.centerCoordinate
+            settingCoordinate = newCoordinate
+            
+            // Use debounced geocoding
+            debouncedGeocoder.reverseGeocode(coordinate: newCoordinate) { address, neighborhood in
+                DispatchQueue.main.async {
+                    settingAddress = address
+                    settingNeighborhood = neighborhood
+                }
+            }
+        }
+        .overlay(
+            // Fixed center pin
+            ZStack {
+                Image(systemName: "car.fill")
+                    .foregroundColor(.white)
+                    .font(.system(size: 12, weight: .medium))
+                    .frame(width: 24, height: 24)
+                    .background(Color.blue)
+                    .clipShape(Circle())
+                    .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+            }
+            .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
+        )
+        .overlay(
+            MapControlButtons(
+                userLocation: locationManager.userLocation,
+                parkingLocation: parkingManager.currentLocation,
+                onCenterOnUser: centerOnUser,
+                onGoToCar: goToCar,
+                onLocationRequest: { locationManager.requestLocation() }
+            ),
+            alignment: .topTrailing
+        )
+    }
+    
+    private var normalModeMap: some View {
+        Map(position: $mapPosition) {
+            // User location annotation
+            if let userLocation = locationManager.userLocation {
+                Annotation("Your Location", coordinate: userLocation.coordinate) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.blue)
+                            .frame(width: 24, height: 24)
+                        
+                        Circle()
+                            .fill(Color.white)
+                            .frame(width: 8, height: 8)
+                    }
+                    .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 1)
+                }
+            }
+            
+            // Parking location annotation
+            if let parkingLocation = parkingManager.currentLocation {
+                Annotation("Parked Car", coordinate: parkingLocation.coordinate) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.blue)
+                            .frame(width: 24, height: 24)
+                        
+                        Image(systemName: "car.fill")
+                            .foregroundColor(.white)
+                            .font(.system(size: 8, weight: .bold))
+                    }
+                    .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 1)
+                }
+            }
+        }
+        .onReceive(locationManager.$userLocation) { location in
+            if location != nil {
+                centerMapOnBothLocations()
+            }
+        }
+        .onReceive(parkingManager.$currentLocation) { parkingLocation in
+            // Only fetch street data if location actually changed
+            if let location = parkingLocation,
+               lastNotificationLocationId != location.id {
+                
+                print("🚗 Parking location changed, fetching schedules...")
+                streetDataManager.fetchSchedules(for: location.coordinate)
+                lastNotificationLocationId = location.id
+                hasScheduledNotifications = false
+            }
+            // Re-center map to show both locations
+            centerMapOnBothLocations()
+        }
+        .onMapCameraChange { context in
+            // Track user interaction with map
+            handleMapInteraction()
+        }
+        .overlay(
+            MapControlButtons(
+                userLocation: locationManager.userLocation,
+                parkingLocation: parkingManager.currentLocation,
+                onCenterOnUser: centerOnUser,
+                onGoToCar: goToCar,
+                onLocationRequest: { locationManager.requestLocation() }
+            ),
+            alignment: .topTrailing
+        )
+    }
+    
+    // MARK: - Button Section
+    
+    private var buttonSection: some View {
+        VStack(spacing: 16) {
+            HStack(spacing: 12) {
+                // Left button - changes based on state
+                Button(action: isSettingLocation ? cancelSettingLocation : handleNotificationAction) {
+                    Image(systemName: isSettingLocation ? "xmark" : (notificationManager.notificationPermissionStatus == .authorized ? "bell.fill" : "bell.badge.fill"))
+                        .font(.system(size: 20, weight: .medium))
+                        .foregroundColor(.white)
+                        .frame(width: 52, height: 52)
+                        .background(
+                            RoundedRectangle(cornerRadius: 26)
+                                .fill(notificationManager.notificationPermissionStatus == .denied ? Color.orange.opacity(0.8) : Color.gray.opacity(0.8))
+                        )
+                }
+                .frame(maxWidth: 52)
+                .scaleEffect(1.0)
+                .animation(.easeInOut(duration: 0.1), value: isSettingLocation)
+                
+                // Right button - changes based on state
+                Button(action: isSettingLocation ? setParkingLocation : startSettingLocation) {
+                    Text(isSettingLocation ? "Set Location" : "Update Parking Location")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(height: 52)
+                        .frame(maxWidth: .infinity)
+                        .background(
+                            RoundedRectangle(cornerRadius: 28)
+                                .fill(
+                                    LinearGradient(
+                                        colors: isSettingLocation ?
+                                            [Color.green, Color.green.opacity(0.8)] :
+                                            [Color.blue, Color.blue.opacity(0.8)],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                                .shadow(
+                                    color: isSettingLocation ?
+                                        Color.green.opacity(0.3) :
+                                        Color.blue.opacity(0.3),
+                                    radius: 10,
+                                    x: 0,
+                                    y: 5
+                                )
+                        )
+                }
+                .scaleEffect(1.0)
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.bottom, max(8, UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first?.windows
+            .first?.safeAreaInsets.bottom ?? 0))
     }
     
     // MARK: - Resource Cleanup
@@ -514,30 +522,39 @@ struct ParkingLocationView: View {
         let startCoordinate: CLLocationCoordinate2D
         if let parkingLocation = parkingManager.currentLocation {
             startCoordinate = parkingLocation.coordinate
-            previewAddress = parkingLocation.address
-            previewNeighborhood = nil
+            settingAddress = parkingLocation.address
+            settingNeighborhood = nil // Will be loaded via geocoding
         } else if let userLocation = locationManager.userLocation {
             startCoordinate = userLocation.coordinate
-            previewAddress = "Loading..."
-            previewNeighborhood = nil
-            
-            GeocodingCacheManager.shared.reverseGeocode(coordinate: startCoordinate) { address, neighborhood in
-                DispatchQueue.main.async {
-                    previewAddress = address
-                    previewNeighborhood = neighborhood
-                }
-            }
+            settingAddress = nil // Will be loaded via geocoding
+            settingNeighborhood = nil
         } else {
             startCoordinate = CLLocationCoordinate2D(latitude: 37.783759, longitude: -122.442232)
-            previewAddress = "San Francisco, CA"
-            previewNeighborhood = nil
+            settingAddress = "San Francisco, CA"
+            settingNeighborhood = nil
         }
         
-        previewCoordinate = startCoordinate
+        settingCoordinate = startCoordinate
         centerMap(on: startCoordinate, zoomLevel: .close)
+        
+        // Trigger initial geocoding if needed
+        if settingAddress == nil || settingNeighborhood == nil {
+            debouncedGeocoder.reverseGeocode(coordinate: startCoordinate) { address, neighborhood in
+                DispatchQueue.main.async {
+                    if settingAddress == nil {
+                        settingAddress = address
+                    }
+                    if settingNeighborhood == nil {
+                        settingNeighborhood = neighborhood
+                    }
+                }
+            }
+        }
     }
     
     private func setParkingLocation() {
+        guard let address = settingAddress else { return }
+        
         notificationFeedback.notificationOccurred(.success)
         
         // Cancel existing notifications for the old location
@@ -550,14 +567,18 @@ struct ParkingLocationView: View {
         
         // Set the new parking location
         parkingManager.setManualParkingLocation(
-            coordinate: previewCoordinate,
-            address: previewAddress
+            coordinate: settingCoordinate,
+            address: address
         )
         
         // Request notification permission if not already granted
         if notificationManager.notificationPermissionStatus == .notDetermined {
             notificationManager.requestNotificationPermission()
         }
+        
+        // Clear setting state
+        settingAddress = nil
+        settingNeighborhood = nil
         
         withAnimation(.easeInOut(duration: 0.3)) {
             isSettingLocation = false
@@ -572,6 +593,10 @@ struct ParkingLocationView: View {
     
     private func cancelSettingLocation() {
         debouncedGeocoder.cancel()
+        
+        // Clear setting state
+        settingAddress = nil
+        settingNeighborhood = nil
         
         withAnimation(.easeInOut(duration: 0.3)) {
             isSettingLocation = false
@@ -636,128 +661,6 @@ struct ParkingLocationView: View {
                 return MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
             }
         }
-    }
-}
-
-// MARK: - Location Section
-
-extension CLLocationCoordinate2D: @retroactive Equatable {
-    public static func == (lhs: CLLocationCoordinate2D, rhs: CLLocationCoordinate2D) -> Bool {
-        return lhs.latitude == rhs.latitude && lhs.longitude == rhs.longitude
-    }
-}
-
-struct LocationSection: View {
-    let parkingLocation: ParkingLocation?
-    let onLocationTap: (String) -> Void
-    let isPreviewMode: Bool
-    let previewAddress: String?
-    let previewNeighborhood: String?
-    let previewCoordinate: CLLocationCoordinate2D?
-    
-    @State private var cachedNeighborhood: String?
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Parking Location")
-                .font(.title3)
-                .fontWeight(.bold)
-                .foregroundColor(.primary)
-            
-            if isPreviewMode {
-                // Preview mode content
-                HStack(alignment: .center, spacing: 12) {
-                    Image(systemName: "car.fill")
-                        .foregroundColor(.blue)
-                        .font(.body)
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        if let address = previewAddress {
-                            Text(address)
-                                .font(.body)
-                                .foregroundColor(.primary)
-                                .fixedSize(horizontal: false, vertical: true)
-                                .lineLimit(nil)
-                        }
-                        
-                        if let neighborhood = previewNeighborhood {
-                            Text(neighborhood)
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                                .transition(.opacity.combined(with: .move(edge: .top)))
-                        }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
-            } else {
-                // Normal mode content
-                if let location = parkingLocation {
-                    Button(action: { onLocationTap(location.address) }) {
-                        HStack(alignment: .center, spacing: 12) {
-                            Image(systemName: "car.fill")
-                                .foregroundColor(.blue)
-                                .font(.body)
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(location.address)
-                                    .font(.body)
-                                    .foregroundColor(.primary)
-                                    .fixedSize(horizontal: false, vertical: true)
-                                    .lineLimit(nil)
-                                
-                                if let neighborhood = cachedNeighborhood {
-                                    Text(neighborhood)
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                        .transition(.opacity)
-                                } else {
-                                    Text("Tap to open in Maps")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            
-                            Image(systemName: "chevron.right")
-                                .foregroundColor(.secondary)
-                                .font(.caption)
-                        }
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    .onAppear {
-                        // Only fetch neighborhood info once for the current location
-                        if cachedNeighborhood == nil {
-                            GeocodingCacheManager.shared.reverseGeocode(coordinate: location.coordinate) { _, neighborhood in
-                                DispatchQueue.main.async {
-                                    withAnimation(.easeInOut(duration: 0.3)) {
-                                        cachedNeighborhood = neighborhood
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    .onChange(of: location.id) { _ in
-                        // Reset cached neighborhood when location changes
-                        cachedNeighborhood = nil
-                    }
-                } else {
-                    HStack(alignment: .center, spacing: 12) {
-                        Image(systemName: "car")
-                            .foregroundColor(.secondary)
-                            .font(.body)
-                        
-                        Text("No parking location set")
-                            .font(.body)
-                            .foregroundColor(.secondary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                }
-            }
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 16)
-        .padding(.top, 0)
-        .padding(.bottom, 0)
     }
 }
 

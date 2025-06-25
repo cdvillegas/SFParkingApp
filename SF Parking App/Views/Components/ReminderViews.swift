@@ -41,7 +41,6 @@ struct ActiveReminderView: View {
                 Text(schedule.formattedDate)
                     .font(.subheadline)
                     .foregroundColor(.secondary)
-                    .padding(.bottom, 4)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
