@@ -7,29 +7,50 @@
 import Foundation
 import CoreLocation
 
+enum ParkingSource: String, Codable {
+    case manual = "manual"
+    case motionActivity = "motion_activity"
+    case carDisconnect = "car_disconnect"
+    
+    var displayName: String {
+        switch self {
+        case .manual:
+            return "Manually Set"
+        case .motionActivity:
+            return "Auto-detected via Motion"
+        case .carDisconnect:
+            return "Set when Car Disconnected"
+        }
+    }
+}
+
 struct ParkingLocation: Identifiable, Codable {
     let id = UUID()
     let coordinate: CLLocationCoordinate2D
     let address: String
     let timestamp: Date
-    let isManuallySet: Bool
+    let source: ParkingSource
     
-    init(coordinate: CLLocationCoordinate2D, address: String, timestamp: Date = Date(), isManuallySet: Bool = false) {
+    init(coordinate: CLLocationCoordinate2D, address: String, timestamp: Date = Date(), source: ParkingSource = .manual) {
         self.coordinate = coordinate
         self.address = address
         self.timestamp = timestamp
-        self.isManuallySet = isManuallySet
+        self.source = source
     }
     
     static let sample = ParkingLocation(
         coordinate: CLLocationCoordinate2D(latitude: 37.784790, longitude: -122.441556),
         address: "1530 Broderick Street",
-        isManuallySet: true
+        source: .manual
     )
     
     // Custom encoding/decoding for CLLocationCoordinate2D
     enum CodingKeys: String, CodingKey {
-        case coordinate, address, timestamp, isManuallySet
+        case coordinate, address, timestamp, source
+    }
+    
+    enum LegacyCodingKeys: String, CodingKey {
+        case isManuallySet
     }
     
     enum CoordinateKeys: String, CodingKey {
@@ -46,7 +67,14 @@ struct ParkingLocation: Identifiable, Codable {
         self.coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
         self.address = try container.decode(String.self, forKey: .address)
         self.timestamp = try container.decode(Date.self, forKey: .timestamp)
-        self.isManuallySet = try container.decode(Bool.self, forKey: .isManuallySet)
+        
+        // Handle migration from old isManuallySet to new source
+        if let legacyContainer = try? decoder.container(keyedBy: LegacyCodingKeys.self),
+           let isManuallySet = try? legacyContainer.decode(Bool.self, forKey: .isManuallySet) {
+            self.source = isManuallySet ? .manual : .motionActivity
+        } else {
+            self.source = try container.decode(ParkingSource.self, forKey: .source)
+        }
     }
     
     func encode(to encoder: Encoder) throws {
@@ -57,6 +85,6 @@ struct ParkingLocation: Identifiable, Codable {
         try coordinateContainer.encode(coordinate.longitude, forKey: .longitude)
         try container.encode(address, forKey: .address)
         try container.encode(timestamp, forKey: .timestamp)
-        try container.encode(isManuallySet, forKey: .isManuallySet)
+        try container.encode(source, forKey: .source)
     }
 }
