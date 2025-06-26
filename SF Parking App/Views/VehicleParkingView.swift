@@ -42,26 +42,40 @@ struct VehicleParkingView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            mapView
+            ZStack(alignment: .topTrailing) {
+                ZStack(alignment: .top) {
+                    mapView
+                    topControls
+                }
+                
+                // Center on vehicles button - bottom right of map
+                if !vehicleManager.activeVehicles.isEmpty {
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Spacer()
+                            Button(action: {
+                                impactFeedbackLight.impactOccurred()
+                                centerMapOnVehicles()
+                            }) {
+                                Image(systemName: "scope")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(.white)
+                                    .padding(12)
+                                    .background(
+                                        Circle()
+                                            .fill(.ultraThinMaterial)
+                                            .shadow(color: .black.opacity(0.15), radius: 6, x: 0, y: 3)
+                                    )
+                            }
+                            .padding(.trailing, 20)
+                            .padding(.bottom, 20) // Bottom right of map area
+                        }
+                    }
+                }
+            }
 
             bottomInterface
-        }
-        .sheet(item: $showingVehicleActions) { vehicle in
-            VehicleActionSheet(
-                vehicle: vehicle,
-                onClose: { showingVehicleActions = nil },
-                onEdit: {
-                    showingEditVehicle = vehicle
-                    showingVehicleActions = nil
-                },
-                onSetLocation: {
-                    startSettingLocationForVehicle(vehicle)
-                    showingVehicleActions = nil
-                }
-            )
-            .presentationDragIndicator(.visible)
-            .presentationDetents([.height(200)])
-            .presentationCompactAdaptation(.none)
         }
         .sheet(isPresented: $showingVehiclesList) {
             NavigationView {
@@ -170,47 +184,31 @@ struct VehicleParkingView: View {
     
     private var topControls: some View {
         HStack {
-            // Vehicles list button
-            Button(action: { showingVehiclesList = true }) {
-                HStack(spacing: 8) {
-                    Image(systemName: "car.2.fill")
-                        .font(.system(size: 16, weight: .semibold))
-                    
-                    Text("\(vehicleManager.activeVehicles.count)")
-                        .font(.system(size: 16, weight: .semibold))
+            if vehicleManager.activeVehicles.isEmpty {
+                // Add vehicle button when there are no vehicles
+                Button(action: {
+                    impactFeedbackLight.impactOccurred()
+                    showingAddVehicle = true
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 16, weight: .semibold))
+                        
+                        Text("Add Vehicle")
+                            .font(.system(size: 16, weight: .semibold))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(.ultraThinMaterial)
+                            .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                    )
                 }
-                .foregroundColor(.white)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(
-                    Capsule()
-                        .fill(.ultraThinMaterial)
-                        .overlay(
-                            Capsule()
-                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                        )
-                )
             }
             
             Spacer()
-            
-            // Center on vehicles button
-            if !vehicleManager.activeVehicles.isEmpty {
-                Button(action: centerMapOnVehicles) {
-                    Image(systemName: "scope")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white)
-                        .padding(8)
-                        .background(
-                            Circle()
-                                .fill(.ultraThinMaterial)
-                                .overlay(
-                                    Circle()
-                                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                                )
-                        )
-                }
-            }
         }
         .padding(.horizontal, 20)
         .padding(.top, 20)
@@ -220,348 +218,570 @@ struct VehicleParkingView: View {
     
     private var bottomInterface: some View {
         VStack(spacing: 0) {
-            if isSettingLocation {
+            if let vehicleForActions = showingVehicleActions {
+                // Expanded Vehicle Card Interface
+                enhancedVehicleActionsInterface(for: vehicleForActions)
+            } else if isSettingLocation {
                 // Setting location mode UI
+                enhancedLocationSettingInterface()
+            } else {
+                // Normal mode - show vehicles
+                enhancedNormalVehicleInterface()
+            }
+        }
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color(.systemBackground))
+                .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: -4)
+        )
+    }
+    
+    // MARK: - Enhanced Vehicle Actions Interface
+    private func enhancedVehicleActionsInterface(for vehicle: Vehicle) -> some View {
+        VStack(spacing: 0) {
+            // Drag handle
+            RoundedRectangle(cornerRadius: 2)
+                .fill(Color(.systemGray4))
+                .frame(width: 36, height: 4)
+                .padding(.top, 12)
+                .padding(.bottom, 8)
+            
+            // Header Section
+            HStack {
+                Button(action: {
+                    impactFeedbackLight.impactOccurred()
+                    withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+                        showingVehicleActions = nil
+                    }
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.blue)
+                        
+                        Text("Back")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.blue)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color(.systemGray6))
+                    )
+                }
+                
+                Spacer()
+            }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 16)
+            
+            // Compact Vehicle Card
+            VStack(spacing: 12) {
+                HStack(spacing: 12) {
+                    // Vehicle icon with gradient shadow
+                    ZStack {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        vehicle.color.color,
+                                        vehicle.color.color.opacity(0.8)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 50, height: 50)
+                        
+                        Image(systemName: vehicle.type.iconName)
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
+                    .shadow(color: vehicle.color.color.opacity(0.3), radius: 6, x: 0, y: 3)
+                    
+                    // Compact vehicle details
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(vehicle.displayName)
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(.primary)
+                            .lineLimit(1)
+                        
+                        // Compact parking status
+                        HStack(spacing: 6) {
+                            Image(systemName: vehicle.parkingLocation != nil ? "location.fill" : "location.slash")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(vehicle.parkingLocation != nil ? .green : .secondary)
+                            
+                            Text(vehicle.parkingLocation != nil ? "Parked" : "Not Parked")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(vehicle.parkingLocation != nil ? .green : .secondary)
+                        }
+                    }
+                    
+                    Spacer()
+                    
+                    // View in Maps button (only if parked)
+                    if vehicle.parkingLocation != nil {
+                        Button(action: {
+                            impactFeedbackLight.impactOccurred()
+                            openVehicleInMaps(vehicle)
+                        }) {
+                            Image(systemName: "map.fill")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.white)
+                                .frame(width: 44, height: 44)
+                                .background(
+                                    Circle()
+                                        .fill(Color.blue)
+                                        .shadow(color: Color.blue.opacity(0.3), radius: 4, x: 0, y: 2)
+                                )
+                        }
+                    }
+                }
+                
+                // Compact location info if parked
+                if let parkingLocation = vehicle.parkingLocation {
+                    HStack(spacing: 8) {
+                        Image(systemName: "mappin.circle.fill")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.blue)
+                        
+                        Text(parkingLocation.address.components(separatedBy: ",").prefix(2).joined(separator: ","))
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundColor(.primary)
+                            .lineLimit(1)
+                        
+                        Spacer()
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Color(.systemGray6))
+                    )
+                }
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color(.systemBackground))
+                    .shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 2)
+            )
+            .padding(.horizontal, 20)
+            
+            // Action Buttons
+            HStack(spacing: 12) {
+                // Edit Button
+                Button(action: {
+                    impactFeedbackLight.impactOccurred()
+                    withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                        showingEditVehicle = vehicle
+                        showingVehicleActions = nil
+                    }
+                }) {
+                    HStack(spacing: 8) {
+                        Text("Edit")
+                            .font(.system(size: 16, weight: .semibold))
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 48)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(Color(.systemGray2))
+                    )
+                }
+                
+                // Move/Park Button
+                Button(action: {
+                    impactFeedbackLight.impactOccurred()
+                    withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                        startSettingLocationForVehicle(vehicle)
+                        showingVehicleActions = nil
+                    }
+                }) {
+                    HStack(spacing: 8) {
+                        Text(vehicle.parkingLocation != nil ? "Move" : "Park")
+                            .font(.system(size: 16, weight: .semibold))
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 48)
+                    .background(.primary)
+                    .cornerRadius(14)
+                    .shadow(color: (vehicle.parkingLocation != nil ? Color.orange : Color.green).opacity(0.3), radius: 4, x: 0, y: 2)
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 20)
+            .padding(.bottom, 28)
+        }
+        .transition(.asymmetric(
+            insertion: .move(edge: .bottom).combined(with: .opacity).combined(with: .scale(scale: 0.95)),
+            removal: .move(edge: .bottom).combined(with: .opacity)
+        ))
+    }
+    
+    // MARK: - Helper function to open vehicle in Maps
+    private func openVehicleInMaps(_ vehicle: Vehicle) {
+        guard let parkingLocation = vehicle.parkingLocation else { return }
+        
+        let coordinate = parkingLocation.coordinate
+        let placemark = MKPlacemark(coordinate: coordinate)
+        let mapItem = MKMapItem(placemark: placemark)
+        mapItem.name = "\(vehicle.displayName) - Parked Location"
+        
+        mapItem.openInMaps(launchOptions: [
+            MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving
+        ])
+    }
+    
+    // MARK: - Enhanced Location Setting Interface
+    private func enhancedLocationSettingInterface() -> some View {
+        VStack(spacing: 0) {
+            // Drag handle
+            RoundedRectangle(cornerRadius: 2)
+                .fill(Color(.systemGray4))
+                .frame(width: 36, height: 4)
+                .padding(.top, 12)
+                .padding(.bottom, 8)
+            
+            VStack(spacing: 20) {
+                // Header with vehicle info
                 VStack(spacing: 16) {
                     HStack {
                         Text("Choose Parking Location")
-                            .font(.title2)
-                            .fontWeight(.bold)
+                            .font(.system(size: 22, weight: .bold))
                             .foregroundColor(.primary)
                         Spacer()
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 20)
                     
                     if let selectedVehicle = vehicleManager.selectedVehicle {
-                        HStack {
+                        HStack(spacing: 12) {
+                            // Mini vehicle icon - consistent style
+                            ZStack {
+                                Circle()
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [
+                                                selectedVehicle.color.color,
+                                                selectedVehicle.color.color.opacity(0.8)
+                                            ],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                    .frame(width: 32, height: 32)
+                                
+                                Image(systemName: selectedVehicle.type.iconName)
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(.white)
+                            }
+                            .shadow(color: selectedVehicle.color.color.opacity(0.3), radius: 4, x: 0, y: 2)
+                            
                             Text("Setting location for \(selectedVehicle.displayName)")
-                                .font(.subheadline)
+                                .font(.system(size: 16, weight: .medium))
                                 .foregroundColor(.secondary)
+                            
                             Spacer()
                         }
-                        .padding(.horizontal, 20)
-                    }
-                    
-                    HStack(spacing: 16) {
-                        Button("Cancel") {
-                            cancelSettingLocation()
-                        }
-                        .font(.headline)
-                        .foregroundColor(.secondary)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
+                        .padding(16)
                         .background(
                             RoundedRectangle(cornerRadius: 12)
                                 .fill(Color(.systemGray6))
                         )
-                        
-                        Button("Set Location") {
+                    }
+                    
+                    // Address preview if available
+                    if let address = settingAddress {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Selected Location")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.secondary)
+                            
+                            Text(address)
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.primary)
+                                .lineLimit(3)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(16)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color(.systemBackground))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color(.systemGray4), lineWidth: 1)
+                                )
+                        )
+                    }
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 20)
+                
+                // Enhanced action buttons
+                HStack(spacing: 12) {
+                    Button("Cancel") {
+                        impactFeedbackLight.impactOccurred()
+                        withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+                            cancelSettingLocation()
+                        }
+                    }
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 52)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color(.systemGray6))
+                    )
+                    
+                    Button("Set Location") {
+                        notificationFeedback.notificationOccurred(.success)
+                        withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
                             confirmSetLocation()
                         }
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .background(
-                            LinearGradient(
-                                colors: [.green, .green.opacity(0.8)],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
+                    }
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 52)
+                    .background(
+                        LinearGradient(
+                            colors: [Color.green, Color.green.opacity(0.8)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
                         )
-                        .cornerRadius(12)
-                    }
-                    .padding(.horizontal, 20)
-                }
-            } else {
-                // Normal mode - show vehicles
-                if !vehicleManager.activeVehicles.isEmpty {
-                    // Show upcoming reminders for selected vehicle
-                    if let selectedVehicle = vehicleManager.selectedVehicle,
-                       let parkingLocation = selectedVehicle.parkingLocation {
-                        UpcomingRemindersSection(
-                            streetDataManager: streetDataManager,
-                            parkingLocation: parkingLocation
-                        )
-                        
-                        Divider().padding(.horizontal, 20)
-                    }
-                    
-                    // Header with title and add button
-                    HStack {
-                        Text("My Vehicles")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundColor(.primary)
-                        
-                        Spacer()
-                        
-                        Button(action: { showingVehiclesList = true }) {
-                            HStack(spacing: 6) {
-                                Image(systemName: "car.2.fill")
-                                    .font(.system(size: 16, weight: .medium))
-                                Text("\(vehicleManager.activeVehicles.count)")
-                                    .font(.system(size: 15, weight: .bold))
-                            }
-                            .foregroundColor(.secondary)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(
-                                Capsule()
-                                    .fill(Color(.systemGray6))
-                            )
-                        }
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 20)
-                    
-                    // Swipeable vehicles section
-                    SwipeableVehicleSection(
-                        vehicles: vehicleManager.activeVehicles,
-                        selectedVehicle: vehicleManager.selectedVehicle,
-                        onVehicleSelected: { vehicle in
-                            selectVehicle(vehicle)
-                        },
-                        onVehicleTap: { vehicle in
-                            showVehicleActions(vehicle)
-                        }
                     )
-                    .padding(.bottom, 20)
-                    
-                    // Set parking location button for selected vehicle
-                    if let selectedVehicle = vehicleManager.selectedVehicle {
-                        if selectedVehicle.parkingLocation == nil {
-                            Button("Set Parking Location") {
-                                startSettingLocationForVehicle(selectedVehicle)
-                            }
-                            .font(.headline)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 50)
-                            .background(
-                                LinearGradient(
-                                    colors: [.blue, .blue.opacity(0.8)],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                            .cornerRadius(12)
-                            .padding(.horizontal, 20)
-                            .padding(.bottom, 20)
-                        }
-                    }
-                } else {
-                    // Empty state with add vehicle button
-                    VStack(spacing: 20) {
-                        emptyStateCard
-                        
-                        Button(action: { showingAddVehicle = true }) {
-                            HStack(spacing: 8) {
-                                Image(systemName: "plus")
-                                    .font(.system(size: 16, weight: .semibold))
-                                Text("Add Your First Vehicle")
-                                    .font(.headline)
-                                    .fontWeight(.semibold)
-                            }
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 50)
-                            .background(
-                                LinearGradient(
-                                    colors: [.blue, .blue.opacity(0.8)],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                            .cornerRadius(12)
-                        }
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 20)
-                    }
+                    .cornerRadius(16)
+                    .shadow(color: Color.green.opacity(0.3), radius: 6, x: 0, y: 3)
+                    .disabled(settingAddress == nil)
+                    .opacity(settingAddress == nil ? 0.6 : 1.0)
                 }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 32)
             }
         }
-        .background(Color(.systemBackground))
+        .transition(.asymmetric(
+            insertion: .move(edge: .bottom).combined(with: .opacity),
+            removal: .move(edge: .bottom).combined(with: .opacity)
+        ))
     }
     
-    private func vehicleActionsInterface(for vehicle: Vehicle) -> some View {
-        VStack(spacing: 16) {
-            // Header with back button
-            HStack {
-                Button(action: {
-                    showingVehicleActions = nil
-                }) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 16, weight: .semibold))
-                        Text("Back")
-                            .font(.body)
-                            .fontWeight(.medium)
-                    }
-                    .foregroundColor(.blue)
+    // MARK: - Enhanced Normal Vehicle Interface
+    private func enhancedNormalVehicleInterface() -> some View {
+        VStack(spacing: 0) {
+            if !vehicleManager.activeVehicles.isEmpty {
+                // Show upcoming reminders for selected vehicle
+                if let selectedVehicle = vehicleManager.selectedVehicle,
+                   let parkingLocation = selectedVehicle.parkingLocation {
+                    UpcomingRemindersSection(
+                        streetDataManager: streetDataManager,
+                        parkingLocation: parkingLocation
+                    )
+                    .padding(.horizontal, 20)
+                    
+                    Divider()
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 16)
                 }
                 
-                Spacer()
+                // Enhanced header with vehicles list button
+                HStack {
+                    Text("My Vehicles")
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundColor(.primary)
+                    
+                    Spacer()
+                    
+                    // Vehicles list button
+                    Button(action: {
+                        impactFeedbackLight.impactOccurred()
+                        showingVehiclesList = true
+                    }) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "car.2.fill")
+                                .font(.system(size: 14, weight: .semibold))
+                            
+                            Text("\(vehicleManager.activeVehicles.count)")
+                                .font(.system(size: 15, weight: .semibold))
+                        }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.blue)
+                                .shadow(color: Color.blue.opacity(0.3), radius: 4, x: 0, y: 2)
+                        )
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 20)
                 
-                Text(vehicle.displayName)
-                    .font(.title2)
-                    .fontWeight(.bold)
+                // Swipeable vehicles section - already perfectly styled
+                SwipeableVehicleSection(
+                    vehicles: vehicleManager.activeVehicles,
+                    selectedVehicle: vehicleManager.selectedVehicle,
+                    onVehicleSelected: { vehicle in
+                        selectVehicle(vehicle)
+                    },
+                    onVehicleTap: { vehicle in
+                        withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                            showVehicleActions(vehicle)
+                        }
+                    }
+                )
+                .padding(.bottom, 20)
+                
+                // Enhanced set parking location button for selected vehicle
+                if let selectedVehicle = vehicleManager.selectedVehicle {
+                    if selectedVehicle.parkingLocation == nil {
+                        Button("Set Parking Location") {
+                            impactFeedbackLight.impactOccurred()
+                            startSettingLocationForVehicle(selectedVehicle)
+                        }
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 54)
+                        .background(
+                            LinearGradient(
+                                colors: [.blue, .blue.opacity(0.8)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .cornerRadius(16)
+                        .shadow(color: Color.blue.opacity(0.3), radius: 6, x: 0, y: 3)
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 32)
+                    }
+                }
+            } else {
+                // Enhanced empty state
+                enhancedEmptyStateInterface()
+            }
+        }
+    }
+    
+    private func enhancedEmptyStateInterface() -> some View {
+        VStack(spacing: 0) {
+            // Empty state content
+            VStack(spacing: 24) {
+                // Icon with subtle animation potential
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [Color(.systemGray5), Color(.systemGray6)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 80, height: 80)
+                    
+                    Image(systemName: "car.circle")
+                        .font(.system(size: 36, weight: .light))
+                        .foregroundColor(.secondary)
+                }
+                
+                VStack(spacing: 12) {
+                    Text("No Vehicles Yet")
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundColor(.primary)
+                    
+                    Text("Add your first vehicle to start tracking parking locations and get street cleaning reminders")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .lineSpacing(2)
+                }
+            }
+            .padding(.horizontal, 32)
+            .padding(.vertical, 40)
+            
+            // Enhanced add vehicle button
+            Button(action: {
+                impactFeedbackLight.impactOccurred()
+                showingAddVehicle = true
+            }) {
+                HStack(spacing: 10) {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 18, weight: .semibold))
+                    Text("Add Your First Vehicle")
+                        .font(.system(size: 18, weight: .semibold))
+                }
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 54)
+                .background(
+                    LinearGradient(
+                        colors: [.blue, .blue.opacity(0.8)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .cornerRadius(16)
+                .shadow(color: Color.blue.opacity(0.3), radius: 8, x: 0, y: 4)
+            }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 32)
+        }
+    }
+    
+    // MARK: - Enhanced Vehicle List Sheet
+    
+    private var vehicleListSheet: some View {
+        VStack(spacing: 0) {
+            // Enhanced header
+            HStack {
+                Text("My Vehicles")
+                    .font(.system(size: 28, weight: .bold))
                     .foregroundColor(.primary)
                 
                 Spacer()
                 
-                // Balance the layout
-                HStack(spacing: 8) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 16, weight: .semibold))
-                    Text("Back")
-                        .font(.body)
-                        .fontWeight(.medium)
+                Button("Done") {
+                    impactFeedbackLight.impactOccurred()
+                    showingVehiclesList = false
                 }
-                .opacity(0)
-            }
-            .padding(.horizontal, 20)
-            
-            // Action buttons
-            VStack(spacing: 12) {
-                if vehicle.parkingLocation != nil {
-                    Button("Update Parking Location") {
-                        startSettingLocationForVehicle(vehicle)
-                        showingVehicleActions = nil
-                    }
-                    .font(.headline)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 50)
-                    .background(
-                        LinearGradient(
-                            colors: [.blue, .blue.opacity(0.8)],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    .cornerRadius(12)
-                } else {
-                    Button("Set Parking Location") {
-                        startSettingLocationForVehicle(vehicle)
-                        showingVehicleActions = nil
-                    }
-                    .font(.headline)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 50)
-                    .background(
-                        LinearGradient(
-                            colors: [.green, .green.opacity(0.8)],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    .cornerRadius(12)
-                }
-                
-                Button("Edit Vehicle") {
-                    showingEditVehicle = vehicle
-                    showingVehicleActions = nil
-                }
-                .font(.headline)
-                .foregroundColor(.secondary)
-                .frame(maxWidth: .infinity)
-                .frame(height: 50)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.blue)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
                         .fill(Color(.systemGray6))
                 )
             }
             .padding(.horizontal, 20)
-            .padding(.bottom, 20)
-        }
-        .background(Color(.systemBackground))
-    }
-    
-    private var emptyStateCard: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "car.circle")
-                .font(.system(size: 48, weight: .light))
-                .foregroundColor(.secondary)
-            
-            VStack(spacing: 8) {
-                Text("No Vehicles")
-                    .font(.headline)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.primary)
-                
-                Text("Add your first vehicle to start tracking parking locations and get street cleaning reminders")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-        }
-        .padding(32)
-    }
-    
-    // MARK: - Vehicle List Sheet
-    
-    private var vehicleListSheet: some View {
-        VStack(spacing: 0) {
-            // Header
-            HStack {
-                Text("My Vehicles")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                
-                Spacer()
-                
-                Button("Done") {
-                    showingVehiclesList = false
-                }
-                .font(.body)
-                .fontWeight(.semibold)
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
+            .padding(.vertical, 20)
             
             Divider()
             
-            // Vehicles list
+            // Enhanced vehicles list
             if vehicleManager.activeVehicles.isEmpty {
-                VStack(spacing: 16) {
-                    Image(systemName: "car.circle.fill")
-                        .font(.system(size: 64, weight: .light))
-                        .foregroundColor(.secondary)
-                    
-                    Text("No vehicles yet")
-                        .font(.title3)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.primary)
-                    
-                    Text("Add your first vehicle to get started")
-                        .font(.body)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                .padding(40)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                enhancedEmptyStateInterface()
             } else {
                 ScrollView {
                     LazyVStack(spacing: 12) {
                         ForEach(vehicleManager.activeVehicles) { vehicle in
-                            VehicleListRow(
+                            EnhancedVehicleListRow(
                                 vehicle: vehicle,
                                 isSelected: vehicleManager.selectedVehicle?.id == vehicle.id,
                                 onTap: {
+                                    impactFeedbackLight.impactOccurred()
                                     selectVehicle(vehicle)
                                     showingVehiclesList = false
                                 },
                                 onEdit: {
+                                    impactFeedbackLight.impactOccurred()
                                     showingEditVehicle = vehicle
                                 },
                                 onSetLocation: {
+                                    impactFeedbackLight.impactOccurred()
                                     startSettingLocationForVehicle(vehicle)
                                     showingVehiclesList = false
                                 }
@@ -570,12 +790,45 @@ struct VehicleParkingView: View {
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 16)
+                    .padding(.bottom, 16)
                 }
+                
+                // Big Add Vehicle Button at bottom
+                VStack(spacing: 0) {
+                    Divider()
+                    
+                    Button(action: {
+                        impactFeedbackLight.impactOccurred()
+                        showingAddVehicle = true
+                    }) {
+                        HStack(spacing: 12) {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.system(size: 20, weight: .semibold))
+                            Text("Add Vehicle")
+                                .font(.system(size: 18, weight: .semibold))
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 54)
+                        .background(
+                            LinearGradient(
+                                colors: [.blue, .blue.opacity(0.8)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .cornerRadius(16)
+                        .shadow(color: Color.blue.opacity(0.3), radius: 8, x: 0, y: 4)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 20)
+                }
+                .background(Color(.systemBackground))
             }
         }
     }
     
-    // MARK: - Methods
+    // MARK: - Methods (keeping existing functionality)
     
     private func selectVehicle(_ vehicle: Vehicle) {
         impactFeedbackLight.impactOccurred()
@@ -705,7 +958,6 @@ struct VehicleParkingView: View {
         }
     }
     
-    
     private func geocodeLocation(_ coordinate: CLLocationCoordinate2D) {
         debouncedGeocoder.reverseGeocode(coordinate: coordinate) { address, _ in
             DispatchQueue.main.async {
@@ -775,6 +1027,130 @@ struct VehicleParkingView: View {
     }
     
     @State private var cancellables = Set<AnyCancellable>()
+}
+
+// MARK: - Enhanced Vehicle List Row Component
+
+struct EnhancedVehicleListRow: View {
+    let vehicle: Vehicle
+    let isSelected: Bool
+    let onTap: () -> Void
+    let onEdit: () -> Void
+    let onSetLocation: () -> Void
+    
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 16) {
+                // Vehicle icon with gradient - consistent with card style
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    vehicle.color.color,
+                                    vehicle.color.color.opacity(0.8)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 50, height: 50)
+                    
+                    Image(systemName: vehicle.type.iconName)
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(.white)
+                }
+                .shadow(color: vehicle.color.color.opacity(0.3), radius: 4, x: 0, y: 2)
+                
+                // Vehicle info
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(vehicle.displayName)
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
+                    
+                    HStack(spacing: 6) {
+                        Text(vehicle.type.displayName)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.secondary)
+                        
+                        Text("•")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.secondary)
+                        
+                        Text(vehicle.color.displayName)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    // Parking status
+                    HStack(spacing: 6) {
+                        Image(systemName: vehicle.parkingLocation != nil ? "location.fill" : "location.slash")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(vehicle.parkingLocation != nil ? .green : .secondary)
+                        
+                        Text(vehicle.parkingLocation != nil ? "Parked" : "Not Parked")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(vehicle.parkingLocation != nil ? .green : .secondary)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(Color(.systemGray6))
+                    )
+                }
+                
+                Spacer()
+                
+                // Action buttons
+                VStack(spacing: 8) {
+                    Button(action: onEdit) {
+                        Image(systemName: "pencil")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.secondary)
+                            .frame(width: 28, height: 28)
+                            .background(
+                                Circle()
+                                    .fill(Color(.systemGray6))
+                            )
+                    }
+                    
+                    Button(action: onSetLocation) {
+                        Image(systemName: vehicle.parkingLocation != nil ? "arrow.triangle.2.circlepath" : "location")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.white)
+                            .frame(width: 28, height: 28)
+                            .background(
+                                Circle()
+                                    .fill(vehicle.parkingLocation != nil ? Color.blue : Color.green)
+                            )
+                    }
+                }
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color(.systemBackground))
+                    .shadow(
+                        color: isSelected ? vehicle.color.color.opacity(0.2) : Color.black.opacity(0.06),
+                        radius: isSelected ? 8 : 4,
+                        x: 0,
+                        y: isSelected ? 4 : 2
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(
+                                isSelected ? vehicle.color.color.opacity(0.3) : Color.clear,
+                                lineWidth: isSelected ? 2 : 0
+                            )
+                    )
+            )
+            .scaleEffect(isSelected ? 1.02 : 1.0)
+            .animation(.spring(response: 0.4, dampingFraction: 0.7), value: isSelected)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
 }
 
 #Preview {
