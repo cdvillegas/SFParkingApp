@@ -138,12 +138,35 @@ struct ParkingLocationSection: View {
                         .foregroundColor(.secondary)
                         .font(.body)
                     
-                    Text("No parking location set")
-                        .font(.body)
-                        .foregroundColor(.secondary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 4) {
+                        // Address line
+                        Text("No parking location set")
+                            .font(.body)
+                            .bold()
+                            .foregroundColor(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        
+                        // Always show "View in Maps" - no neighborhood logic
+                        Text("Set your parking location below ⤵")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
                 }
             }
         }
     }
+}
+
+#Preview {
+    ParkingLocationView()
+}
+
+#Preview("Light Mode") {
+    ParkingLocationView()
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark Mode") {
+    ParkingLocationView()
+        .preferredColorScheme(.dark)
 }

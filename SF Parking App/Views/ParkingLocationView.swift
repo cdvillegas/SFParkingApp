@@ -8,6 +8,7 @@
 import SwiftUI
 import _MapKit_SwiftUI
 import CoreLocation
+import Combine
 
 struct ParkingLocationView: View {
     @StateObject private var locationManager = LocationManager()
@@ -56,10 +57,17 @@ struct ParkingLocationView: View {
                     normalModeMap
                 }
             }
+            #if DEBUG
+            .onLongPressGesture(minimumDuration: 3.0) {
+                OnboardingManager.resetOnboarding()
+                let feedback = UINotificationFeedbackGenerator()
+                feedback.notificationOccurred(.success)
+            }
+            #endif
             
             // Bottom UI Section
             VStack(spacing: 4) {
-                if !isSettingLocation {
+                if !isSettingLocation && parkingManager.currentLocation != nil {
                     UpcomingRemindersSection(
                         streetDataManager: streetDataManager,
                         parkingLocation: parkingManager.currentLocation
@@ -87,9 +95,25 @@ struct ParkingLocationView: View {
                 setupView()
                 prepareHaptics()
                 setupNotificationHandling()
+                // CRITICAL FIX: Validate notifications on app start
+                NotificationManager.shared.validateAndRecoverNotifications()
             }
             .onDisappear {
                 cleanupResources()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("OnboardingCompleted"))) { _ in
+                // Start monitoring services after onboarding completes
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    // Only request location if not already authorized
+                    let locationStatus = CLLocationManager().authorizationStatus
+                    if locationStatus == .notDetermined {
+                        locationManager.requestLocationPermission()
+                    }
+                    
+                    // Start motion and bluetooth monitoring (these should have been granted during onboarding)
+                    motionActivityManager.requestMotionPermission()
+                    bluetoothManager.requestBluetoothPermission()
+                }
             }
             .alert("Enable Notifications", isPresented: $showingNotificationPermissionAlert) {
                 Button("Settings") {
@@ -491,16 +515,18 @@ struct ParkingLocationView: View {
     
     private func setupView() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            locationManager.requestLocationPermission()
-            
             // Link managers together
             motionActivityManager.parkingLocationManager = parkingManager
             motionActivityManager.locationManager = locationManager
             bluetoothManager.parkingLocationManager = parkingManager
             bluetoothManager.locationManager = locationManager
             
-            // Request motion permission
-            motionActivityManager.requestMotionPermission()
+            // Only request permissions if onboarding has been completed
+            if OnboardingManager.hasCompletedOnboarding {
+                locationManager.requestLocationPermission()
+                motionActivityManager.requestMotionPermission()
+                bluetoothManager.requestBluetoothPermission()
+            }
             
             // Only fetch schedules if we have a parking location and haven't already done so
             if let parkingLocation = parkingManager.currentLocation {

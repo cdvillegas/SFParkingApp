@@ -25,7 +25,7 @@ class MotionActivityManager: ObservableObject {
     weak var locationManager: LocationManager?
     
     init() {
-        setupMotionActivityMonitoring()
+        // Don't auto-start monitoring - wait for explicit permission request
     }
     
     private func setupMotionActivityMonitoring() {
@@ -147,10 +147,7 @@ class MotionActivityManager: ObservableObject {
     func requestMotionPermission() {
         // CMMotionActivity doesn't have a specific permission request method
         // Permission is requested automatically when startActivityUpdates is called
-        // We can check authorization status though
-        if CMMotionActivityManager.authorizationStatus() == .notDetermined {
-            print("Motion activity permission will be requested automatically")
-        }
+        setupMotionActivityMonitoring()
     }
     
     deinit {

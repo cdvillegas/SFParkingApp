@@ -67,23 +67,30 @@ class NotificationManager: NSObject, ObservableObject {
     }
 
     private func setupNotificationCategories() {
+        // CRITICAL FIX: Better action buttons with snooze functionality
         let moveCarAction = UNNotificationAction(
             identifier: "MOVE_CAR",
-            title: "Move Car",
+            title: "Mark as Moved",
             options: [.foreground]
         )
         
         let openMapsAction = UNNotificationAction(
             identifier: "OPEN_MAPS",
-            title: "Open Maps",
+            title: "Find Parking",
             options: [.foreground]
+        )
+        
+        let snoozeAction = UNNotificationAction(
+            identifier: "SNOOZE_15",
+            title: "Remind in 15 min",
+            options: []
         )
         
         let category = UNNotificationCategory(
             identifier: "STREET_CLEANING",
-            actions: [moveCarAction, openMapsAction],
+            actions: [moveCarAction, openMapsAction, snoozeAction],
             intentIdentifiers: [],
-            options: []
+            options: [.customDismissAction]
         )
         
         center.setNotificationCategories([category])
@@ -179,29 +186,45 @@ class NotificationManager: NSObject, ObservableObject {
     
     private func getNotificationTimes(for cleaningDate: Date, schedule: StreetCleaningSchedule) -> [(NotificationTiming, Date)] {
         var times: [(NotificationTiming, Date)] = []
+        let now = Date()
+        let timeUntilCleaning = cleaningDate.timeIntervalSince(now)
         
-        // Night before (8 PM)
-        if let nightBefore = calendar.date(byAdding: .day, value: -1, to: cleaningDate) {
-            var components = calendar.dateComponents([.year, .month, .day], from: nightBefore)
-            components.hour = 20
-            components.minute = 0
-            
-            if let notificationDate = calendar.date(from: components),
-               notificationDate > Date() {
-                times.append((.nightBefore, notificationDate))
+        // CRITICAL FIX: Smart notification timing based on how much time is left
+        
+        // Only add night before if cleaning is more than 12 hours away
+        if timeUntilCleaning > 12 * 3600 { // 12 hours
+            if let nightBefore = calendar.date(byAdding: .day, value: -1, to: cleaningDate) {
+                var components = calendar.dateComponents([.year, .month, .day], from: nightBefore)
+                components.hour = 20
+                components.minute = 0
+                
+                if let notificationDate = calendar.date(from: components),
+                   notificationDate > now {
+                    times.append((.nightBefore, notificationDate))
+                }
             }
         }
         
-        // Morning of (1 hour before)
-        if let oneHourBefore = calendar.date(byAdding: .hour, value: -1, to: cleaningDate),
-           oneHourBefore > Date() {
-            times.append((.oneHourBefore, oneHourBefore))
+        // 1 hour before (only if more than 1 hour away)
+        if timeUntilCleaning > 3600 { // 1 hour
+            if let oneHourBefore = calendar.date(byAdding: .hour, value: -1, to: cleaningDate),
+               oneHourBefore > now {
+                times.append((.oneHourBefore, oneHourBefore))
+            }
         }
         
-        // 30 minutes before
-        if let thirtyMinBefore = calendar.date(byAdding: .minute, value: -30, to: cleaningDate),
-           thirtyMinBefore > Date() {
-            times.append((.thirtyMinutesBefore, thirtyMinBefore))
+        // 30 minutes before (only if more than 30 minutes away)
+        if timeUntilCleaning > 1800 { // 30 minutes
+            if let thirtyMinBefore = calendar.date(byAdding: .minute, value: -30, to: cleaningDate),
+               thirtyMinBefore > now {
+                times.append((.thirtyMinutesBefore, thirtyMinBefore))
+            }
+        }
+        
+        // EDGE CASE FIX: If cleaning is very soon, add immediate notification
+        if timeUntilCleaning <= 1800 && timeUntilCleaning > 600 { // Between 10-30 minutes
+            let immediateNotification = calendar.date(byAdding: .minute, value: 2, to: now) ?? now
+            times.append((.thirtyMinutesBefore, immediateNotification))
         }
         
         return times
@@ -224,7 +247,9 @@ class NotificationManager: NSObject, ObservableObject {
         ]
         
         let triggerDate = notification.scheduledDate
-        let components = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: triggerDate)
+        // CRITICAL FIX: Add explicit timezone handling
+        var components = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: triggerDate)
+        components.timeZone = TimeZone.current
         let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
         
         let request = UNNotificationRequest(
@@ -233,9 +258,72 @@ class NotificationManager: NSObject, ObservableObject {
             trigger: trigger
         )
         
-        center.add(request) { error in
+        center.add(request) { [weak self] error in
             if let error = error {
                 print("Failed to schedule notification: \(error)")
+                // CRITICAL FIX: Retry mechanism
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    self?.center.add(request) { retryError in
+                        if let retryError = retryError {
+                            print("Retry failed for notification: \(retryError)")
+                        } else {
+                            self?.persistScheduledNotification(notification)
+                        }
+                    }
+                }
+            } else {
+                // CRITICAL FIX: Persist successful notifications
+                self?.persistScheduledNotification(notification)
+            }
+        }
+    }
+    
+    // MARK: - Notification Persistence (CRITICAL FIX)
+    
+    private func persistScheduledNotification(_ notification: ScheduledNotification) {
+        var persistedNotifications = getPersistedNotifications()
+        persistedNotifications[notification.id] = notification
+        
+        if let data = try? JSONEncoder().encode(persistedNotifications) {
+            UserDefaults.standard.set(data, forKey: "ScheduledNotifications")
+        }
+    }
+    
+    private func getPersistedNotifications() -> [String: ScheduledNotification] {
+        guard let data = UserDefaults.standard.data(forKey: "ScheduledNotifications"),
+              let notifications = try? JSONDecoder().decode([String: ScheduledNotification].self, from: data) else {
+            return [:]
+        }
+        return notifications
+    }
+    
+    private func removePersistedNotification(_ notificationId: String) {
+        var persistedNotifications = getPersistedNotifications()
+        persistedNotifications.removeValue(forKey: notificationId)
+        
+        if let data = try? JSONEncoder().encode(persistedNotifications) {
+            UserDefaults.standard.set(data, forKey: "ScheduledNotifications")
+        }
+    }
+    
+    func validateAndRecoverNotifications() {
+        let persistedNotifications = getPersistedNotifications()
+        let currentTime = Date()
+        
+        // Remove expired notifications
+        let validNotifications = persistedNotifications.filter { _, notification in
+            notification.scheduledDate > currentTime
+        }
+        
+        // Re-schedule any missing notifications
+        center.getPendingNotificationRequests { [weak self] requests in
+            let existingIds = Set(requests.map { $0.identifier })
+            
+            for (id, notification) in validNotifications {
+                if !existingIds.contains(id) {
+                    print("Re-scheduling missing notification: \(id)")
+                    self?.scheduleNotification(notification)
+                }
             }
         }
     }
@@ -249,6 +337,11 @@ class NotificationManager: NSObject, ObservableObject {
         
         center.removePendingNotificationRequests(withIdentifiers: identifiers)
         scheduledNotifications.removeAll { $0.locationId == location.id }
+        
+        // CRITICAL FIX: Remove from persistence
+        for identifier in identifiers {
+            removePersistedNotification(identifier)
+        }
         
         print("Cancelled \(identifiers.count) notifications for location")
     }
@@ -364,7 +457,7 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
 
 // MARK: - Data Models
 
-struct ScheduledNotification: Identifiable {
+struct ScheduledNotification: Identifiable, Codable {
     let id: String
     let locationId: UUID
     let scheduleId: String
@@ -375,7 +468,7 @@ struct ScheduledNotification: Identifiable {
     let location: ParkingLocation
 }
 
-enum NotificationTiming: String, CaseIterable {
+enum NotificationTiming: String, CaseIterable, Codable {
     case nightBefore = "night_before"
     case oneHourBefore = "one_hour_before"
     case thirtyMinutesBefore = "thirty_minutes_before"
@@ -383,24 +476,26 @@ enum NotificationTiming: String, CaseIterable {
     var title: String {
         switch self {
         case .nightBefore:
-            return "Street Cleaning Tomorrow"
+            return "🚗 Parking Reminder"
         case .oneHourBefore:
-            return "Street Cleaning in 1 Hour"
+            return "⚠️ MOVE CAR - 1 HOUR"
         case .thirtyMinutesBefore:
-            return "Street Cleaning in 30 Minutes"
+            return "🚨 URGENT: MOVE NOW"
         }
     }
     
     func body(for address: String, schedule: StreetCleaningSchedule) -> String {
+        // Extract just the street name for brevity
+        let streetName = address.components(separatedBy: ",").first ?? address
         let cleaningTime = schedule.description
         
         switch self {
         case .nightBefore:
-            return "Move your car by \(cleaningTime) tomorrow at \(address)"
+            return "Tomorrow \(cleaningTime) on \(streetName). Move by then to avoid $80+ ticket"
         case .oneHourBefore:
-            return "Move your car now! Street cleaning starts in 1 hour at \(address)"
+            return "Cleaning starts in 1 HOUR on \(streetName). Move now or get ticketed!"
         case .thirtyMinutesBefore:
-            return "🚨 Move your car immediately! Street cleaning starts in 30 minutes at \(address)"
+            return "30 MINUTES LEFT! Move car from \(streetName) immediately to avoid ticket"
         }
     }
 }
@@ -413,7 +508,7 @@ extension Notification.Name {
 
 // MARK: - Placeholder Models (assuming these exist in your app)
 
-struct StreetCleaningSchedule {
+struct StreetCleaningSchedule: Codable {
     let id: String
     let description: String
     let dayOfWeek: Int

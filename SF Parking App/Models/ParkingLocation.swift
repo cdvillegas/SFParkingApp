@@ -25,13 +25,14 @@ enum ParkingSource: String, Codable {
 }
 
 struct ParkingLocation: Identifiable, Codable {
-    let id = UUID()
+    let id: UUID
     let coordinate: CLLocationCoordinate2D
     let address: String
     let timestamp: Date
     let source: ParkingSource
     
     init(coordinate: CLLocationCoordinate2D, address: String, timestamp: Date = Date(), source: ParkingSource = .manual) {
+        self.id = UUID()
         self.coordinate = coordinate
         self.address = address
         self.timestamp = timestamp
@@ -46,7 +47,7 @@ struct ParkingLocation: Identifiable, Codable {
     
     // Custom encoding/decoding for CLLocationCoordinate2D
     enum CodingKeys: String, CodingKey {
-        case coordinate, address, timestamp, source
+        case id, coordinate, address, timestamp, source
     }
     
     enum LegacyCodingKeys: String, CodingKey {
@@ -63,6 +64,9 @@ struct ParkingLocation: Identifiable, Codable {
         
         let latitude = try coordinateContainer.decode(Double.self, forKey: .latitude)
         let longitude = try coordinateContainer.decode(Double.self, forKey: .longitude)
+        
+        // Decode the id 
+        self.id = try container.decode(UUID.self, forKey: .id)
         
         self.coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
         self.address = try container.decode(String.self, forKey: .address)
@@ -81,6 +85,7 @@ struct ParkingLocation: Identifiable, Codable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         var coordinateContainer = container.nestedContainer(keyedBy: CoordinateKeys.self, forKey: .coordinate)
         
+        try container.encode(id, forKey: .id)
         try coordinateContainer.encode(coordinate.latitude, forKey: .latitude)
         try coordinateContainer.encode(coordinate.longitude, forKey: .longitude)
         try container.encode(address, forKey: .address)

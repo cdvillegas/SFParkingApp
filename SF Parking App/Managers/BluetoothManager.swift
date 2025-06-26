@@ -29,6 +29,10 @@ class BluetoothManager: NSObject, ObservableObject {
     
     override init() {
         super.init()
+        // Don't auto-start Bluetooth - wait for explicit permission request
+    }
+    
+    func requestBluetoothPermission() {
         setupBluetoothManager()
     }
     
