@@ -516,10 +516,3 @@ struct StreetCleaningSchedule: Codable {
     let endTime: String
 }
 
-// MARK: - Integration with ParkingLocationManager
-
-extension ParkingLocationManager {
-    func scheduleNotificationsForCurrentLocation() {
-        guard currentLocation != nil else { return }
-    }
-}

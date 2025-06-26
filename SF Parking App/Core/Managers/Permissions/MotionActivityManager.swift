@@ -21,7 +21,6 @@ class MotionActivityManager: ObservableObject {
     private var lastDrivingLocation: CLLocation?
     private var drivingEndTime: Date?
     
-    weak var parkingLocationManager: ParkingLocationManager?
     weak var locationManager: LocationManager?
     
     init() {
@@ -128,7 +127,8 @@ class MotionActivityManager: ObservableObject {
     
     private func setParkingLocation(coordinate: CLLocationCoordinate2D, address: String) {
         print("Auto-setting parking location via motion detection: \(address)")
-        parkingLocationManager?.setCurrentLocationAsParking(coordinate: coordinate, address: address)
+        // TODO: Integrate with VehicleManager for auto-parking detection
+        // This feature could automatically set parking location when driving stops
     }
     
     private func formatAddress(from placemark: CLPlacemark) -> String {

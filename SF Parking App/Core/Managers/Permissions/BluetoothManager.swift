@@ -20,7 +20,6 @@ class BluetoothManager: NSObject, ObservableObject {
     private var wasConnectedToCar = false
     private var lastCarDisconnectLocation: CLLocation?
     
-    weak var parkingLocationManager: ParkingLocationManager?
     weak var locationManager: LocationManager?
     
     // Known car device identifiers (you'll need to customize these)
@@ -152,7 +151,8 @@ class BluetoothManager: NSObject, ObservableObject {
     
     private func setParkingLocation(coordinate: CLLocationCoordinate2D, address: String) {
         print("Auto-setting parking location via car disconnect: \(address)")
-        parkingLocationManager?.setCarDisconnectLocation(coordinate: coordinate, address: address)
+        // TODO: Integrate with VehicleManager for auto-parking detection
+        // This feature could automatically set parking location when car Bluetooth disconnects
     }
     
     private func formatAddress(from placemark: CLPlacemark) -> String {

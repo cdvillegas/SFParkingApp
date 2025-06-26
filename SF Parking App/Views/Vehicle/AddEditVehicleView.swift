@@ -5,6 +5,7 @@ struct AddEditVehicleView: View {
     @ObservedObject var vehicleManager: VehicleManager
     
     let editingVehicle: Vehicle?
+    let onVehicleCreated: ((Vehicle) -> Void)?
     
     @State private var vehicleName: String = ""
     @State private var selectedType: VehicleType = .car
@@ -211,6 +212,9 @@ struct AddEditVehicleView: View {
                 color: selectedColor
             )
             vehicleManager.addVehicle(newVehicle)
+            
+            // Notify parent that vehicle was created
+            onVehicleCreated?(newVehicle)
         }
         
         dismiss()
@@ -225,13 +229,15 @@ struct AddEditVehicleView: View {
 #Preview {
     AddEditVehicleView(
         vehicleManager: VehicleManager(),
-        editingVehicle: nil
+        editingVehicle: nil,
+        onVehicleCreated: nil
     )
 }
 
 #Preview("Editing") {
     AddEditVehicleView(
         vehicleManager: VehicleManager(),
-        editingVehicle: Vehicle.sample
+        editingVehicle: Vehicle.sample,
+        onVehicleCreated: nil
     )
 }

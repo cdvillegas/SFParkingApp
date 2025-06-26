@@ -27,6 +27,7 @@ struct VehicleParkingView: View {
     @State private var settingAddress: String?
     @State private var settingCoordinate = CLLocationCoordinate2D()
     @State private var showingVehicleActions: Vehicle?
+    @State private var isSettingLocationForNewVehicle = false
     
     // Auto-center functionality
     @State private var autoResetTimer: Timer?
@@ -35,6 +36,7 @@ struct VehicleParkingView: View {
     // Notification tracking
     @State private var showingNotificationPermissionAlert = false
     @State private var lastNotificationLocationId: UUID?
+    @State private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Haptic Feedback
     private let impactFeedbackLight = UIImpactFeedbackGenerator(style: .light)
@@ -42,7 +44,7 @@ struct VehicleParkingView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            ZStack(alignment: .topTrailing) {
+            ZStack(alignment: .topLeading) {
                 ZStack(alignment: .top) {
                     mapView
                     topControls
@@ -85,13 +87,21 @@ struct VehicleParkingView: View {
         .sheet(isPresented: $showingAddVehicle) {
             AddEditVehicleView(
                 vehicleManager: vehicleManager,
-                editingVehicle: nil
+                editingVehicle: nil,
+                onVehicleCreated: { newVehicle in
+                    // Auto-start parking location setup for new vehicle
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        isSettingLocationForNewVehicle = true
+                        startSettingLocationForVehicle(newVehicle)
+                    }
+                }
             )
         }
         .sheet(item: $showingEditVehicle) { vehicle in
             AddEditVehicleView(
                 vehicleManager: vehicleManager,
-                editingVehicle: vehicle
+                editingVehicle: vehicle,
+                onVehicleCreated: nil
             )
         }
         .onAppear {
@@ -397,6 +407,7 @@ struct VehicleParkingView: View {
                 Button(action: {
                     impactFeedbackLight.impactOccurred()
                     withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                        isSettingLocationForNewVehicle = false
                         startSettingLocationForVehicle(vehicle)
                         showingVehicleActions = nil
                     }
@@ -522,7 +533,7 @@ struct VehicleParkingView: View {
                 
                 // Enhanced action buttons
                 HStack(spacing: 12) {
-                    Button("Cancel") {
+                    Button(isSettingLocationForNewVehicle ? "Skip for Now" : "Cancel") {
                         impactFeedbackLight.impactOccurred()
                         withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
                             cancelSettingLocation()
@@ -584,7 +595,6 @@ struct VehicleParkingView: View {
                     
                     Divider()
                         .padding(.horizontal, 20)
-                        .padding(.bottom, 16)
                 }
                 
                 // Enhanced header with vehicles list button
@@ -618,7 +628,7 @@ struct VehicleParkingView: View {
                     }
                 }
                 .padding(.horizontal, 20)
-                .padding(.bottom, 20)
+                .padding(.vertical, 20)
                 
                 // Swipeable vehicles section - already perfectly styled
                 SwipeableVehicleSection(
@@ -635,30 +645,6 @@ struct VehicleParkingView: View {
                 )
                 .padding(.bottom, 20)
                 
-                // Enhanced set parking location button for selected vehicle
-                if let selectedVehicle = vehicleManager.selectedVehicle {
-                    if selectedVehicle.parkingLocation == nil {
-                        Button("Set Parking Location") {
-                            impactFeedbackLight.impactOccurred()
-                            startSettingLocationForVehicle(selectedVehicle)
-                        }
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 54)
-                        .background(
-                            LinearGradient(
-                                colors: [.blue, .blue.opacity(0.8)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .cornerRadius(16)
-                        .shadow(color: Color.blue.opacity(0.3), radius: 6, x: 0, y: 3)
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 32)
-                    }
-                }
             } else {
                 // Enhanced empty state
                 enhancedEmptyStateInterface()
@@ -669,8 +655,7 @@ struct VehicleParkingView: View {
     private func enhancedEmptyStateInterface() -> some View {
         VStack(spacing: 0) {
             // Empty state content
-            VStack(spacing: 24) {
-                // Icon with subtle animation potential
+            HStack(alignment: .center, spacing: 16) {
                 ZStack {
                     Circle()
                         .fill(
@@ -680,27 +665,26 @@ struct VehicleParkingView: View {
                                 endPoint: .bottomTrailing
                             )
                         )
-                        .frame(width: 80, height: 80)
-                    
+                        .frame(width: 56, height: 56)
+
                     Image(systemName: "car.circle")
-                        .font(.system(size: 36, weight: .light))
+                        .font(.system(size: 28, weight: .light))
                         .foregroundColor(.secondary)
                 }
                 
-                VStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 8) {
                     Text("No Vehicles Yet")
-                        .font(.system(size: 24, weight: .bold))
+                        .font(.system(size: 20, weight: .semibold))
                         .foregroundColor(.primary)
-                    
-                    Text("Add your first vehicle to start tracking parking locations and get street cleaning reminders")
-                        .font(.system(size: 16, weight: .medium))
+
+                    Text("Add a vehicle to track parking and get cleaning reminders.")
+                        .font(.system(size: 14))
                         .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                        .lineSpacing(2)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
-            .padding(.horizontal, 32)
-            .padding(.vertical, 40)
+            .padding(24)
+
             
             // Enhanced add vehicle button
             Button(action: {
@@ -708,9 +692,7 @@ struct VehicleParkingView: View {
                 showingAddVehicle = true
             }) {
                 HStack(spacing: 10) {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.system(size: 18, weight: .semibold))
-                    Text("Add Your First Vehicle")
+                    Text("Add Vehicle")
                         .font(.system(size: 18, weight: .semibold))
                 }
                 .foregroundColor(.white)
@@ -782,6 +764,7 @@ struct VehicleParkingView: View {
                                 },
                                 onSetLocation: {
                                     impactFeedbackLight.impactOccurred()
+                                    isSettingLocationForNewVehicle = false
                                     startSettingLocationForVehicle(vehicle)
                                     showingVehiclesList = false
                                 }
@@ -930,6 +913,7 @@ struct VehicleParkingView: View {
         impactFeedbackLight.impactOccurred()
         isSettingLocation = false
         settingAddress = nil
+        isSettingLocationForNewVehicle = false
     }
     
     private func confirmSetLocation() {
@@ -951,6 +935,7 @@ struct VehicleParkingView: View {
         
         isSettingLocation = false
         settingAddress = nil
+        isSettingLocationForNewVehicle = false
         
         // Fetch street data for the new location
         if let parkingLocation = selectedVehicle.parkingLocation {
@@ -1025,8 +1010,6 @@ struct VehicleParkingView: View {
         autoResetTimer?.invalidate()
         cancellables.removeAll()
     }
-    
-    @State private var cancellables = Set<AnyCancellable>()
 }
 
 // MARK: - Enhanced Vehicle List Row Component

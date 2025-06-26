@@ -56,14 +56,6 @@ struct OnboardingStep {
             gradientColors: [Color.red, Color.orange],
             permissionType: .notifications,
             buttonText: "Enable Notifications"
-        ),
-        OnboardingStep(
-            title: "You're All Set!",
-            description: "Your SF Parking app is ready to help you stay ticket-free. Park with confidence knowing we've got your back.",
-            systemImage: "checkmark.circle.fill",
-            gradientColors: [Color.blue, Color.green],
-            permissionType: nil,
-            buttonText: "Start Parking Smart"
         )
     ]
 }
