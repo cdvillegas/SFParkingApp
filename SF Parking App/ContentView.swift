@@ -17,7 +17,7 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             // Main app with beautiful slide-up transition
-            ParkingLocationView()
+            VehicleParkingView()
                 .opacity(showingOnboarding ? 0 : 1)
                 .scaleEffect(showingOnboarding ? 0.95 : 1.0)
                 .offset(y: showingOnboarding ? 50 : 0)

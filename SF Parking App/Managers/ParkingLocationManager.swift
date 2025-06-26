@@ -10,102 +10,199 @@ import CoreLocation
 import Combine
 
 class ParkingLocationManager: ObservableObject {
-    @Published var currentLocation: ParkingLocation?
-    @Published var locationHistory: [ParkingLocation] = []
+    @Published var parkingLocations: [ParkingLocation] = []
+    @Published var selectedLocation: ParkingLocation?
     
     private let userDefaults = UserDefaults.standard
-    private let currentLocationKey = "CurrentParkingLocation"
-    private let historyKey = "ParkingLocationHistory"
+    private let locationsKey = "ParkingLocations"
+    private let selectedLocationKey = "SelectedParkingLocation"
     
     init() {
-        loadCurrentLocation()
-        loadLocationHistory()
+        loadParkingLocations()
+        loadSelectedLocation()
+    }
+    
+    // MARK: - Computed Properties
+    
+    var activeLocations: [ParkingLocation] {
+        return parkingLocations.filter { $0.isActive }
+    }
+    
+    var currentLocation: ParkingLocation? {
+        return selectedLocation
+    }
+    
+    var hasMultipleLocations: Bool {
+        return activeLocations.count > 1
+    }
+    
+    // MARK: - Location Management
+    
+    func addParkingLocation(_ location: ParkingLocation, setAsSelected: Bool = true) {
+        // Remove any existing location at the same coordinates (within 10 meters)
+        parkingLocations.removeAll { existingLocation in
+            let distance = CLLocation(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude)
+                .distance(from: CLLocation(latitude: existingLocation.coordinate.latitude, longitude: existingLocation.coordinate.longitude))
+            return distance < 10
+        }
+        
+        parkingLocations.append(location)
+        
+        if setAsSelected || selectedLocation == nil {
+            selectedLocation = location
+            saveSelectedLocation()
+        }
+        
+        saveParkingLocations()
+        print("Added parking location: \(location.displayName)")
     }
     
     func updateParkingLocation(_ location: ParkingLocation) {
-        // Add current location to history if it exists
-        if let current = currentLocation {
-            addToHistory(current)
+        if let index = parkingLocations.firstIndex(where: { $0.id == location.id }) {
+            parkingLocations[index] = location
+            
+            if selectedLocation?.id == location.id {
+                selectedLocation = location
+                saveSelectedLocation()
+            }
+            
+            saveParkingLocations()
+        }
+    }
+    
+    func removeParkingLocation(_ location: ParkingLocation) {
+        parkingLocations.removeAll { $0.id == location.id }
+        
+        if selectedLocation?.id == location.id {
+            selectedLocation = activeLocations.first
+            saveSelectedLocation()
         }
         
-        // Set new current location
-        currentLocation = location
-        saveCurrentLocation()
-        
-        print("Parking location updated: \(location.address)")
+        saveParkingLocations()
     }
+    
+    func selectLocation(_ location: ParkingLocation) {
+        selectedLocation = location
+        saveSelectedLocation()
+    }
+    
+    func deactivateLocation(_ location: ParkingLocation) {
+        let updatedLocation = ParkingLocation(
+            coordinate: location.coordinate,
+            address: location.address,
+            timestamp: location.timestamp,
+            source: location.source,
+            name: location.name,
+            color: location.color,
+            isActive: false
+        )
+        updateParkingLocation(updatedLocation)
+    }
+    
+    // MARK: - Convenience Methods
     
     func setCurrentLocationAsParking(coordinate: CLLocationCoordinate2D, address: String) {
         let location = ParkingLocation(
             coordinate: coordinate,
             address: address,
-            source: .motionActivity
+            source: .motionActivity,
+            color: getNextAvailableColor()
         )
-        updateParkingLocation(location)
+        addParkingLocation(location)
     }
     
-    func setManualParkingLocation(coordinate: CLLocationCoordinate2D, address: String) {
+    func setManualParkingLocation(coordinate: CLLocationCoordinate2D, address: String, name: String? = nil, color: ParkingLocationColor? = nil) {
         let location = ParkingLocation(
             coordinate: coordinate,
             address: address,
-            source: .manual
+            source: .manual,
+            name: name,
+            color: color ?? getNextAvailableColor()
         )
-        updateParkingLocation(location)
+        addParkingLocation(location)
     }
     
-    func setMotionDetectedParking(coordinate: CLLocationCoordinate2D, address: String) {
+    func setCarDisconnectLocation(coordinate: CLLocationCoordinate2D, address: String) {
         let location = ParkingLocation(
             coordinate: coordinate,
             address: address,
-            source: .motionActivity
+            source: .carDisconnect,
+            color: getNextAvailableColor()
         )
-        updateParkingLocation(location)
+        addParkingLocation(location)
     }
     
-    func setCarDisconnectParking(coordinate: CLLocationCoordinate2D, address: String) {
-        let location = ParkingLocation(
-            coordinate: coordinate,
-            address: address,
-            source: .carDisconnect
-        )
-        updateParkingLocation(location)
+    private func getNextAvailableColor() -> ParkingLocationColor {
+        let usedColors = Set(activeLocations.map { $0.color })
+        let availableColors = ParkingLocationColor.allCases.filter { !usedColors.contains($0) }
+        return availableColors.first ?? ParkingLocationColor.allCases.randomElement() ?? .blue
     }
     
-    private func addToHistory(_ location: ParkingLocation) {
-        locationHistory.insert(location, at: 0)
+    // MARK: - Persistence
+    
+    private func saveParkingLocations() {
+        if let data = try? JSONEncoder().encode(parkingLocations) {
+            userDefaults.set(data, forKey: locationsKey)
+        }
+    }
+    
+    private func loadParkingLocations() {
+        if let data = userDefaults.data(forKey: locationsKey),
+           let locations = try? JSONDecoder().decode([ParkingLocation].self, from: data) {
+            parkingLocations = locations
+        }
         
-        // Keep only the last 50 locations
-        if locationHistory.count > 50 {
-            locationHistory = Array(locationHistory.prefix(50))
+        // Migration from old single location system
+        migrateOldCurrentLocation()
+    }
+    
+    private func saveSelectedLocation() {
+        if let location = selectedLocation,
+           let data = try? JSONEncoder().encode(location.id) {
+            userDefaults.set(data, forKey: selectedLocationKey)
+        } else {
+            userDefaults.removeObject(forKey: selectedLocationKey)
+        }
+    }
+    
+    private func loadSelectedLocation() {
+        if let data = userDefaults.data(forKey: selectedLocationKey),
+           let locationId = try? JSONDecoder().decode(UUID.self, from: data) {
+            selectedLocation = parkingLocations.first { $0.id == locationId }
         }
         
-        saveLocationHistory()
-    }
-    
-    private func saveCurrentLocation() {
-        if let location = currentLocation,
-           let data = try? JSONEncoder().encode(location) {
-            userDefaults.set(data, forKey: currentLocationKey)
+        // If no selected location or it doesn't exist, select the first active one
+        if selectedLocation == nil {
+            selectedLocation = activeLocations.first
         }
     }
     
-    private func loadCurrentLocation() {
-        if let data = userDefaults.data(forKey: currentLocationKey),
-           let location = try? JSONDecoder().decode(ParkingLocation.self, from: data) {
-            currentLocation = location
-        }
-    }
-    
-    private func saveLocationHistory() {
-        if let data = try? JSONEncoder().encode(locationHistory) {
-            userDefaults.set(data, forKey: historyKey)
-        }
-    }
-    
-    private func loadLocationHistory() {
-        if let data = userDefaults.data(forKey: historyKey),
-           let history = try? JSONDecoder().decode([ParkingLocation].self, from: data) {
-            locationHistory = history
+    private func migrateOldCurrentLocation() {
+        // Check for old single location data and migrate it
+        if parkingLocations.isEmpty,
+           let data = userDefaults.data(forKey: "CurrentParkingLocation"),
+           let oldLocation = try? JSONDecoder().decode(ParkingLocation.self, from: data) {
+            
+            // Create new location with updated structure
+            let migratedLocation = ParkingLocation(
+                coordinate: oldLocation.coordinate,
+                address: oldLocation.address,
+                timestamp: oldLocation.timestamp,
+                source: oldLocation.source,
+                name: nil,
+                color: .blue,
+                isActive: true
+            )
+            
+            parkingLocations = [migratedLocation]
+            selectedLocation = migratedLocation
+            
+            saveParkingLocations()
+            saveSelectedLocation()
+            
+            // Clean up old data
+            userDefaults.removeObject(forKey: "CurrentParkingLocation")
+            userDefaults.removeObject(forKey: "ParkingLocationHistory")
         }
     }
 }

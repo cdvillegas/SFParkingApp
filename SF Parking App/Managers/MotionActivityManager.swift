@@ -128,7 +128,7 @@ class MotionActivityManager: ObservableObject {
     
     private func setParkingLocation(coordinate: CLLocationCoordinate2D, address: String) {
         print("Auto-setting parking location via motion detection: \(address)")
-        parkingLocationManager?.setMotionDetectedParking(coordinate: coordinate, address: address)
+        parkingLocationManager?.setCurrentLocationAsParking(coordinate: coordinate, address: address)
     }
     
     private func formatAddress(from placemark: CLPlacemark) -> String {

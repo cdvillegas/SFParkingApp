@@ -152,7 +152,7 @@ class BluetoothManager: NSObject, ObservableObject {
     
     private func setParkingLocation(coordinate: CLLocationCoordinate2D, address: String) {
         print("Auto-setting parking location via car disconnect: \(address)")
-        parkingLocationManager?.setCarDisconnectParking(coordinate: coordinate, address: address)
+        parkingLocationManager?.setCarDisconnectLocation(coordinate: coordinate, address: address)
     }
     
     private func formatAddress(from placemark: CLPlacemark) -> String {

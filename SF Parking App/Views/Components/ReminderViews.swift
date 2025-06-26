@@ -93,16 +93,16 @@ struct NoRemindersView: View {
 }
 
 #Preview {
-    ParkingLocationView()
+    VehicleParkingView()
 }
 
 #Preview("Light Mode") {
-    ParkingLocationView()
+    VehicleParkingView()
         .preferredColorScheme(.light)
 }
 
 #Preview("Dark Mode") {
-    ParkingLocationView()
+    VehicleParkingView()
         .preferredColorScheme(.dark)
 }
 
