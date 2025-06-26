@@ -57,9 +57,9 @@ struct AddEditVehicleView: View {
                 }
                 .background(Color(.systemGroupedBackground))
                 .onTapGesture {
-                    // Dismiss name editing when tapping outside
+                    // Save name editing when tapping outside
                     if isEditingName {
-                        cancelNameEditing()
+                        commitNameEdit()
                     }
                 }
                 
@@ -99,6 +99,7 @@ struct AddEditVehicleView: View {
         }
         .onChange(of: isNameFieldFocused) { _, newValue in
             if !newValue && isEditingName {
+                // Save the name when focus is lost instead of just committing
                 commitNameEdit()
             }
         }
@@ -223,6 +224,7 @@ struct AddEditVehicleView: View {
                                 RoundedRectangle(cornerRadius: 12)
                                     .fill(selectedType == type ? Color.blue.opacity(0.1) : Color.clear)
                             )
+                            .contentShape(Rectangle())
                         }
                         .buttonStyle(PlainButtonStyle())
                     }
@@ -310,6 +312,8 @@ struct AddEditVehicleView: View {
     }
     
     private func commitNameEdit() {
+        // Update the original name to the current value so it's saved
+        originalName = vehicleName
         withAnimation(.easeInOut(duration: 0.2)) {
             isEditingName = false
         }
