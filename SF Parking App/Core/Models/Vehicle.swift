@@ -12,7 +12,6 @@ enum VehicleType: String, CaseIterable, Codable {
     case car = "car"
     case motorcycle = "motorcycle"
     case truck = "truck"
-    case suv = "suv"
     case van = "van"
     
     var displayName: String {
@@ -23,8 +22,6 @@ enum VehicleType: String, CaseIterable, Codable {
             return "Motorcycle"
         case .truck:
             return "Truck"
-        case .suv:
-            return "SUV"
         case .van:
             return "Van"
         }
@@ -35,11 +32,9 @@ enum VehicleType: String, CaseIterable, Codable {
         case .car:
             return "car.fill"
         case .motorcycle:
-            return "bicycle"
+            return "motorcycle"
         case .truck:
             return "truck.box.fill"
-        case .suv:
-            return "car.side.fill"
         case .van:
             return "bus.fill"
         }
