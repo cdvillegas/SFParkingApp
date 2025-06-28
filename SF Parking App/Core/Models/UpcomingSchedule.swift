@@ -23,6 +23,19 @@ struct UpcomingSchedule {
             return "Street Sweeping in Progress"
         }
         
+        // Get day of week shorthand and rounded start time
+        let dayFormatter = DateFormatter()
+        dayFormatter.dateFormat = "E" // Short day (Mon, Tue, etc.)
+        let dayShorthand = dayFormatter.string(from: date)
+        
+        // Round start time to nearest hour
+        let hourFormatter = DateFormatter()
+        hourFormatter.dateFormat = "h:mm a"
+        let startTimeComponents = hourFormatter.string(from: date).components(separatedBy: ":")
+        let hour = startTimeComponents[0]
+        let ampm = startTimeComponents[1].components(separatedBy: " ")[1]
+        let roundedTime = "\(hour)\(ampm.lowercased())"
+        
         let seconds = Int(timeInterval)
         let minutes = seconds / 60
         let hours = minutes / 60
@@ -30,15 +43,15 @@ struct UpcomingSchedule {
         let weeks = days / 7
         
         if weeks > 0 {
-            return "\(weeks) \(weeks == 1 ? "Week" : "Weeks") Until Street Sweeping"
+            return "\(weeks) \(weeks == 1 ? "Week" : "Weeks") Until Street Sweeping (\(dayShorthand) \(roundedTime))"
         } else if days > 0 {
-            return "\(days) \(days == 1 ? "Day" : "Days") Until Street Sweeping"
+            return "\(days) \(days == 1 ? "Day" : "Days") Until Street Sweeping (\(dayShorthand) \(roundedTime))"
         } else if hours > 0 {
-            return "\(hours) \(hours == 1 ? "Hour" : "Hours") Until Street Sweeping"
+            return "\(hours) \(hours == 1 ? "Hour" : "Hours") Until Street Sweeping (\(dayShorthand) \(roundedTime))"
         } else if minutes > 0 {
-            return "\(minutes) \(minutes == 1 ? "Minute" : "Minutes") Until Street Sweeping"
+            return "\(minutes) \(minutes == 1 ? "Minute" : "Minutes") Until Street Sweeping (\(dayShorthand) \(roundedTime))"
         } else {
-            return "Street Sweeping Starting Soon"
+            return "Street Sweeping Starting Soon (\(dayShorthand) \(roundedTime))"
         }
     }
     

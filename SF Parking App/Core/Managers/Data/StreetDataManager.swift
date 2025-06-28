@@ -18,8 +18,8 @@ class StreetDataManager: ObservableObject {
     // Add debouncing to prevent repeated API calls
     private var lastFetchedCoordinate: CLLocationCoordinate2D?
     private var lastFetchTime: Date?
-    private let minimumFetchInterval: TimeInterval = 5.0 // 5 seconds
-    private let coordinateThreshold: Double = 0.0001 // ~10 meters
+    private let minimumFetchInterval: TimeInterval = 0.5 // 0.5 seconds
+    private let coordinateThreshold: Double = 0.00001 // ~1 meter
     
     func fetchSchedules(for coordinate: CLLocationCoordinate2D) {
         // Check if we should skip this fetch due to debouncing
@@ -49,7 +49,13 @@ class StreetDataManager: ObservableObject {
                         self?.schedule = schedule
                         self?.processNextSchedule(for: schedule)
                         self?.hasError = false
-                        print("✅ Successfully found schedule for street: \(schedule.streetName)")
+                        print("✅ Successfully found schedule:")
+                        print("   Street: \(schedule.streetName)")
+                        print("   Block: \(schedule.limits ?? "N/A")")
+                        print("   Side: \(schedule.blockside ?? "N/A")")
+                        print("   Full Name: \(schedule.fullname ?? "N/A")")
+                        print("   Corridor: \(schedule.corridor ?? "N/A")")
+                        print("   CNN: \(schedule.cnn ?? "N/A")")
                     } else {
                         self?.hasError = false
                         self?.schedule = nil
@@ -71,15 +77,20 @@ class StreetDataManager: ObservableObject {
         // Check if we have a recent fetch
         if let lastFetch = lastFetchTime,
            Date().timeIntervalSince(lastFetch) < minimumFetchInterval {
+            print("⏭️ Skipping fetch - too recent (\(Date().timeIntervalSince(lastFetch)) seconds ago)")
             return true
         }
         
-        // Check if the coordinate is too close to the last one
+        // Check if the coordinate is too close to the last one using proper distance calculation
         if let lastCoordinate = lastFetchedCoordinate {
-            let latDiff = abs(coordinate.latitude - lastCoordinate.latitude)
-            let lonDiff = abs(coordinate.longitude - lastCoordinate.longitude)
+            let currentLocation = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+            let lastLocation = CLLocation(latitude: lastCoordinate.latitude, longitude: lastCoordinate.longitude)
+            let distance = currentLocation.distance(from: lastLocation)
             
-            if latDiff < coordinateThreshold && lonDiff < coordinateThreshold {
+            print("📍 Distance from last location: \(Int(distance)) meters")
+            
+            if distance < 1.0 { // 1 meter threshold
+                print("⏭️ Skipping fetch - too close (\(Int(distance)) meters)")
                 return true
             }
         }

@@ -136,6 +136,62 @@ final class StreetDataService {
     private init() {}
 
     func getClosestSchedule(for coordinate: CLLocationCoordinate2D, completion: @escaping (Result<SweepSchedule?, ParkingError>) -> Void) {
+        print("🚀 Starting address-based matching for coordinate: \(coordinate.latitude), \(coordinate.longitude)")
+        
+        // First, reverse geocode the coordinate to get the address
+        let geocoder = CLGeocoder()
+        let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+        
+        geocoder.reverseGeocodeLocation(location) { [weak self] placemarks, error in
+            guard let self = self else { return }
+            
+            if let error = error {
+                print("❌ Geocoding failed: \(error.localizedDescription)")
+                print("🔄 Falling back to geometric matching")
+                self.getClosestScheduleGeometric(for: coordinate, completion: completion)
+                return
+            }
+            
+            guard let placemark = placemarks?.first else {
+                print("❌ No placemarks returned from geocoding")
+                print("🔄 Falling back to geometric matching")
+                self.getClosestScheduleGeometric(for: coordinate, completion: completion)
+                return
+            }
+            
+            print("📍 Placemark found:")
+            print("   subThoroughfare: \(placemark.subThoroughfare ?? "nil")")
+            print("   thoroughfare: \(placemark.thoroughfare ?? "nil")")
+            print("   locality: \(placemark.locality ?? "nil")")
+            print("   administrativeArea: \(placemark.administrativeArea ?? "nil")")
+            
+            guard let streetNumber = placemark.subThoroughfare,
+                  let streetName = placemark.thoroughfare else {
+                print("❌ Could not extract address components from placemark")
+                print("🔄 Falling back to geometric matching")
+                self.getClosestScheduleGeometric(for: coordinate, completion: completion)
+                return
+            }
+            
+            let fullAddress = "\(streetNumber) \(streetName)"
+            print("🏠 Geocoded address: \(fullAddress)")
+            
+            // Parse the address
+            guard let parsedAddress = self.parseAddress(fullAddress) else {
+                print("❌ Could not parse address: \(fullAddress)")
+                print("🔄 Falling back to geometric matching")
+                self.getClosestScheduleGeometric(for: coordinate, completion: completion)
+                return
+            }
+            
+            print("✅ Successfully parsed address - proceeding with address-based matching")
+            // Use address-based matching
+            self.getClosestScheduleByAddress(for: coordinate, address: parsedAddress, completion: completion)
+        }
+    }
+    
+    // Original geometric-based matching as fallback
+    private func getClosestScheduleGeometric(for coordinate: CLLocationCoordinate2D, completion: @escaping (Result<SweepSchedule?, ParkingError>) -> Void) {
         // Try multiple approaches
         print("Searching for schedules near: \(coordinate.latitude), \(coordinate.longitude)")
         
@@ -330,24 +386,78 @@ final class StreetDataService {
             // Convert meters to feet for comparison
             let distanceInFeet = scheduleMinDistance * 3.28084
             
-            print("Schedule '\(schedule.streetName)' distance: \(distanceInFeet) feet")
+            let blockInfo = schedule.limits ?? "N/A"
+            let sideInfo = schedule.blockside ?? "N/A"
+            print("Schedule '\(schedule.streetName)' distance: \(String(format: "%.3f", distanceInFeet)) feet (Block: \(blockInfo), Side: \(sideInfo))")
             
             // Only consider schedules within max distance and keep the closest one
             if distanceInFeet <= maxDistance && scheduleMinDistance < minDistance {
                 minDistance = scheduleMinDistance
                 closestSchedule = schedule
-                print("New closest: \(schedule.streetName) at \(distanceInFeet) feet")
+                print("New closest: \(schedule.streetName) at \(String(format: "%.3f", distanceInFeet)) feet (Block: \(blockInfo), Side: \(sideInfo))")
             }
         }
         
         if let closest = closestSchedule {
             let distanceInFeet = minDistance * 3.28084
-            print("Final closest schedule: \(closest.streetName) at \(distanceInFeet) feet")
+            let finalBlockInfo = closest.limits ?? "N/A"
+            let finalSideInfo = closest.blockside ?? "N/A"
+            print("Final closest schedule: \(closest.streetName) at \(String(format: "%.3f", distanceInFeet)) feet (Block: \(finalBlockInfo), Side: \(finalSideInfo))")
         } else {
             print("No schedules found within \(maxDistance) feet - area appears to be street sweeping free!")
         }
         
         return closestSchedule
+    }
+    
+    // Address-based schedule matching (primary method)
+    private func getClosestScheduleByAddress(for coordinate: CLLocationCoordinate2D, address: ParsedAddress, completion: @escaping (Result<SweepSchedule?, ParkingError>) -> Void) {
+        
+        print("🔍 Searching for schedules matching address: \(address.fullAddress)")
+        print("   Street Number: \(address.streetNumber) (\(determineStreetSide(from: address.streetNumber)) side)")
+        print("   Street Name: \(address.streetName)")
+        
+        // Use spatial queries to get nearby schedules first
+        getSchedulesWithinRadius(for: coordinate) { [weak self] schedules in
+            guard let self = self else { return }
+            
+            guard let schedules = schedules else {
+                print("❌ No schedules found, falling back to geometric matching")
+                self.getClosestScheduleGeometric(for: coordinate, completion: completion)
+                return
+            }
+            
+            print("📋 Found \(schedules.count) nearby schedules, filtering by address...")
+            
+            // Filter schedules by address matching
+            let matchingSchedules = schedules.filter { schedule in
+                return self.addressMatchesSchedule(address, schedule: schedule)
+            }
+            
+            print("✅ Found \(matchingSchedules.count) address-matching schedules")
+            
+            if matchingSchedules.isEmpty {
+                print("⚠️ No schedules match the address, falling back to geometric matching")
+                self.getClosestScheduleGeometric(for: coordinate, completion: completion)
+                return
+            }
+            
+            // Address-based matching found results - just pick the first one
+            // No need for distance calculation since address matching is binary (matches or doesn't)
+            let selectedSchedule = matchingSchedules.first
+            print("✅ Using address-based match: \(selectedSchedule?.streetName ?? "Unknown")")
+            
+            if matchingSchedules.count > 1 {
+                print("ℹ️ Multiple schedules match this address (\(matchingSchedules.count) total)")
+                for schedule in matchingSchedules {
+                    print("   - \(schedule.streetName): \(schedule.limits ?? "N/A") (\(schedule.blockside ?? "N/A") side)")
+                }
+            }
+            
+            DispatchQueue.main.async {
+                completion(.success(selectedSchedule))
+            }
+        }
     }
     
     // Helper method to get user-friendly status message
@@ -366,5 +476,114 @@ final class StreetDataService {
                 }
             }
         }
+    }
+}
+
+// MARK: - Address-Based Matching Utilities
+
+struct ParsedAddress {
+    let streetNumber: Int
+    let streetName: String
+    let fullAddress: String
+}
+
+struct BlockRange {
+    let startNumber: Int
+    let endNumber: Int
+    
+    func contains(_ addressNumber: Int) -> Bool {
+        return addressNumber >= startNumber && addressNumber <= endNumber
+    }
+}
+
+extension StreetDataService {
+    
+    // Parse address string into components
+    func parseAddress(_ addressString: String) -> ParsedAddress? {
+        let components = addressString.components(separatedBy: " ")
+        guard components.count >= 2,
+              let streetNumber = Int(components[0]) else {
+            return nil
+        }
+        
+        let streetName = components.dropFirst().joined(separator: " ")
+        return ParsedAddress(
+            streetNumber: streetNumber,
+            streetName: streetName,
+            fullAddress: addressString
+        )
+    }
+    
+    // Parse block limits string - can be either:
+    // 1. Address numbers: "1000-1099" or "1000 - 1099" 
+    // 2. Street names: "Baker St - Lyon St"
+    func parseBlockLimits(_ limitsString: String) -> BlockRange? {
+        let cleaned = limitsString.replacingOccurrences(of: " ", with: "")
+        let components = cleaned.components(separatedBy: "-")
+        
+        guard components.count == 2 else {
+            print("❌ Block limits format unexpected: '\(limitsString)'")
+            return nil
+        }
+        
+        // Try to parse as address numbers first
+        if let start = Int(components[0]), let end = Int(components[1]) {
+            return BlockRange(startNumber: start, endNumber: end)
+        }
+        
+        // If not numbers, it's probably street names like "Baker St - Lyon St"
+        print("ℹ️ Block limits are street names, not address numbers: '\(limitsString)'")
+        return nil
+    }
+    
+    // Determine street side based on address number (odd/even convention)
+    func determineStreetSide(from addressNumber: Int) -> String {
+        return addressNumber % 2 == 0 ? "Even" : "Odd"
+    }
+    
+    // Normalize street names for comparison (remove common suffixes, case insensitive)
+    func normalizeStreetName(_ streetName: String) -> String {
+        let name = streetName.lowercased()
+        let suffixes = ["street", "st", "avenue", "ave", "boulevard", "blvd", "road", "rd", "drive", "dr"]
+        
+        var normalized = name
+        for suffix in suffixes {
+            if normalized.hasSuffix(" \(suffix)") {
+                normalized = String(normalized.dropLast(suffix.count + 1))
+                break
+            }
+        }
+        
+        return normalized.trimmingCharacters(in: .whitespaces)
+    }
+    
+    // Check if address matches a schedule's block
+    func addressMatchesSchedule(_ address: ParsedAddress, schedule: SweepSchedule) -> Bool {
+        // First check if street names match
+        let normalizedAddress = normalizeStreetName(address.streetName)
+        let normalizedSchedule = normalizeStreetName(schedule.streetName)
+        
+        guard normalizedAddress == normalizedSchedule else {
+            print("❌ Street name mismatch: '\(normalizedAddress)' vs '\(normalizedSchedule)'")
+            return false
+        }
+        
+        // Check if we have address-number-based limits
+        if let limits = schedule.limits,
+           let blockRange = parseBlockLimits(limits) {
+            // We have numeric block limits - check if address is in range
+            guard blockRange.contains(address.streetNumber) else {
+                print("❌ Address \(address.streetNumber) not in block range \(limits)")
+                return false
+            }
+            print("✅ Address matches schedule: \(address.fullAddress) -> \(schedule.streetName) (\(limits))")
+            return true
+        }
+        
+        // If we don't have numeric limits, we're dealing with cross-street format
+        // For now, just match by street name since we can't validate the specific block
+        print("ℹ️ Street name matches but using cross-street limits (can't validate block): \(schedule.limits ?? "N/A")")
+        print("✅ Matching by street name: \(address.fullAddress) -> \(schedule.streetName)")
+        return true
     }
 }
