@@ -28,6 +28,8 @@ struct VehicleParkingView: View {
     @State private var settingCoordinate = CLLocationCoordinate2D()
     @State private var showingVehicleActions: Vehicle?
     @State private var isSettingLocationForNewVehicle = false
+    @State private var showingAddressInput = false
+    @State private var addressInput = ""
     
     // Auto-center functionality
     @State private var autoResetTimer: Timer?
@@ -125,6 +127,26 @@ struct VehicleParkingView: View {
             Button("Not Now", role: .cancel) { }
         } message: {
             Text("Enable notifications to get reminders about street cleaning and avoid parking tickets.")
+        }
+        .alert("Set Parking Location", isPresented: $showingAddressInput) {
+            TextField("Enter address (e.g., 1234 Main St)", text: $addressInput)
+            Button("Set by Map") {
+                addressInput = ""
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                    isSettingLocationForNewVehicle = false
+                    startSettingLocation()
+                }
+            }
+            Button("Set by Address") {
+                if !addressInput.isEmpty {
+                    geocodeAddressAndSetLocation(addressInput)
+                }
+            }
+            Button("Cancel", role: .cancel) { 
+                addressInput = ""
+            }
+        } message: {
+            Text("Choose how to set your parking location:")
         }
     }
     
@@ -406,11 +428,9 @@ struct VehicleParkingView: View {
                 // Move/Park Button
                 Button(action: {
                     impactFeedbackLight.impactOccurred()
-                    withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                        isSettingLocationForNewVehicle = false
-                        startSettingLocationForVehicle(vehicle)
-                        showingVehicleActions = nil
-                    }
+                    vehicleManager.selectVehicle(vehicle)
+                    showingAddressInput = true
+                    showingVehicleActions = nil
                 }) {
                     HStack(spacing: 8) {
                         Text(vehicle.parkingLocation != nil ? "Move" : "Park")
@@ -907,6 +927,39 @@ struct VehicleParkingView: View {
         settingCoordinate = startCoordinate
         centerMapOnLocation(startCoordinate)
         geocodeLocation(startCoordinate)
+    }
+    
+    private func geocodeAddressAndSetLocation(_ address: String) {
+        print("🏠 Geocoding address: \(address)")
+        
+        let geocoder = CLGeocoder()
+        geocoder.geocodeAddressString(address) { placemarks, error in
+            DispatchQueue.main.async { [self] in
+                
+                addressInput = "" // Clear input
+                
+                if let error = error {
+                    print("❌ Address geocoding failed: \(error.localizedDescription)")
+                    // Could show an error alert here
+                    return
+                }
+                
+                guard let placemark = placemarks?.first,
+                      let location = placemark.location else {
+                    print("❌ No location found for address: \(address)")
+                    // Could show an error alert here
+                    return
+                }
+                
+                let coordinate = location.coordinate
+                print("✅ Address geocoded to: \(coordinate.latitude), \(coordinate.longitude)")
+                
+                // Set the location directly
+                settingCoordinate = coordinate
+                confirmSetLocation()
+                centerMapOnLocation(coordinate)
+            }
+        }
     }
     
     private func cancelSettingLocation() {

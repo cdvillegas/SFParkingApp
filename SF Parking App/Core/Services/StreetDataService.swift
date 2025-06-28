@@ -430,28 +430,89 @@ final class StreetDataService {
             print("📋 Found \(schedules.count) nearby schedules, filtering by address...")
             
             // Filter schedules by address matching
-            let matchingSchedules = schedules.filter { schedule in
+            let addressMatchingSchedules = schedules.filter { schedule in
                 return self.addressMatchesSchedule(address, schedule: schedule)
             }
             
-            print("✅ Found \(matchingSchedules.count) address-matching schedules")
+            print("✅ Found \(addressMatchingSchedules.count) address-matching schedules")
             
-            if matchingSchedules.isEmpty {
+            if addressMatchingSchedules.isEmpty {
                 print("⚠️ No schedules match the address, falling back to geometric matching")
                 self.getClosestScheduleGeometric(for: coordinate, completion: completion)
                 return
             }
             
-            // Address-based matching found results - just pick the first one
-            // No need for distance calculation since address matching is binary (matches or doesn't)
-            let selectedSchedule = matchingSchedules.first
-            print("✅ Using address-based match: \(selectedSchedule?.streetName ?? "Unknown")")
-            
-            if matchingSchedules.count > 1 {
-                print("ℹ️ Multiple schedules match this address (\(matchingSchedules.count) total)")
-                for schedule in matchingSchedules {
-                    print("   - \(schedule.streetName): \(schedule.limits ?? "N/A") (\(schedule.blockside ?? "N/A") side)")
+            // If we only have one match, use it
+            if addressMatchingSchedules.count == 1 {
+                let selectedSchedule = addressMatchingSchedules.first
+                print("✅ Single address match: \(selectedSchedule?.streetName ?? "Unknown")")
+                DispatchQueue.main.async {
+                    completion(.success(selectedSchedule))
                 }
+                return
+            }
+            
+            // Multiple matches - use geometric side detection to pick the correct one
+            print("🔍 Multiple address matches (\(addressMatchingSchedules.count)), using side detection...")
+            
+            for schedule in addressMatchingSchedules {
+                print("   - \(schedule.streetName): \(schedule.limits ?? "N/A") (\(schedule.blockside ?? "N/A") side)")
+                
+                // Debug: Print first few coordinates of line geometry
+                if let line = schedule.line, line.coordinates.count > 0 {
+                    let firstCoord = line.coordinates.first!
+                    let lastCoord = line.coordinates.last!
+                    print("     Line: [\(firstCoord[1]), \(firstCoord[0])] to [\(lastCoord[1]), \(lastCoord[0])] (\(line.coordinates.count) points)")
+                } else {
+                    print("     Line: No geometry data")
+                }
+            }
+            
+            // First filter by street side to narrow down to correct side
+            let detectedSide = self.determineStreetSide(point: coordinate, schedule: addressMatchingSchedules.first!)
+            
+            let sideMatchingSchedules = addressMatchingSchedules.filter { schedule in
+                guard let scheduleSide = schedule.blockside?.lowercased(),
+                      let detected = detectedSide?.lowercased() else { return true }
+                return detected == scheduleSide
+            }
+            
+            print("🎯 Filtered to \(sideMatchingSchedules.count) schedules on \(detectedSide ?? "unknown") side")
+            
+            // If we have multiple schedules on the same side, determine which block/segment
+            var bestMatch: SweepSchedule?
+            
+            if sideMatchingSchedules.count == 1 {
+                bestMatch = sideMatchingSchedules.first
+                print("✅ Single side match found")
+            } else if sideMatchingSchedules.count > 1 {
+                print("🔍 Multiple blocks on same side, determining closest block...")
+                
+                // Calculate which street segment the car is closest to
+                var closestSchedule: SweepSchedule?
+                var minDistanceToSegment = Double.infinity
+                
+                for schedule in sideMatchingSchedules {
+                    let distanceToSegment = self.calculateDistanceToStreetSegment(point: coordinate, schedule: schedule)
+                    print("   📏 Distance to \(schedule.limits ?? "N/A") block: \(String(format: "%.1f", distanceToSegment)) feet")
+                    
+                    if distanceToSegment < minDistanceToSegment {
+                        minDistanceToSegment = distanceToSegment
+                        closestSchedule = schedule
+                    }
+                }
+                
+                bestMatch = closestSchedule
+                print("🎯 Closest block: \(bestMatch?.limits ?? "N/A") at \(String(format: "%.1f", minDistanceToSegment)) feet")
+            }
+            
+            // Fall back to first address match if side detection fails completely
+            let selectedSchedule = bestMatch ?? addressMatchingSchedules.first
+            
+            if bestMatch != nil {
+                print("✅ Using best match: \(selectedSchedule?.streetName ?? "Unknown") (\(selectedSchedule?.blockside ?? "N/A") side, \(selectedSchedule?.limits ?? "N/A"))")
+            } else {
+                print("⚠️ Side/block detection failed, using first address match")
             }
             
             DispatchQueue.main.async {
@@ -555,6 +616,122 @@ extension StreetDataService {
         }
         
         return normalized.trimmingCharacters(in: .whitespaces)
+    }
+    
+    // Determine which side of the street a point is on using line geometry
+    func determineStreetSide(point: CLLocationCoordinate2D, schedule: SweepSchedule) -> String? {
+        guard let line = schedule.line,
+              line.coordinates.count >= 2 else {
+            print("❌ No line geometry available for side detection")
+            return nil
+        }
+        
+        // Convert coordinates to CLLocationCoordinate2D
+        let linePoints = line.coordinates.compactMap { coord -> CLLocationCoordinate2D? in
+            guard coord.count >= 2 else { return nil }
+            return CLLocationCoordinate2D(latitude: coord[1], longitude: coord[0])
+        }
+        
+        guard linePoints.count >= 2 else {
+            print("❌ Insufficient line points for side detection")
+            return nil
+        }
+        
+        // Calculate the overall direction of the street
+        let firstPoint = linePoints.first!
+        let lastPoint = linePoints.last!
+        
+        let latDiff = abs(lastPoint.latitude - firstPoint.latitude)
+        let lonDiff = abs(lastPoint.longitude - firstPoint.longitude)
+        
+        let isEastWest = lonDiff > latDiff
+        
+        print("🧭 Street direction: \(isEastWest ? "East-West" : "North-South")")
+        
+        // Find the closest line segment and determine which side the point is on
+        var closestSegmentIndex = 0
+        var minDistance = Double.infinity
+        
+        for i in 0..<(linePoints.count - 1) {
+            let segment = LineSegment(start: linePoints[i], end: linePoints[i + 1])
+            let (_, distance) = segment.closestPoint(to: point)
+            
+            if distance < minDistance {
+                minDistance = distance
+                closestSegmentIndex = i
+            }
+        }
+        
+        // Use the closest segment to determine side
+        let segmentStart = linePoints[closestSegmentIndex]
+        let segmentEnd = linePoints[closestSegmentIndex + 1]
+        
+        // Calculate cross product to determine which side of the line the point is on
+        let vectorX = segmentEnd.longitude - segmentStart.longitude
+        let vectorY = segmentEnd.latitude - segmentStart.latitude
+        let pointX = point.longitude - segmentStart.longitude
+        let pointY = point.latitude - segmentStart.latitude
+        
+        let crossProduct = vectorX * pointY - vectorY * pointX
+        
+        // Debug the math
+        print("🔧 Side Detection Debug:")
+        print("   Segment: [\(segmentStart.latitude), \(segmentStart.longitude)] to [\(segmentEnd.latitude), \(segmentEnd.longitude)]")
+        print("   Car Point: [\(point.latitude), \(point.longitude)]")
+        print("   Vector: [\(vectorX), \(vectorY)]")
+        print("   Point relative: [\(pointX), \(pointY)]")
+        print("   Cross Product: \(crossProduct)")
+        print("   Street Type: \(isEastWest ? "East-West" : "North-South")")
+        
+        // For E/W streets, use latitude comparison (more intuitive)
+        // For N/S streets, use cross product
+        let side: String
+        if isEastWest {
+            // Calculate average latitude of the street segment
+            let avgStreetLat = (segmentStart.latitude + segmentEnd.latitude) / 2
+            let carLat = point.latitude
+            
+            print("   Avg Street Lat: \(avgStreetLat)")
+            print("   Car Lat: \(carLat)")
+            print("   Car is \(carLat > avgStreetLat ? "NORTH" : "SOUTH") of street")
+            
+            side = carLat > avgStreetLat ? "North" : "South"
+        } else {
+            // For N/S streets: use cross product approach
+            side = crossProduct > 0 ? "East" : "West"
+        }
+        
+        print("🎯 Determined car is on \(side) side of \(schedule.streetName)")
+        return side
+    }
+    
+    // Calculate distance from point to a specific street segment
+    func calculateDistanceToStreetSegment(point: CLLocationCoordinate2D, schedule: SweepSchedule) -> Double {
+        guard let line = schedule.line,
+              line.coordinates.count >= 2 else {
+            return Double.infinity
+        }
+        
+        var minDistance = Double.infinity
+        
+        // Check distance to each line segment in this schedule
+        for i in 0..<(line.coordinates.count - 1) {
+            let coord1 = line.coordinates[i]
+            let coord2 = line.coordinates[i + 1]
+            
+            guard coord1.count >= 2, coord2.count >= 2 else { continue }
+            
+            let segment = LineSegment(
+                start: CLLocationCoordinate2D(latitude: coord1[1], longitude: coord1[0]),
+                end: CLLocationCoordinate2D(latitude: coord2[1], longitude: coord2[0])
+            )
+            
+            let (_, distance) = segment.closestPoint(to: point)
+            minDistance = min(minDistance, distance)
+        }
+        
+        // Convert meters to feet
+        return minDistance * 3.28084
     }
     
     // Check if address matches a schedule's block
