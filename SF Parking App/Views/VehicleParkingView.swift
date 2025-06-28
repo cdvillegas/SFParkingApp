@@ -128,16 +128,9 @@ struct VehicleParkingView: View {
         } message: {
             Text("Enable notifications to get reminders about street cleaning and avoid parking tickets.")
         }
-        .alert("Set Parking Location", isPresented: $showingAddressInput) {
-            TextField("Enter address (e.g., 1234 Main St)", text: $addressInput)
-            Button("Set by Map") {
-                addressInput = ""
-                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                    isSettingLocationForNewVehicle = false
-                    startSettingLocation()
-                }
-            }
-            Button("Set by Address") {
+        .alert("Edit Address", isPresented: $showingAddressInput) {
+            TextField("Enter new address", text: $addressInput)
+            Button("Update") {
                 if !addressInput.isEmpty {
                     geocodeAddressAndSetLocation(addressInput)
                 }
@@ -146,7 +139,7 @@ struct VehicleParkingView: View {
                 addressInput = ""
             }
         } message: {
-            Text("Choose how to set your parking location:")
+            Text("Enter a new address for this parking location:")
         }
     }
     
@@ -374,15 +367,26 @@ struct VehicleParkingView: View {
                 
                 // Compact location info if parked
                 if let parkingLocation = vehicle.parkingLocation {
-                    HStack(spacing: 8) {
-                        Image(systemName: "mappin.circle.fill")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.blue)
-                        
-                        Text(parkingLocation.address.components(separatedBy: ",").prefix(2).joined(separator: ","))
-                            .font(.system(size: 15, weight: .medium))
-                            .foregroundColor(.primary)
-                            .lineLimit(1)
+                    Button(action: {
+                        impactFeedbackLight.impactOccurred()
+                        vehicleManager.selectVehicle(vehicle)
+                        showingAddressInput = true
+                        showingVehicleActions = nil
+                    }) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "mappin.circle.fill")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(.blue)
+                            
+                            Text(parkingLocation.address.components(separatedBy: ",").prefix(2).joined(separator: ","))
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundColor(.primary)
+                                .lineLimit(1)
+                            
+                            Image(systemName: "pencil")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(.secondary)
+                        }
                         
                         Spacer()
                     }
@@ -428,9 +432,11 @@ struct VehicleParkingView: View {
                 // Move/Park Button
                 Button(action: {
                     impactFeedbackLight.impactOccurred()
-                    vehicleManager.selectVehicle(vehicle)
-                    showingAddressInput = true
-                    showingVehicleActions = nil
+                    withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                        isSettingLocationForNewVehicle = false
+                        startSettingLocationForVehicle(vehicle)
+                        showingVehicleActions = nil
+                    }
                 }) {
                     HStack(spacing: 8) {
                         Text(vehicle.parkingLocation != nil ? "Move" : "Park")
