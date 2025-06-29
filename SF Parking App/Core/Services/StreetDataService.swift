@@ -468,42 +468,76 @@ final class StreetDataService {
                 }
             }
             
-            // First filter by street side to narrow down to correct side
-            let detectedSide = self.determineStreetSide(point: coordinate, schedule: addressMatchingSchedules.first!)
+            // First determine which block is closest (regardless of side)
+            print("🔍 Multiple address matches (\(addressMatchingSchedules.count)), determining closest block first...")
             
-            let sideMatchingSchedules = addressMatchingSchedules.filter { schedule in
-                guard let scheduleSide = schedule.blockside?.lowercased(),
-                      let detected = detectedSide?.lowercased() else { return true }
-                return detected == scheduleSide
+            // Group schedules by block (limits)
+            let schedulesByBlock = Dictionary(grouping: addressMatchingSchedules) { schedule in
+                schedule.limits ?? "Unknown"
             }
             
-            print("🎯 Filtered to \(sideMatchingSchedules.count) schedules on \(detectedSide ?? "unknown") side")
+            print("📍 Found \(schedulesByBlock.count) different blocks:")
+            for (blockName, schedules) in schedulesByBlock {
+                print("   - \(blockName): \(schedules.count) sides")
+            }
             
-            // If we have multiple schedules on the same side, determine which block/segment
+            // Find the closest block
+            var closestBlock: String?
+            var minDistanceToBlock = Double.infinity
+            
+            for (blockName, blockSchedules) in schedulesByBlock {
+                // Use the first schedule in the block to calculate distance
+                let sampleSchedule = blockSchedules.first!
+                let distanceToBlock = self.calculateDistanceToStreetSegment(point: coordinate, schedule: sampleSchedule)
+                
+                print("   📏 Distance to \(blockName) block: \(String(format: "%.1f", distanceToBlock)) feet")
+                
+                if distanceToBlock < minDistanceToBlock {
+                    minDistanceToBlock = distanceToBlock
+                    closestBlock = blockName
+                }
+            }
+            
+            guard let selectedBlock = closestBlock,
+                  let blockSchedules = schedulesByBlock[selectedBlock] else {
+                print("❌ Could not determine closest block")
+                DispatchQueue.main.async {
+                    completion(.success(nil))
+                }
+                return
+            }
+            
+            print("🎯 Closest block: \(selectedBlock) at \(String(format: "%.1f", minDistanceToBlock)) feet")
+            
+            // Now determine which side of this specific block
             var bestMatch: SweepSchedule?
             
-            if sideMatchingSchedules.count == 1 {
-                bestMatch = sideMatchingSchedules.first
-                print("✅ Single side match found")
-            } else if sideMatchingSchedules.count > 1 {
-                print("🔍 Multiple blocks on same side, determining closest block...")
+            if blockSchedules.count == 1 {
+                bestMatch = blockSchedules.first
+                print("✅ Single schedule in block")
+            } else {
+                print("🔍 Multiple sides in block, determining correct side...")
                 
-                // Calculate which street segment the car is closest to
-                var closestSchedule: SweepSchedule?
-                var minDistanceToSegment = Double.infinity
-                
-                for schedule in sideMatchingSchedules {
-                    let distanceToSegment = self.calculateDistanceToStreetSegment(point: coordinate, schedule: schedule)
-                    print("   📏 Distance to \(schedule.limits ?? "N/A") block: \(String(format: "%.1f", distanceToSegment)) feet")
-                    
-                    if distanceToSegment < minDistanceToSegment {
-                        minDistanceToSegment = distanceToSegment
-                        closestSchedule = schedule
-                    }
+                for schedule in blockSchedules {
+                    print("   - \(schedule.streetName): \(schedule.limits ?? "N/A") (\(schedule.blockside ?? "N/A") side)")
                 }
                 
-                bestMatch = closestSchedule
-                print("🎯 Closest block: \(bestMatch?.limits ?? "N/A") at \(String(format: "%.1f", minDistanceToSegment)) feet")
+                // Use side detection to pick the correct side within this block
+                let detectedSide = self.determineStreetSide(point: coordinate, schedule: blockSchedules.first!)
+                
+                let sideMatch = blockSchedules.first { schedule in
+                    guard let scheduleSide = schedule.blockside?.lowercased(),
+                          let detected = detectedSide?.lowercased() else { return false }
+                    return detected == scheduleSide
+                }
+                
+                bestMatch = sideMatch ?? blockSchedules.first
+                
+                if let match = sideMatch {
+                    print("🎯 Side match! Using \(match.blockside ?? "N/A") side")
+                } else {
+                    print("⚠️ Side detection didn't match, using first schedule in block")
+                }
             }
             
             // Fall back to first address match if side detection fails completely
