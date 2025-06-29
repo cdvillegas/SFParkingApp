@@ -98,6 +98,13 @@ class StreetDataManager: ObservableObject {
         return false
     }
     
+    // Reset debouncing state to force a fresh fetch
+    func resetDebouncing() {
+        lastFetchedCoordinate = nil
+        lastFetchTime = nil
+        print("🔄 Reset debouncing state - next fetch will be forced")
+    }
+    
     // Separate geocoding for debug to avoid conflicts
     private func reverseGeocodeForDebug(coordinate: CLLocationCoordinate2D) {
         let geocoder = CLGeocoder()

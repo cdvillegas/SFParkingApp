@@ -575,9 +575,24 @@ struct VehicleParkingView: View {
                     )
                     
                     Button("Set Location") {
+                        print("🔴 SET LOCATION BUTTON PRESSED!")
                         notificationFeedback.notificationOccurred(.success)
-                        withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+                        
+                        // Capture the current map center coordinate at button press
+                        // Get the coordinate from the map camera position
+                        print("📍 Current map position: \(mapPosition)")
+                        
+                        // For now, keep using the settingCoordinate that gets updated by onMapCameraChange
+                        print("📍 Using settingCoordinate: \(settingCoordinate)")
+                        
+                        // Call confirmSetLocation with a tiny delay to ensure coordinate is updated
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                             confirmSetLocation()
+                        }
+                        
+                        // Only animate UI state changes
+                        withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+                            // Any UI animations would go here
                         }
                     }
                     .font(.system(size: 16, weight: .semibold))
@@ -960,8 +975,9 @@ struct VehicleParkingView: View {
                 let coordinate = location.coordinate
                 print("✅ Address geocoded to: \(coordinate.latitude), \(coordinate.longitude)")
                 
-                // Set the location directly
+                // Set both coordinate and address for confirmSetLocation
                 settingCoordinate = coordinate
+                settingAddress = address // This was missing!
                 confirmSetLocation()
                 centerMapOnLocation(coordinate)
             }
@@ -976,10 +992,17 @@ struct VehicleParkingView: View {
     }
     
     private func confirmSetLocation() {
-        guard let selectedVehicle = vehicleManager.selectedVehicle,
-              let address = settingAddress else { return }
+        print("🎯 confirmSetLocation() called")
+        guard let selectedVehicle = vehicleManager.selectedVehicle else { 
+            print("❌ No selected vehicle")
+            return 
+        }
         
         notificationFeedback.notificationOccurred(.success)
+        
+        // Use the address if available, otherwise use a placeholder while geocoding completes
+        let address = settingAddress ?? "Locating address..."
+        print("📍 Setting location: \(settingCoordinate) with address: \(address)")
         
         vehicleManager.setManualParkingLocation(
             for: selectedVehicle,
@@ -993,12 +1016,23 @@ struct VehicleParkingView: View {
         }
         
         isSettingLocation = false
-        settingAddress = nil
         isSettingLocationForNewVehicle = false
         
-        // Fetch street data for the new location
-        if let parkingLocation = selectedVehicle.parkingLocation {
-            fetchStreetDataAndScheduleNotifications(for: parkingLocation)
+        // Fetch street data immediately for the new coordinate (force fresh fetch)
+        // Use the coordinate we just set instead of relying on the vehicle's parking location
+        print("🚀 About to force fetch street data for NEW coordinate: \(settingCoordinate)")
+        
+        // Create a temporary parking location with the correct coordinate
+        let tempLocation = ParkingLocation(
+            coordinate: settingCoordinate,
+            address: address
+        )
+        
+        fetchStreetDataAndScheduleNotifications(for: tempLocation, forced: true)
+        
+        // Clear address after use (unless we used a placeholder)
+        if settingAddress != nil {
+            settingAddress = nil
         }
     }
     
@@ -1006,6 +1040,26 @@ struct VehicleParkingView: View {
         debouncedGeocoder.reverseGeocode(coordinate: coordinate) { address, _ in
             DispatchQueue.main.async {
                 self.settingAddress = address
+                
+                // If we're not in location setting mode anymore, update the address for the parked vehicle
+                if !self.isSettingLocation, 
+                   let selectedVehicle = self.vehicleManager.selectedVehicle,
+                   let currentLocation = selectedVehicle.parkingLocation {
+                    
+                    // Update the vehicle with the resolved address
+                    let updatedLocation = ParkingLocation(
+                        coordinate: currentLocation.coordinate,
+                        address: address,
+                        timestamp: currentLocation.timestamp,
+                        source: currentLocation.source,
+                        name: currentLocation.name,
+                        color: currentLocation.color,
+                        isActive: currentLocation.isActive
+                    )
+                    
+                    self.vehicleManager.setParkingLocation(for: selectedVehicle, location: updatedLocation)
+                    print("📍 Updated parking address: \(address)")
+                }
             }
         }
     }
@@ -1052,7 +1106,11 @@ struct VehicleParkingView: View {
         }
     }
     
-    private func fetchStreetDataAndScheduleNotifications(for location: ParkingLocation) {
+    private func fetchStreetDataAndScheduleNotifications(for location: ParkingLocation, forced: Bool = false) {
+        if forced {
+            // Reset the debouncing state to force a fresh fetch
+            streetDataManager.resetDebouncing()
+        }
         streetDataManager.fetchSchedules(for: location.coordinate)
     }
     
