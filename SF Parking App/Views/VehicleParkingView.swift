@@ -157,14 +157,9 @@ struct VehicleParkingView: View {
                 vehicleAnnotations
             }
             
-            // Street sweeping schedule lines (when detected)
+            // Street sweeping schedule edge lines (when detected)
             if isSettingLocation && !nearbySchedules.isEmpty {
-                multipleScheduleLines
-            }
-            
-            // Multiple schedule option markers for side-of-street selection
-            if isSettingLocation && nearbySchedules.count > 1 {
-                scheduleSelectionMarkers
+                streetEdgeScheduleLines
             }
         }
         .overlay(
@@ -269,67 +264,150 @@ struct VehicleParkingView: View {
         }
     }
     
-    // MARK: - Multiple Schedule Lines
+    // MARK: - Street Edge Schedule Lines
     
     @MapContentBuilder
-    private var multipleScheduleLines: some MapContent {
+    private var streetEdgeScheduleLines: some MapContent {
         ForEach(Array(nearbySchedules.enumerated()), id: \.0) { index, scheduleWithSide in
             if let line = scheduleWithSide.schedule.line {
+                // Create street-edge parking lines that are tappable
                 ForEach(0..<line.coordinates.count-1, id: \.self) { segmentIndex in
                     let startCoord = line.coordinates[segmentIndex]
                     let endCoord = line.coordinates[segmentIndex + 1]
                     
                     if startCoord.count >= 2 && endCoord.count >= 2 {
-                        MapPolyline(coordinates: [
-                            CLLocationCoordinate2D(latitude: startCoord[1], longitude: startCoord[0]),
-                            CLLocationCoordinate2D(latitude: endCoord[1], longitude: endCoord[0])
-                        ])
-                        .stroke(
-                            index == selectedScheduleIndex ? 
-                                (scheduleConfidence > 0.7 ? Color.green : scheduleConfidence > 0.4 ? Color.orange : Color.red) :
-                                Color.gray.opacity(0.6),
-                            style: StrokeStyle(
-                                lineWidth: index == selectedScheduleIndex ? 6 : 4,
-                                lineCap: .round, 
-                                lineJoin: .round
-                            )
+                        let streetEdgeCoords = calculateStreetEdgeCoordinates(
+                            start: CLLocationCoordinate2D(latitude: startCoord[1], longitude: startCoord[0]),
+                            end: CLLocationCoordinate2D(latitude: endCoord[1], longitude: endCoord[0]),
+                            blockSide: scheduleWithSide.side
                         )
+                        
+                        // Main parking zone line
+                        MapPolyline(coordinates: streetEdgeCoords)
+                            .stroke(
+                                index == selectedScheduleIndex ? Color.blue : Color.secondary.opacity(0.4),
+                                style: StrokeStyle(
+                                    lineWidth: index == selectedScheduleIndex ? 8 : 6,
+                                    lineCap: .round, 
+                                    lineJoin: .round
+                                )
+                            )
+                        
+                        // Add invisible annotations for tapping along the line
+                        let midPoint = calculateMidpoint(streetEdgeCoords)
+                        Annotation("", coordinate: midPoint) {
+                            Button(action: {
+                                selectScheduleOption(index)
+                            }) {
+                                Rectangle()
+                                    .fill(Color.clear)
+                                    .frame(width: 60, height: 20)
+                            }
+                        }
+                        
+                        // Elegant selection indicator with subtle glow
+                        if index == selectedScheduleIndex {
+                            MapPolyline(coordinates: streetEdgeCoords)
+                                .stroke(
+                                    Color.blue.opacity(0.3),
+                                    style: StrokeStyle(
+                                        lineWidth: 16,
+                                        lineCap: .round, 
+                                        lineJoin: .round
+                                    )
+                                )
+                        }
                     }
                 }
             }
         }
     }
     
-    // MARK: - Schedule Selection Markers
+    // Calculate street edge coordinates based on block side
+    private func calculateStreetEdgeCoordinates(
+        start: CLLocationCoordinate2D, 
+        end: CLLocationCoordinate2D, 
+        blockSide: String
+    ) -> [CLLocationCoordinate2D] {
+        
+        // Calculate the street direction vector
+        let streetVector = (
+            longitude: end.longitude - start.longitude,
+            latitude: end.latitude - start.latitude
+        )
+        
+        // Calculate perpendicular vector (rotate 90 degrees)
+        let perpVector = (
+            longitude: -streetVector.latitude,
+            latitude: streetVector.longitude
+        )
+        
+        // Normalize the perpendicular vector
+        let perpLength = sqrt(perpVector.longitude * perpVector.longitude + perpVector.latitude * perpVector.latitude)
+        guard perpLength > 0 else { return [start, end] }
+        
+        let normalizedPerp = (
+            longitude: perpVector.longitude / perpLength,
+            latitude: perpVector.latitude / perpLength
+        )
+        
+        // Determine offset direction and distance based on block side
+        let (offsetDirection, offsetDistance) = getStreetEdgeOffset(blockSide: blockSide)
+        
+        // Apply offset to both start and end points to create parking edge line
+        let offsetStart = CLLocationCoordinate2D(
+            latitude: start.latitude + (normalizedPerp.latitude * offsetDistance * offsetDirection),
+            longitude: start.longitude + (normalizedPerp.longitude * offsetDistance * offsetDirection)
+        )
+        
+        let offsetEnd = CLLocationCoordinate2D(
+            latitude: end.latitude + (normalizedPerp.latitude * offsetDistance * offsetDirection),
+            longitude: end.longitude + (normalizedPerp.longitude * offsetDistance * offsetDirection)
+        )
+        
+        return [offsetStart, offsetEnd]
+    }
     
-    @MapContentBuilder
-    private var scheduleSelectionMarkers: some MapContent {
-        ForEach(Array(nearbySchedules.enumerated()), id: \.0) { index, scheduleWithSide in
-            Annotation(
-                scheduleWithSide.schedule.streetName + " - " + scheduleWithSide.side,
-                coordinate: scheduleWithSide.offsetCoordinate
-            ) {
-                Button(action: {
-                    selectScheduleOption(index)
-                }) {
-                    ZStack {
-                        Circle()
-                            .fill(index == selectedScheduleIndex ? Color.blue : Color.gray)
-                            .frame(width: 32, height: 32)
-                            .overlay(
-                                Circle()
-                                    .stroke(Color.white, lineWidth: 3)
-                            )
-                        
-                        Text("\(index + 1)")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.white)
-                    }
-                    .scaleEffect(index == selectedScheduleIndex ? 1.2 : 1.0)
-                    .animation(.spring(response: 0.3, dampingFraction: 0.6), value: selectedScheduleIndex)
-                }
-            }
+    // Get proper street edge offset for realistic parking zone positioning
+    private func getStreetEdgeOffset(blockSide: String) -> (direction: Double, distance: Double) {
+        let side = blockSide.lowercased()
+        
+        // Street parking is typically 8-12 feet from the center line
+        // Using coordinate degrees: roughly 0.00003 = ~10 feet
+        let parkingLaneOffset = 0.00003
+        
+        // Determine which side of the street the parking is on
+        // NOTE: The perpendicular vector calculation rotates 90 degrees counterclockwise
+        // So we need to flip the direction to get the correct side
+        if side.contains("north") || side.contains("northeast") || side.contains("northwest") {
+            return (-1.0, parkingLaneOffset)  // North side - negative offset (flipped)
+        } else if side.contains("south") || side.contains("southeast") || side.contains("southwest") {
+            return (1.0, parkingLaneOffset) // South side - positive offset (flipped)
+        } else if side.contains("east") {
+            return (-1.0, parkingLaneOffset)   // East side - negative offset (flipped)
+        } else if side.contains("west") {
+            return (1.0, parkingLaneOffset)  // West side - positive offset (flipped)
+        } else {
+            // Default: slight offset to distinguish from street center
+            return (1.0, parkingLaneOffset * 0.5)
         }
+    }
+    
+    // Calculate midpoint of a line for annotation placement
+    private func calculateMidpoint(_ coordinates: [CLLocationCoordinate2D]) -> CLLocationCoordinate2D {
+        guard !coordinates.isEmpty else {
+            return CLLocationCoordinate2D(latitude: 0, longitude: 0)
+        }
+        
+        if coordinates.count == 2 {
+            let lat = (coordinates[0].latitude + coordinates[1].latitude) / 2
+            let lon = (coordinates[0].longitude + coordinates[1].longitude) / 2
+            return CLLocationCoordinate2D(latitude: lat, longitude: lon)
+        }
+        
+        // For multiple coordinates, return the middle one
+        let midIndex = coordinates.count / 2
+        return coordinates[midIndex]
     }
     
     // MARK: - Top Controls
@@ -658,13 +736,13 @@ struct VehicleParkingView: View {
                 
                 VStack(spacing: 8) {
 
-                    Button("Confirm Location") {
+                    Button("Confirm") {
                         notificationFeedback.notificationOccurred(.success)
                         withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
                             confirmUnifiedLocation()
                         }
                     }
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 52)
@@ -1553,58 +1631,128 @@ struct VehicleParkingView: View {
         // Handle notifications when vehicles are selected
     }
     
-    // MARK: - Street Sweeping Section (title outside, elegant simplicity)
+    // MARK: - Street Sweeping Section (redesigned for beautiful light/dark mode)
     private func streetSweepingSection() -> some View {
-        VStack(spacing: 8) {
-            // Title outside the box
+        VStack(spacing: 12) {
+            // Title with refined styling
             HStack {
-                Text("Street Sweeping")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.secondary)
+                Text("My Vehicle")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(.primary)
                 
                 Spacer()
                 
                 if isAutoDetectingSchedule {
                     ProgressView()
-                        .scaleEffect(0.7)
-                        .tint(.secondary)
+                        .scaleEffect(0.8)
+                        .tint(.blue)
                 }
             }
             
-            // Content box - always same height
-            Group {
-                if nearbySchedules.isEmpty {
-                    // No schedules - centered text
-                    Text(settingAddress != nil ? "No restrictions" : "Move map to check")
-                        .font(.system(size: 15))
+            // Schedule cards with consistent height but no background container
+            if nearbySchedules.isEmpty {
+                // No schedules - centered beautiful state
+                VStack(spacing: 8) {
+                    Image(systemName: settingAddress != nil ? "checkmark.circle.fill" : "location.circle")
+                        .font(.system(size: 24, weight: .medium))
+                        .foregroundColor(settingAddress != nil ? .green : .blue.opacity(0.7))
+                    
+                    Text(settingAddress != nil ? "No parking restrictions" : "Move map to check area")
+                        .font(.system(size: 15, weight: .medium))
                         .foregroundColor(settingAddress != nil ? .green : .secondary)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 80)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(.ultraThinMaterial)
-                        )
-                } else {
-                    // Scrollable schedule cards
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 12) {
-                            ForEach(Array(nearbySchedules.enumerated()), id: \.0) { index, scheduleWithSide in
-                                scheduleCard(scheduleWithSide, index: index)
-                            }
-                        }
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 4) // Extra padding to prevent clipping when scaled
-                    }
-                    .frame(height: 80)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .clipped()
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(.ultraThinMaterial)
-                    )
+                        .multilineTextAlignment(.center)
                 }
+                .frame(maxWidth: .infinity)
+                .frame(height: 88)
+            } else {
+                // Standalone schedule cards with proper padding to prevent clipping
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        ForEach(Array(nearbySchedules.enumerated()), id: \.0) { index, scheduleWithSide in
+                            elegantScheduleCard(scheduleWithSide, index: index)
+                        }
+                    }
+                    .padding(.leading, 4) // Minimal leading padding to prevent clipping
+                    .padding(.trailing, 20) // Trailing padding for right side
+                    .padding(.vertical, 12) // Extra padding to prevent clipping when cards scale up
+                }
+                .frame(height: 88)
             }
         }
+    }
+    
+    // MARK: - Elegant Schedule Card (redesigned for beautiful light/dark mode)
+    private func elegantScheduleCard(_ scheduleWithSide: SweepScheduleWithSide, index: Int) -> some View {
+        let isSelected = index == selectedScheduleIndex
+        let schedule = scheduleWithSide.schedule
+        
+        return Button(action: {
+            selectScheduleOption(index)
+        }) {
+            VStack(alignment: .leading, spacing: 4) {
+                // Street name with side indicator
+                HStack(spacing: 6) {
+                    Text(schedule.streetName)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
+                    
+                    // Side badge
+                    Text(formatSideDescription(scheduleWithSide.side))
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(.secondary)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(
+                            Capsule()
+                                .fill(Color(.systemGray5))
+                        )
+                }
+                
+                // Schedule timing with cleaner format
+                Text(formatConciseSchedule(schedule))
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+            }
+            .frame(width: 220, height: 56)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(
+                        isSelected ? 
+                        Color.blue.opacity(0.12) : 
+                        Color(.systemBackground)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(
+                                isSelected ? 
+                                Color.blue.opacity(0.4) : 
+                                Color(.systemGray4).opacity(0.6), 
+                                lineWidth: isSelected ? 2 : 1
+                            )
+                    )
+                    .shadow(
+                        color: isSelected ? 
+                        Color.blue.opacity(0.15) : 
+                        Color.black.opacity(0.06), 
+                        radius: isSelected ? 6 : 2, 
+                        x: 0, 
+                        y: isSelected ? 3 : 1
+                    )
+            )
+            .scaleEffect(isSelected ? 1.02 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+    
+    // MARK: - Concise Schedule Formatter
+    private func formatConciseSchedule(_ schedule: SweepSchedule) -> String {
+        let pattern = getSimpleWeekPattern(schedule)
+        return "\(pattern) \(schedule.sweepDay), \(schedule.startTime)–\(schedule.endTime)"
     }
     
     // MARK: - Schedule Option Box (matches "no restrictions" styling)
