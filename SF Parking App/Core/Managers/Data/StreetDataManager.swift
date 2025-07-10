@@ -15,6 +15,11 @@ class StreetDataManager: ObservableObject {
     @Published var hasError = false
     @Published var nextUpcomingSchedule: UpcomingSchedule?
     
+    // For area visualization in two-step location setting
+    @Published var areaSchedules: [SweepSchedule] = []
+    @Published var isLoadingAreaSchedules = false
+    @Published var selectedSchedule: SweepSchedule?
+    
     // Add debouncing to prevent repeated API calls
     private var lastFetchedCoordinate: CLLocationCoordinate2D?
     private var lastFetchTime: Date?
@@ -132,18 +137,29 @@ class StreetDataManager: ObservableObject {
         return "Unknown Location"
     }
     
-    private func processNextSchedule(for schedule: SweepSchedule) {
+    func processNextSchedule(for schedule: SweepSchedule) {
         let now = Date()
         
         guard let weekday = schedule.weekday,
               let fromHour = schedule.fromhour,
-              let toHour = schedule.tohour else { return }
+              let toHour = schedule.tohour else { 
+            print("❌ Missing schedule data: weekday=\(schedule.weekday ?? "nil"), fromHour=\(schedule.fromhour ?? "nil"), toHour=\(schedule.tohour ?? "nil")")
+            return 
+        }
         
         let weekdayNum = dayStringToWeekday(weekday)
-        guard weekdayNum > 0 else { return }
+        guard weekdayNum > 0 else { 
+            print("❌ Invalid weekday: \(weekday)")
+            return 
+        }
         
         guard let startHour = Int(fromHour),
-              let endHour = Int(toHour) else { return }
+              let endHour = Int(toHour) else { 
+            print("❌ Invalid hours: fromHour=\(fromHour), toHour=\(toHour)")
+            return 
+        }
+        
+        print("🔍 Processing schedule for \(schedule.streetName): \(weekday) \(schedule.startTime)-\(schedule.endTime)")
         
         let nextOccurrences = findNextOccurrences(weekday: weekdayNum, schedule: schedule, from: now)
         
@@ -168,36 +184,85 @@ class StreetDataManager: ObservableObject {
         }
         
         nextUpcomingSchedule = upcomingSchedules.sorted { $0.date < $1.date }.first
+        
+        if let next = nextUpcomingSchedule {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "MMM d, yyyy h:mm a"
+            print("✅ Next occurrence: \(formatter.string(from: next.date))")
+        } else {
+            print("❌ No upcoming schedules found")
+        }
     }
     
     private func findNextOccurrences(weekday: Int, schedule: SweepSchedule, from date: Date) -> [Date] {
         let calendar = Calendar.current
         var occurrences: [Date] = []
         
-        // Look ahead for up to 8 weeks to find valid occurrences
-        for weekOffset in 0..<8 {
-            guard let futureDate = calendar.date(byAdding: .weekOfYear, value: weekOffset, to: date) else { continue }
+        // Look ahead for up to 6 months to find valid occurrences
+        for monthOffset in 0..<6 {
+            guard let futureMonth = calendar.date(byAdding: .month, value: monthOffset, to: date) else { continue }
             
-            // Find the next occurrence of the target weekday in this week
-            let targetDate = nextOccurrence(of: weekday, from: futureDate, allowSameDay: weekOffset == 0)
-            let weekOfMonth = calendar.component(.weekOfMonth, from: targetDate)
+            // Get all occurrences of the target weekday in this month
+            let monthOccurrences = getAllWeekdayOccurrencesInMonth(weekday: weekday, month: futureMonth, calendar: calendar)
             
-            let appliesThisWeek: Bool
-            switch weekOfMonth {
-            case 1: appliesThisWeek = schedule.week1 == "1"
-            case 2: appliesThisWeek = schedule.week2 == "1"
-            case 3: appliesThisWeek = schedule.week3 == "1"
-            case 4: appliesThisWeek = schedule.week4 == "1"
-            case 5: appliesThisWeek = schedule.week5 == "1"
-            default: appliesThisWeek = false
-            }
-            
-            if appliesThisWeek {
-                occurrences.append(targetDate)
+            for (weekNumber, weekdayDate) in monthOccurrences.enumerated() {
+                let weekPos = weekNumber + 1
+                let applies = doesScheduleApplyToWeek(weekNumber: weekPos, schedule: schedule)
+                
+                if applies {
+                    // Create the actual start time for this occurrence
+                    guard let startHour = schedule.fromhour, let hour = Int(startHour) else { continue }
+                    guard let scheduleDateTime = calendar.date(bySettingHour: hour, minute: 0, second: 0, of: weekdayDate) else { continue }
+                    
+                    // Only include if the schedule time is in the future
+                    if scheduleDateTime > date {
+                        occurrences.append(weekdayDate)
+                    }
+                }
             }
         }
         
+        return occurrences.sorted()
+    }
+    
+    // Get all occurrences of a specific weekday in a given month
+    private func getAllWeekdayOccurrencesInMonth(weekday: Int, month: Date, calendar: Calendar) -> [Date] {
+        var occurrences: [Date] = []
+        
+        // Get the first day of the month
+        let monthComponents = calendar.dateComponents([.year, .month], from: month)
+        guard let firstDayOfMonth = calendar.date(from: monthComponents) else { return [] }
+        
+        // Find the first occurrence of the target weekday in this month
+        let firstWeekday = calendar.component(.weekday, from: firstDayOfMonth)
+        var daysToAdd = weekday - firstWeekday
+        if daysToAdd < 0 {
+            daysToAdd += 7
+        }
+        
+        guard let firstOccurrence = calendar.date(byAdding: .day, value: daysToAdd, to: firstDayOfMonth) else { return [] }
+        
+        // Add all occurrences of this weekday in the month (typically 4-5 times)
+        var currentDate = firstOccurrence
+        while calendar.component(.month, from: currentDate) == calendar.component(.month, from: month) {
+            occurrences.append(currentDate)
+            guard let nextWeek = calendar.date(byAdding: .weekOfYear, value: 1, to: currentDate) else { break }
+            currentDate = nextWeek
+        }
+        
         return occurrences
+    }
+    
+    // Check if the schedule applies to a specific week number (1st, 2nd, 3rd, 4th, 5th)
+    private func doesScheduleApplyToWeek(weekNumber: Int, schedule: SweepSchedule) -> Bool {
+        switch weekNumber {
+        case 1: return schedule.week1 == "1"
+        case 2: return schedule.week2 == "1"
+        case 3: return schedule.week3 == "1"
+        case 4: return schedule.week4 == "1"
+        case 5: return schedule.week5 == "1"
+        default: return false
+        }
     }
     
     private func dayStringToWeekday(_ dayString: String) -> Int {
@@ -235,6 +300,41 @@ class StreetDataManager: ObservableObject {
         return calendar.date(bySettingHour: hour, minute: 0, second: 0, of: date)
     }
     
+    /// Fetch all street sweeping schedules in an area for visualization
+    func fetchAreaSchedules(for coordinate: CLLocationCoordinate2D) {
+        isLoadingAreaSchedules = true
+        selectedSchedule = nil
+        
+        StreetDataService.shared.getSchedulesInArea(for: coordinate) { [weak self] result in
+            DispatchQueue.main.async {
+                self?.isLoadingAreaSchedules = false
+                
+                switch result {
+                case .success(let schedules):
+                    self?.areaSchedules = schedules
+                    print("✅ Loaded \(schedules.count) schedules for area visualization")
+                case .failure(let error):
+                    print("❌ Failed to load area schedules: \(error)")
+                    self?.areaSchedules = []
+                }
+            }
+        }
+    }
+    
+    /// Select a specific schedule from the area schedules
+    func selectSchedule(_ schedule: SweepSchedule) {
+        selectedSchedule = schedule
+        self.schedule = schedule
+        processNextSchedule(for: schedule)
+    }
+    
+    /// Clear area visualization data
+    func clearAreaData() {
+        areaSchedules = []
+        selectedSchedule = nil
+        isLoadingAreaSchedules = false
+    }
+    
     // Clean up method to reset state when needed
     func reset() {
         lastFetchedCoordinate = nil
@@ -243,5 +343,8 @@ class StreetDataManager: ObservableObject {
         nextUpcomingSchedule = nil
         isLoading = false
         hasError = false
+        
+        // Clear area data
+        clearAreaData()
     }
 }

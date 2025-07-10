@@ -8,6 +8,33 @@ import Foundation
 import CoreLocation
 import SwiftUI
 
+// Simplified schedule data for persistence (avoids complex line geometry)
+struct PersistedSweepSchedule: Codable, Equatable {
+    let streetName: String
+    let blockSide: String
+    let weekday: String
+    let startTime: String
+    let endTime: String
+    let week1: String
+    let week2: String
+    let week3: String
+    let week4: String
+    let week5: String
+    
+    init(from schedule: SweepSchedule, side: String) {
+        self.streetName = schedule.streetName
+        self.blockSide = side
+        self.weekday = schedule.weekday ?? ""
+        self.startTime = schedule.startTime
+        self.endTime = schedule.endTime
+        self.week1 = schedule.week1 ?? ""
+        self.week2 = schedule.week2 ?? ""
+        self.week3 = schedule.week3 ?? ""
+        self.week4 = schedule.week4 ?? ""
+        self.week5 = schedule.week5 ?? ""
+    }
+}
+
 enum ParkingSource: String, Codable {
     case manual = "manual"
     case motionActivity = "motion_activity"
@@ -78,7 +105,10 @@ struct ParkingLocation: Identifiable, Codable, Equatable {
     let color: ParkingLocationColor
     let isActive: Bool
     
-    init(coordinate: CLLocationCoordinate2D, address: String, timestamp: Date = Date(), source: ParkingSource = .manual, name: String? = nil, color: ParkingLocationColor = .blue, isActive: Bool = true) {
+    // Store user's selected schedule to persist their side-of-street choice
+    let selectedSchedule: PersistedSweepSchedule?
+    
+    init(coordinate: CLLocationCoordinate2D, address: String, timestamp: Date = Date(), source: ParkingSource = .manual, name: String? = nil, color: ParkingLocationColor = .blue, isActive: Bool = true, selectedSchedule: PersistedSweepSchedule? = nil) {
         self.id = UUID()
         self.coordinate = coordinate
         self.address = address
@@ -87,6 +117,7 @@ struct ParkingLocation: Identifiable, Codable, Equatable {
         self.name = name
         self.color = color
         self.isActive = isActive
+        self.selectedSchedule = selectedSchedule
     }
     
     var displayName: String {
@@ -116,7 +147,7 @@ struct ParkingLocation: Identifiable, Codable, Equatable {
     
     // Custom encoding/decoding for CLLocationCoordinate2D
     enum CodingKeys: String, CodingKey {
-        case id, coordinate, address, timestamp, source, name, color, isActive
+        case id, coordinate, address, timestamp, source, name, color, isActive, selectedSchedule
     }
     
     enum LegacyCodingKeys: String, CodingKey {
@@ -145,6 +176,7 @@ struct ParkingLocation: Identifiable, Codable, Equatable {
         self.name = try container.decodeIfPresent(String.self, forKey: .name)
         self.color = try container.decodeIfPresent(ParkingLocationColor.self, forKey: .color) ?? .blue
         self.isActive = try container.decodeIfPresent(Bool.self, forKey: .isActive) ?? true
+        self.selectedSchedule = try container.decodeIfPresent(PersistedSweepSchedule.self, forKey: .selectedSchedule)
         
         // Handle migration from old isManuallySet to new source
         if let legacyContainer = try? decoder.container(keyedBy: LegacyCodingKeys.self),
@@ -168,5 +200,6 @@ struct ParkingLocation: Identifiable, Codable, Equatable {
         try container.encodeIfPresent(name, forKey: .name)
         try container.encode(color, forKey: .color)
         try container.encode(isActive, forKey: .isActive)
+        try container.encodeIfPresent(selectedSchedule, forKey: .selectedSchedule)
     }
 }

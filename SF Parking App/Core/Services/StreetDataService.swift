@@ -127,230 +127,491 @@ struct LineSegment {
     }
 }
 
+// MARK: - Models
+struct SweepScheduleWithSide {
+    let schedule: SweepSchedule
+    let offsetCoordinate: CLLocationCoordinate2D // Coordinate offset to the side of the street
+    let side: String // "North", "South", "East", "West" or blockside description
+    let distance: Double // Distance from user's selected point
+}
+
+struct LocalSweepSchedule {
+    let cnn: String
+    let corridor: String
+    let limits: String
+    let blockSide: String
+    let fullName: String
+    let weekday: String
+    let fromHour: Int
+    let toHour: Int
+    let week1: Int
+    let week2: Int
+    let week3: Int
+    let week4: Int
+    let week5: Int
+    let holidays: Int
+    let blockSweepID: Int
+    let lineCoordinates: [[Double]] // Parsed from Line column
+    
+    // Computed properties for compatibility with existing code
+    var streetName: String { return corridor }
+    var sweepDay: String { return weekday }
+    
+    var startTime: String {
+        let period = fromHour < 12 ? "AM" : "PM"
+        let displayHour = fromHour == 0 ? 12 : (fromHour > 12 ? fromHour - 12 : fromHour)
+        return "\(displayHour):00 \(period)"
+    }
+    
+    var endTime: String {
+        let period = toHour < 12 ? "AM" : "PM"
+        let displayHour = toHour == 0 ? 12 : (toHour > 12 ? toHour - 12 : toHour)
+        return "\(displayHour):00 \(period)"
+    }
+}
+
+// MARK: - Spatial Grid for Fast Lookups
+class SpatialGrid {
+    private let cellSize: Double = 0.001 // roughly 100 meters in SF
+    private var grid: [String: [LocalSweepSchedule]] = [:]
+    
+    private func getCellKey(for coordinate: CLLocationCoordinate2D) -> String {
+        let x = Int(coordinate.longitude / cellSize)
+        let y = Int(coordinate.latitude / cellSize)
+        return "\(x),\(y)"
+    }
+    
+    func addSchedule(_ schedule: LocalSweepSchedule) {
+        // Add schedule to all grid cells it intersects
+        for coord in schedule.lineCoordinates {
+            let location = CLLocationCoordinate2D(latitude: coord[1], longitude: coord[0])
+            let key = getCellKey(for: location)
+            
+            if grid[key] == nil {
+                grid[key] = []
+            }
+            
+            // Avoid duplicates
+            if !grid[key]!.contains(where: { $0.blockSweepID == schedule.blockSweepID }) {
+                grid[key]!.append(schedule)
+            }
+        }
+    }
+    
+    func getSchedulesNear(_ coordinate: CLLocationCoordinate2D, radius: Int = 2) -> [LocalSweepSchedule] {
+        var schedules: [LocalSweepSchedule] = []
+        let centerKey = getCellKey(for: coordinate)
+        let centerX = Int(coordinate.longitude / cellSize)
+        let centerY = Int(coordinate.latitude / cellSize)
+        
+        // Check surrounding cells
+        for dx in -radius...radius {
+            for dy in -radius...radius {
+                let key = "\(centerX + dx),\(centerY + dy)"
+                if let cellSchedules = grid[key] {
+                    schedules.append(contentsOf: cellSchedules)
+                }
+            }
+        }
+        
+        // Remove duplicates
+        let uniqueSchedules = Array(Set(schedules.map { $0.blockSweepID }))
+            .compactMap { id in schedules.first { $0.blockSweepID == id } }
+        
+        return uniqueSchedules
+    }
+}
+
+// MARK: - Main Service
 final class StreetDataService {
     static let shared = StreetDataService()
-    private let session = URLSession.shared
-    private let baseURL = "https://data.sfgov.org/resource/yhqp-riqs.json"
-    private let maxDistance = 50.0 // 50 feet maximum distance
-
-    private init() {}
-
+    
+    private var schedules: [LocalSweepSchedule] = []
+    private var spatialGrid = SpatialGrid()
+    private let maxDistance = 50.0 // 50 feet
+    private var isLoaded = false
+    
+    private init() {
+        // Test WKT parsing with known good data
+        if let testCoords = parseLineCoordinates("\"LINESTRING (-122.416291701103 37.777493843394, -122.416317106137 37.777410028361)\"") {
+            print("🧪 WKT parsing test successful: \(testCoords.count) coordinates")
+        } else {
+            print("❌ WKT parsing test failed")
+        }
+        
+        loadSchedulesFromCSV()
+    }
+    
+    // MARK: - CSV Loading
+    private func loadSchedulesFromCSV() {
+        print("Loading street sweeping schedules from CSV...")
+        
+        guard let csvPath = Bundle.main.path(forResource: "Street_Sweeping_Schedule_20250709", ofType: "csv") else {
+            print("❌ CSV file not found in bundle")
+            return
+        }
+        
+        guard let csvContent = try? String(contentsOfFile: csvPath) else {
+            print("❌ Failed to read CSV file")
+            return
+        }
+        
+        let lines = csvContent.components(separatedBy: .newlines)
+        guard lines.count > 1 else {
+            print("❌ CSV file appears empty")
+            return
+        }
+        
+        // Skip header row
+        let dataLines = Array(lines.dropFirst())
+        var loadedCount = 0
+        
+        for (index, line) in dataLines.enumerated() {
+            if line.trimmingCharacters(in: .whitespaces).isEmpty { continue }
+            
+            if let schedule = parseCSVLine(line, lineIndex: index) {
+                schedules.append(schedule)
+                spatialGrid.addSchedule(schedule)
+                loadedCount += 1
+            } else if index < 10 {
+                print("❌ Failed to parse line \(index): \(line.prefix(100))")
+            }
+        }
+        
+        isLoaded = true
+        print("✅ Loaded \(loadedCount) street sweeping schedules from \(dataLines.count) total lines")
+    }
+    
+    private func parseCSVLine(_ line: String, lineIndex: Int) -> LocalSweepSchedule? {
+        let columns = parseCSVRow(line)
+        
+        guard columns.count >= 17 else {
+            return nil
+        }
+        
+        // Parse the Line column (WKT LINESTRING format)
+        guard let lineCoordinates = parseLineCoordinates(columns[16]) else {
+            if lineIndex < 5 {
+                print("❌ Failed to parse coordinates for line \(lineIndex): \(columns[16].prefix(100))")
+            }
+            return nil
+        }
+        
+        if lineIndex < 5 {
+            print("✅ Parsed \(lineCoordinates.count) coordinates for \(columns[1])")
+        }
+        
+        return LocalSweepSchedule(
+            cnn: columns[0],
+            corridor: columns[1],
+            limits: columns[2],
+            blockSide: columns[4],
+            fullName: columns[5],
+            weekday: columns[6],
+            fromHour: Int(columns[7]) ?? 0,
+            toHour: Int(columns[8]) ?? 0,
+            week1: Int(columns[9]) ?? 0,
+            week2: Int(columns[10]) ?? 0,
+            week3: Int(columns[11]) ?? 0,
+            week4: Int(columns[12]) ?? 0,
+            week5: Int(columns[13]) ?? 0,
+            holidays: Int(columns[14]) ?? 0,
+            blockSweepID: Int(columns[15]) ?? 0,
+            lineCoordinates: lineCoordinates
+        )
+    }
+    
+    // Simple CSV parser that handles quoted fields
+    private func parseCSVRow(_ row: String) -> [String] {
+        var fields: [String] = []
+        var currentField = ""
+        var inQuotes = false
+        var i = row.startIndex
+        
+        while i < row.endIndex {
+            let char = row[i]
+            
+            if char == "\"" {
+                if inQuotes && i < row.index(before: row.endIndex) && row[row.index(after: i)] == "\"" {
+                    // Escaped quote
+                    currentField.append("\"")
+                    i = row.index(after: i)
+                } else {
+                    inQuotes.toggle()
+                }
+            } else if char == "," && !inQuotes {
+                fields.append(currentField.trimmingCharacters(in: .whitespaces))
+                currentField = ""
+            } else {
+                currentField.append(char)
+            }
+            
+            i = row.index(after: i)
+        }
+        
+        // Add the last field
+        fields.append(currentField.trimmingCharacters(in: .whitespaces))
+        
+        return fields
+    }
+    
+    // Parse the Line column which contains WKT LINESTRING format
+    private func parseLineCoordinates(_ lineString: String) -> [[Double]]? {
+        // The Line column contains WKT format like: "LINESTRING (-122.416291701103 37.777493843394, -122.416317106137 37.777410028361)"
+        let trimmed = lineString.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Remove quotes if present
+        let unquoted = trimmed.hasPrefix("\"") && trimmed.hasSuffix("\"") 
+            ? String(trimmed.dropFirst().dropLast()) 
+            : trimmed
+        
+        // Check if it starts with LINESTRING
+        guard unquoted.hasPrefix("LINESTRING") else {
+            return nil
+        }
+        
+        // Extract coordinates from LINESTRING (lon lat, lon lat, ...)
+        let coordinatesStart = unquoted.firstIndex(of: "(")
+        let coordinatesEnd = unquoted.lastIndex(of: ")")
+        
+        guard let start = coordinatesStart, let end = coordinatesEnd else {
+            return nil
+        }
+        
+        let coordinatesString = String(unquoted[unquoted.index(after: start)..<end])
+        let coordinatePairs = coordinatesString.components(separatedBy: ",")
+        
+        var coordinates: [[Double]] = []
+        
+        for pair in coordinatePairs {
+            let trimmedPair = pair.trimmingCharacters(in: .whitespacesAndNewlines)
+            let components = trimmedPair.components(separatedBy: " ")
+            
+            if components.count == 2,
+               let lon = Double(components[0]),
+               let lat = Double(components[1]) {
+                coordinates.append([lon, lat])
+            }
+        }
+        
+        return coordinates.isEmpty ? nil : coordinates
+    }
+    
+    // MARK: - Public API (matches your existing interface)
     func getClosestSchedule(for coordinate: CLLocationCoordinate2D, completion: @escaping (Result<SweepSchedule?, ParkingError>) -> Void) {
-        // Try multiple approaches
-        print("Searching for schedules near: \(coordinate.latitude), \(coordinate.longitude)")
-        
-        // First try the spatial query approach
-        getSchedulesWithinRadius(for: coordinate) { [weak self] schedules in
-            if let schedules = schedules, !schedules.isEmpty {
-                print("Spatial query found \(schedules.count) schedules")
-                let closestSchedule = self?.findClosestSchedule(from: coordinate, schedules: schedules)
-                if let schedule = closestSchedule {
-                    completion(.success(schedule))
-                } else {
-                    completion(.success(nil)) // No schedules within range, but data was retrieved
-                }
-                return
-            }
-            
-            print("Spatial query returned no results, trying fallback approach...")
-            
-            // Fallback: Get a larger sample and filter client-side
-            self?.getSchedulesFallback(for: coordinate, completion: completion)
-        }
-    }
-    
-    private func getSchedulesWithinRadius(for coordinate: CLLocationCoordinate2D, completion: @escaping ([SweepSchedule]?) -> Void) {
-        // More accurate degree calculation for San Francisco latitude
-        let latInRadians = coordinate.latitude * .pi / 180
-        let feetPerDegreeLat = 364000.0 // roughly constant
-        let feetPerDegreeLng = 364000.0 * cos(latInRadians) // varies by latitude
-        
-        let radiusInFeet = 200.0 // Start with larger radius for testing
-        let deltaLat = radiusInFeet / feetPerDegreeLat
-        let deltaLng = radiusInFeet / feetPerDegreeLng
-        
-        let minLat = coordinate.latitude - deltaLat
-        let maxLat = coordinate.latitude + deltaLat
-        let minLng = coordinate.longitude - deltaLng
-        let maxLng = coordinate.longitude + deltaLng
-        
-        print("Search bounds: lat[\(minLat), \(maxLat)] lng[\(minLng), \(maxLng)]")
-        
-        // Try different spatial query formats
-        let queries = [
-            // Standard intersects with polygon
-            "intersects(line, 'POLYGON((\(minLng) \(maxLat), \(maxLng) \(maxLat), \(maxLng) \(minLat), \(minLng) \(minLat), \(minLng) \(maxLat)))')",
-            
-            // Alternative: Use within_circle if supported
-            "within_circle(line, \(coordinate.latitude), \(coordinate.longitude), \(radiusInFeet * 0.3048))", // Convert feet to meters
-            
-            // Simple bounding box on coordinates (if line has point representation)
-            "latitude between \(minLat) and \(maxLat) and longitude between \(minLng) and \(maxLng)"
-        ]
-        
-        tryQueriesSequentially(queries: queries, completion: completion)
-    }
-    
-    private func tryQueriesSequentially(queries: [String], completion: @escaping ([SweepSchedule]?) -> Void) {
-        guard !queries.isEmpty else {
-            completion(nil)
+        guard isLoaded else {
+            print("❌ StreetDataService not loaded yet")
+            completion(.failure(.noData))
             return
         }
         
-        let whereClause = queries[0]
-        let remainingQueries = Array(queries.dropFirst())
+        print("🔍 Total schedules loaded: \(schedules.count)")
         
-        guard let query = "\(baseURL)?$where=\(whereClause)&$limit=1000"
-                .addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-              let url = URL(string: query) else {
-            print("Failed to create URL for query: \(whereClause)")
-            tryQueriesSequentially(queries: remainingQueries, completion: completion)
+        // Get candidates from spatial grid
+        let candidates = spatialGrid.getSchedulesNear(coordinate)
+        print("🔍 Found \(candidates.count) candidate schedules near \(coordinate)")
+        
+        // Find the closest one
+        let closestSchedule = findClosestSchedule(from: coordinate, schedules: candidates)
+        
+        if let schedule = closestSchedule {
+            print("✅ Found closest schedule: \(schedule.corridor) at distance within 50 feet")
+        } else {
+            print("❌ No schedules found within 50 feet of \(coordinate)")
+        }
+        
+        // Convert to your existing SweepSchedule format
+        if let local = closestSchedule {
+            let apiSchedule = convertToAPIFormat(local)
+            completion(.success(apiSchedule))
+        } else {
+            completion(.success(nil))
+        }
+    }
+    
+    // New method to get nearby schedules for side-of-street selection
+    func getNearbySchedulesForSelection(for coordinate: CLLocationCoordinate2D, completion: @escaping (Result<[SweepScheduleWithSide], ParkingError>) -> Void) {
+        guard isLoaded else {
+            completion(.failure(.noData))
             return
         }
         
-        print("Trying query: \(whereClause)")
-        print("Full URL: \(query)")
+        // Get candidates from spatial grid
+        let candidates = spatialGrid.getSchedulesNear(coordinate)
         
-        let request = URLRequest(url: url)
+        // Find all schedules within range and calculate their side positions
+        let schedulesWithSides = findSchedulesWithSides(from: coordinate, schedules: candidates)
         
-        session.dataTask(with: request) { [weak self] data, response, error in
-            if let error = error {
-                print("Network error for query '\(whereClause)': \(error)")
-                self?.tryQueriesSequentially(queries: remainingQueries, completion: completion)
-                return
-            }
-            
-            if let httpResponse = response as? HTTPURLResponse {
-                print("HTTP Status: \(httpResponse.statusCode)")
-            }
-            
-            guard let data = data else {
-                print("No data received for query: \(whereClause)")
-                self?.tryQueriesSequentially(queries: remainingQueries, completion: completion)
-                return
-            }
-            
-            // Print raw response for debugging
-            if let responseString = String(data: data, encoding: .utf8) {
-                print("Raw response length: \(responseString.count)")
-                if responseString.count < 1000 {
-                    print("Raw response: \(responseString)")
-                }
-            }
-            
-            do {
-                let schedules = try JSONDecoder().decode([SweepSchedule].self, from: data)
-                print("Query '\(whereClause)' found \(schedules.count) schedules")
-                
-                if schedules.isEmpty && !remainingQueries.isEmpty {
-                    // Try next query
-                    self?.tryQueriesSequentially(queries: remainingQueries, completion: completion)
-                } else {
-                    completion(schedules)
-                }
-            } catch {
-                print("Decoding error for query '\(whereClause)': \(error)")
-                self?.tryQueriesSequentially(queries: remainingQueries, completion: completion)
-            }
-        }.resume()
+        print("🔍 Found \(schedulesWithSides.count) schedules with side information for selection")
+        
+        completion(.success(schedulesWithSides))
     }
     
-    private func getSchedulesFallback(for coordinate: CLLocationCoordinate2D, completion: @escaping (Result<SweepSchedule?, ParkingError>) -> Void) {
-        // Get a sample of all data and filter client-side
-        let fallbackURL = "\(baseURL)?$limit=5000"
-        
-        guard let url = URL(string: fallbackURL) else {
-            completion(.failure(.invalidURL))
+    func getSchedulesInArea(for coordinate: CLLocationCoordinate2D, completion: @escaping (Result<[SweepSchedule], ParkingError>) -> Void) {
+        guard isLoaded else {
+            completion(.failure(.noData))
             return
         }
         
-        print("Trying fallback: getting sample data to filter client-side")
+        let candidates = spatialGrid.getSchedulesNear(coordinate, radius: 5) // Larger radius for area view
+        let apiSchedules = candidates.map { convertToAPIFormat($0) }
         
-        let request = URLRequest(url: url)
-        
-        session.dataTask(with: request) { [weak self] data, response, error in
-            if let error = error {
-                print("Fallback network error: \(error)")
-                completion(.failure(.networkError(error)))
-                return
-            }
-            
-            guard let data = data else {
-                print("No fallback data received")
-                completion(.failure(.noData))
-                return
-            }
-            
-            do {
-                let allSchedules = try JSONDecoder().decode([SweepSchedule].self, from: data)
-                print("Fallback: Got \(allSchedules.count) total schedules to filter")
-                
-                // Filter client-side
-                let closestSchedule = self?.findClosestSchedule(from: coordinate, schedules: allSchedules)
-                completion(.success(closestSchedule))
-            } catch {
-                print("Fallback decoding error: \(error)")
-                completion(.failure(.decodingError(error)))
-            }
-        }.resume()
+        completion(.success(apiSchedules))
     }
     
-    private func findClosestSchedule(from point: CLLocationCoordinate2D, schedules: [SweepSchedule]) -> SweepSchedule? {
-        var closestSchedule: SweepSchedule?
+    // MARK: - Helper Methods
+    private func findClosestSchedule(from point: CLLocationCoordinate2D, schedules: [LocalSweepSchedule]) -> LocalSweepSchedule? {
+        var closestSchedule: LocalSweepSchedule?
         var minDistance = Double.infinity
         
-        print("Checking \(schedules.count) schedules for closest match...")
-        
         for schedule in schedules {
-            guard let line = schedule.line else {
-                print("Schedule missing line geometry: \(schedule.streetName)")
-                continue
-            }
-            
-            // Find the closest distance to this schedule's line
-            let coordinates = line.coordinates
-            guard coordinates.count >= 2 else {
-                print("Schedule has insufficient coordinates: \(schedule.streetName)")
-                continue
-            }
-            
             var scheduleMinDistance = Double.infinity
             
             // Check distance to each line segment
-            for i in 0..<(coordinates.count - 1) {
+            for i in 0..<(schedule.lineCoordinates.count - 1) {
                 let segment = LineSegment(
-                    start: CLLocationCoordinate2D(latitude: coordinates[i][1], longitude: coordinates[i][0]),
-                    end: CLLocationCoordinate2D(latitude: coordinates[i+1][1], longitude: coordinates[i+1][0])
+                    start: CLLocationCoordinate2D(latitude: schedule.lineCoordinates[i][1], longitude: schedule.lineCoordinates[i][0]),
+                    end: CLLocationCoordinate2D(latitude: schedule.lineCoordinates[i+1][1], longitude: schedule.lineCoordinates[i+1][0])
                 )
                 
                 let (_, distance) = segment.closestPoint(to: point)
                 scheduleMinDistance = min(scheduleMinDistance, distance)
             }
             
-            // Convert meters to feet for comparison
             let distanceInFeet = scheduleMinDistance * 3.28084
             
-            print("Schedule '\(schedule.streetName)' distance: \(distanceInFeet) feet")
-            
-            // Only consider schedules within max distance and keep the closest one
             if distanceInFeet <= maxDistance && scheduleMinDistance < minDistance {
                 minDistance = scheduleMinDistance
                 closestSchedule = schedule
-                print("New closest: \(schedule.streetName) at \(distanceInFeet) feet")
             }
-        }
-        
-        if let closest = closestSchedule {
-            let distanceInFeet = minDistance * 3.28084
-            print("Final closest schedule: \(closest.streetName) at \(distanceInFeet) feet")
-        } else {
-            print("No schedules found within \(maxDistance) feet - area appears to be street sweeping free!")
         }
         
         return closestSchedule
     }
     
-    // Helper method to get user-friendly status message
+    private func findSchedulesWithSides(from point: CLLocationCoordinate2D, schedules: [LocalSweepSchedule]) -> [SweepScheduleWithSide] {
+        var schedulesWithSides: [SweepScheduleWithSide] = []
+        
+        for schedule in schedules {
+            var closestDistance = Double.infinity
+            var closestSegment: LineSegment?
+            
+            // Find the closest line segment for this schedule
+            for i in 0..<(schedule.lineCoordinates.count - 1) {
+                let segment = LineSegment(
+                    start: CLLocationCoordinate2D(latitude: schedule.lineCoordinates[i][1], longitude: schedule.lineCoordinates[i][0]),
+                    end: CLLocationCoordinate2D(latitude: schedule.lineCoordinates[i+1][1], longitude: schedule.lineCoordinates[i+1][0])
+                )
+                
+                let (_, distance) = segment.closestPoint(to: point)
+                if distance < closestDistance {
+                    closestDistance = distance
+                    closestSegment = segment
+                }
+            }
+            
+            guard let segment = closestSegment else { continue }
+            
+            let distanceInFeet = closestDistance * 3.28084
+            if distanceInFeet <= maxDistance {
+                // Calculate the offset coordinate to represent the side of the street
+                let offsetCoordinate = calculateSideOffset(point: point, segment: segment, blockSide: schedule.blockSide)
+                
+                let scheduleWithSide = SweepScheduleWithSide(
+                    schedule: convertToAPIFormat(schedule),
+                    offsetCoordinate: offsetCoordinate,
+                    side: schedule.blockSide,
+                    distance: distanceInFeet
+                )
+                
+                schedulesWithSides.append(scheduleWithSide)
+            }
+        }
+        
+        // Sort by distance, closest first
+        return schedulesWithSides.sorted { $0.distance < $1.distance }
+    }
+    
+    private func calculateSideOffset(point: CLLocationCoordinate2D, segment: LineSegment, blockSide: String) -> CLLocationCoordinate2D {
+        // Calculate the direction vector of the street segment
+        let streetVector = (
+            longitude: segment.end.longitude - segment.start.longitude,
+            latitude: segment.end.latitude - segment.start.latitude
+        )
+        
+        // Calculate perpendicular vector (rotate 90 degrees)
+        let perpVector = (
+            longitude: -streetVector.latitude,
+            latitude: streetVector.longitude
+        )
+        
+        // Normalize the perpendicular vector
+        let perpLength = sqrt(perpVector.longitude * perpVector.longitude + perpVector.latitude * perpVector.latitude)
+        guard perpLength > 0 else { return point }
+        
+        let normalizedPerp = (
+            longitude: perpVector.longitude / perpLength,
+            latitude: perpVector.latitude / perpLength
+        )
+        
+        // Determine offset direction based on block side
+        let offsetDirection = getOffsetDirection(blockSide: blockSide, streetVector: streetVector)
+        
+        // Apply offset (about 15 feet / 5 meters converted to coordinate degrees)
+        let offsetDistance = 0.00004 // roughly 15 feet in coordinate degrees
+        
+        return CLLocationCoordinate2D(
+            latitude: point.latitude + (normalizedPerp.latitude * offsetDistance * offsetDirection),
+            longitude: point.longitude + (normalizedPerp.longitude * offsetDistance * offsetDirection)
+        )
+    }
+    
+    private func getOffsetDirection(blockSide: String, streetVector: (longitude: Double, latitude: Double)) -> Double {
+        // Determine which side of the street based on block side description
+        let side = blockSide.lowercased()
+        
+        // For north/south streets, east side gets positive offset, west side gets negative
+        // For east/west streets, north side gets positive offset, south side gets negative
+        
+        if side.contains("north") || side.contains("northeast") || side.contains("northwest") {
+            return 1.0
+        } else if side.contains("south") || side.contains("southeast") || side.contains("southwest") {
+            return -1.0
+        } else if side.contains("east") {
+            return streetVector.latitude > 0 ? 1.0 : -1.0 // Adjust based on street direction
+        } else if side.contains("west") {
+            return streetVector.latitude > 0 ? -1.0 : 1.0 // Adjust based on street direction
+        } else {
+            // Default: use the closest point with slight offset
+            return 1.0
+        }
+    }
+    
+    private func convertToAPIFormat(_ local: LocalSweepSchedule) -> SweepSchedule {
+        let lineGeometry = LineGeometry(
+            type: "LineString",
+            coordinates: local.lineCoordinates
+        )
+        
+        return SweepSchedule(
+            cnn: local.cnn,
+            corridor: local.corridor,
+            limits: local.limits,
+            blockside: local.blockSide,
+            fullname: local.fullName,
+            weekday: local.weekday,
+            fromhour: String(local.fromHour),
+            tohour: String(local.toHour),
+            week1: String(local.week1),
+            week2: String(local.week2),
+            week3: String(local.week3),
+            week4: String(local.week4),
+            week5: String(local.week5),
+            holidays: String(local.holidays),
+            line: lineGeometry
+        )
+    }
+    
     func getParkingStatusMessage(for coordinate: CLLocationCoordinate2D, completion: @escaping (String) -> Void) {
         getClosestSchedule(for: coordinate) { result in
             DispatchQueue.main.async {
@@ -367,4 +628,43 @@ final class StreetDataService {
             }
         }
     }
+    
+    // Convert persisted schedule back to SweepSchedule for processing
+    func convertToSweepSchedule(from persisted: PersistedSweepSchedule) -> SweepSchedule {
+        return SweepSchedule(
+            cnn: nil,
+            corridor: persisted.streetName,
+            limits: nil,
+            blockside: persisted.blockSide,
+            fullname: nil,
+            weekday: persisted.weekday,
+            fromhour: extractHourFromTime(persisted.startTime),
+            tohour: extractHourFromTime(persisted.endTime),
+            week1: persisted.week1,
+            week2: persisted.week2,
+            week3: persisted.week3,
+            week4: persisted.week4,
+            week5: persisted.week5,
+            holidays: nil,
+            line: nil
+        )
+    }
+    
+    private func extractHourFromTime(_ timeString: String) -> String? {
+        // Convert "8:00 AM" back to "8"
+        let components = timeString.components(separatedBy: ":")
+        guard let firstComponent = components.first else { return nil }
+        
+        if timeString.contains("PM") && firstComponent != "12" {
+            if let hour = Int(firstComponent) {
+                return String(hour + 12)
+            }
+        } else if timeString.contains("AM") && firstComponent == "12" {
+            return "0"
+        }
+        
+        return firstComponent
+    }
 }
+
+

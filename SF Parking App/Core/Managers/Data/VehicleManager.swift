@@ -20,6 +20,9 @@ class VehicleManager: ObservableObject {
     init() {
         loadVehicles()
         loadSelectedVehicle()
+        
+        // Ensure we always have exactly one vehicle (single-vehicle mode)
+        ensureSingleVehicleExists()
     }
     
     // MARK: - Vehicle Management
@@ -28,12 +31,34 @@ class VehicleManager: ObservableObject {
         return vehicles.filter { $0.isActive }
     }
     
-    func addVehicle(_ vehicle: Vehicle, setAsSelected: Bool = true) {
-        vehicles.append(vehicle)
-        
-        if setAsSelected || selectedVehicle == nil {
-            selectedVehicle = vehicle
+    /// Returns the single vehicle (single-vehicle mode)
+    var currentVehicle: Vehicle? {
+        return activeVehicles.first
+    }
+    
+    /// Ensures exactly one vehicle exists (single-vehicle mode)
+    private func ensureSingleVehicleExists() {
+        if activeVehicles.isEmpty {
+            let defaultVehicle = Vehicle(
+                name: nil, // Will use generated name
+                type: .car,
+                color: .blue
+            )
+            addVehicle(defaultVehicle, setAsSelected: true)
+        } else if activeVehicles.count > 1 {
+            // If we have multiple vehicles, keep only the first one
+            let vehicleToKeep = activeVehicles.first!
+            vehicles = [vehicleToKeep]
+            selectedVehicle = vehicleToKeep
+            saveVehicles()
+            saveSelectedVehicle()
         }
+    }
+    
+    func addVehicle(_ vehicle: Vehicle, setAsSelected: Bool = true) {
+        // Single-vehicle mode: replace the existing vehicle
+        vehicles = [vehicle]
+        selectedVehicle = vehicle
         
         saveVehicles()
         saveSelectedVehicle()
@@ -58,12 +83,15 @@ class VehicleManager: ObservableObject {
     }
     
     func removeVehicle(_ vehicle: Vehicle) {
-        vehicles.removeAll { $0.id == vehicle.id }
-        
-        // If we removed the selected vehicle, select another one
-        if selectedVehicle?.id == vehicle.id {
-            selectedVehicle = activeVehicles.first
-        }
+        // Single-vehicle mode: don't allow removing the only vehicle
+        // Instead, reset it to default
+        let defaultVehicle = Vehicle(
+            name: nil, // Will use generated name
+            type: .car,
+            color: .blue
+        )
+        vehicles = [defaultVehicle]
+        selectedVehicle = defaultVehicle
         
         saveVehicles()
         saveSelectedVehicle()
@@ -96,13 +124,14 @@ class VehicleManager: ObservableObject {
         print("🚗 Cleared parking location for \(vehicle.displayName)")
     }
     
-    func setManualParkingLocation(for vehicle: Vehicle, coordinate: CLLocationCoordinate2D, address: String) {
+    func setManualParkingLocation(for vehicle: Vehicle, coordinate: CLLocationCoordinate2D, address: String, selectedSchedule: PersistedSweepSchedule? = nil) {
         let parkingLocation = ParkingLocation(
             coordinate: coordinate,
             address: address,
             source: .manual,
             name: "\(vehicle.displayName) Parking",
-            color: .blue // We can match vehicle color later if needed
+            color: .blue, // We can match vehicle color later if needed
+            selectedSchedule: selectedSchedule
         )
         
         setParkingLocation(for: vehicle, location: parkingLocation)

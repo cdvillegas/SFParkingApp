@@ -29,6 +29,18 @@ struct VehicleParkingView: View {
     @State private var showingVehicleActions: Vehicle?
     @State private var isSettingLocationForNewVehicle = false
     
+    // Unified location setting
+    @State private var detectedSchedule: SweepSchedule?
+    @State private var scheduleConfidence: Float = 0.0
+    @State private var isAutoDetectingSchedule = false
+    @State private var lastDetectionCoordinate: CLLocationCoordinate2D?
+    @State private var detectionDebounceTimer: Timer?
+    
+    // Side-of-street selection
+    @State private var nearbySchedules: [SweepScheduleWithSide] = []
+    @State private var selectedScheduleIndex: Int = 0
+    @State private var showingScheduleSelection = false
+    
     // Auto-center functionality
     @State private var autoResetTimer: Timer?
     @State private var lastInteractionTime = Date()
@@ -80,9 +92,7 @@ struct VehicleParkingView: View {
             bottomInterface
         }
         .sheet(isPresented: $showingVehiclesList) {
-            NavigationView {
-                vehicleListSheet
-            }
+            // Vehicle list sheet not used in single-vehicle mode
         }
         .sheet(isPresented: $showingAddVehicle) {
             AddEditVehicleView(
@@ -144,32 +154,57 @@ struct VehicleParkingView: View {
             }
             
             if !isSettingLocation {
-                // Vehicle parking locations
-                ForEach(vehicleManager.activeVehicles, id: \.id) { vehicle in
-                    if let parkingLocation = vehicle.parkingLocation {
-                        Annotation(vehicle.displayName, coordinate: parkingLocation.coordinate) {
-                            VehicleParkingMapMarker(
-                                vehicle: vehicle,
-                                isSelected: vehicleManager.selectedVehicle?.id == vehicle.id,
-                                onTap: {
-                                    showVehicleActions(vehicle)
-                                }
-                            )
-                        }
-                    }
-                }
+                vehicleAnnotations
+            }
+            
+            // Street sweeping schedule lines (when detected)
+            if isSettingLocation && !nearbySchedules.isEmpty {
+                multipleScheduleLines
+            }
+            
+            // Multiple schedule option markers for side-of-street selection
+            if isSettingLocation && nearbySchedules.count > 1 {
+                scheduleSelectionMarkers
             }
         }
         .overlay(
             Group {
                 if isSettingLocation, let vehicle = vehicleManager.selectedVehicle {
-                    VehicleParkingMapMarker(
-                        vehicle: vehicle,
-                        isSelected: true,
-                        onTap: {} // Do nothing or provide haptic
-                    )
-                    .frame(width: 20, height: 20)
-                    .offset(y: -22) // visually center pin tip
+                    // Unified location pin with schedule confidence indicator
+                    ZStack {
+                        VehicleParkingMapMarker(
+                            vehicle: vehicle,
+                            isSelected: true,
+                            onTap: {}
+                        )
+                        .frame(width: 24, height: 24)
+                        .offset(y: -24)
+                        
+                        // Schedule confidence ring with animation
+                        if scheduleConfidence > 0 {
+                            ZStack {
+                                // Outer glow ring
+                                Circle()
+                                    .stroke(
+                                        (scheduleConfidence > 0.7 ? Color.green :
+                                         scheduleConfidence > 0.4 ? Color.orange : Color.red).opacity(0.3),
+                                        lineWidth: 6
+                                    )
+                                    .frame(width: 50, height: 50)
+                                
+                                // Main confidence ring  
+                                Circle()
+                                    .stroke(
+                                        scheduleConfidence > 0.7 ? Color.green :
+                                        scheduleConfidence > 0.4 ? Color.orange : Color.red,
+                                        lineWidth: 3
+                                    )
+                                    .frame(width: 40, height: 40)
+                            }
+                            .offset(y: -24)
+                            .animation(.easeInOut(duration: 0.3), value: scheduleConfidence)
+                        }
+                    }
                     .allowsHitTesting(false)
                 }
             }
@@ -179,6 +214,7 @@ struct VehicleParkingView: View {
             if isSettingLocation {
                 settingCoordinate = context.camera.centerCoordinate
                 geocodeLocation(settingCoordinate)
+                autoDetectSchedule(for: settingCoordinate)
             }
         }
         #if DEBUG
@@ -190,6 +226,112 @@ struct VehicleParkingView: View {
         #endif
     }
     
+    // MARK: - Vehicle Annotations
+    
+    @MapContentBuilder
+    private var vehicleAnnotations: some MapContent {
+        ForEach(vehicleManager.activeVehicles, id: \.id) { vehicle in
+            if let parkingLocation = vehicle.parkingLocation {
+                Annotation(vehicle.displayName, coordinate: parkingLocation.coordinate) {
+                    VehicleParkingMapMarker(
+                        vehicle: vehicle,
+                        isSelected: vehicleManager.selectedVehicle?.id == vehicle.id,
+                        onTap: {
+                            showVehicleActions(vehicle)
+                        }
+                    )
+                }
+            }
+        }
+    }
+    
+    // MARK: - Street Schedule Lines
+    
+    @MapContentBuilder
+    private var detectedScheduleLines: some MapContent {
+        if let schedule = detectedSchedule, let line = schedule.line {
+            ForEach(0..<line.coordinates.count-1, id: \.self) { segmentIndex in
+                let startCoord = line.coordinates[segmentIndex]
+                let endCoord = line.coordinates[segmentIndex + 1]
+                
+                if startCoord.count >= 2 && endCoord.count >= 2 {
+                    MapPolyline(coordinates: [
+                        CLLocationCoordinate2D(latitude: startCoord[1], longitude: startCoord[0]),
+                        CLLocationCoordinate2D(latitude: endCoord[1], longitude: endCoord[0])
+                    ])
+                    .stroke(
+                        scheduleConfidence > 0.7 ? Color.green :
+                        scheduleConfidence > 0.4 ? Color.orange : Color.red,
+                        style: StrokeStyle(lineWidth: 6, lineCap: .round, lineJoin: .round)
+                    )
+                }
+            }
+        }
+    }
+    
+    // MARK: - Multiple Schedule Lines
+    
+    @MapContentBuilder
+    private var multipleScheduleLines: some MapContent {
+        ForEach(Array(nearbySchedules.enumerated()), id: \.0) { index, scheduleWithSide in
+            if let line = scheduleWithSide.schedule.line {
+                ForEach(0..<line.coordinates.count-1, id: \.self) { segmentIndex in
+                    let startCoord = line.coordinates[segmentIndex]
+                    let endCoord = line.coordinates[segmentIndex + 1]
+                    
+                    if startCoord.count >= 2 && endCoord.count >= 2 {
+                        MapPolyline(coordinates: [
+                            CLLocationCoordinate2D(latitude: startCoord[1], longitude: startCoord[0]),
+                            CLLocationCoordinate2D(latitude: endCoord[1], longitude: endCoord[0])
+                        ])
+                        .stroke(
+                            index == selectedScheduleIndex ? 
+                                (scheduleConfidence > 0.7 ? Color.green : scheduleConfidence > 0.4 ? Color.orange : Color.red) :
+                                Color.gray.opacity(0.6),
+                            style: StrokeStyle(
+                                lineWidth: index == selectedScheduleIndex ? 6 : 4,
+                                lineCap: .round, 
+                                lineJoin: .round
+                            )
+                        )
+                    }
+                }
+            }
+        }
+    }
+    
+    // MARK: - Schedule Selection Markers
+    
+    @MapContentBuilder
+    private var scheduleSelectionMarkers: some MapContent {
+        ForEach(Array(nearbySchedules.enumerated()), id: \.0) { index, scheduleWithSide in
+            Annotation(
+                scheduleWithSide.schedule.streetName + " - " + scheduleWithSide.side,
+                coordinate: scheduleWithSide.offsetCoordinate
+            ) {
+                Button(action: {
+                    selectScheduleOption(index)
+                }) {
+                    ZStack {
+                        Circle()
+                            .fill(index == selectedScheduleIndex ? Color.blue : Color.gray)
+                            .frame(width: 32, height: 32)
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.white, lineWidth: 3)
+                            )
+                        
+                        Text("\(index + 1)")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                    .scaleEffect(index == selectedScheduleIndex ? 1.2 : 1.0)
+                    .animation(.spring(response: 0.3, dampingFraction: 0.6), value: selectedScheduleIndex)
+                }
+            }
+        }
+    }
+    
     // MARK: - Top Controls
     
     private var topControls: some View {
@@ -198,7 +340,12 @@ struct VehicleParkingView: View {
                 // Add vehicle button when there are no vehicles
                 Button(action: {
                     impactFeedbackLight.impactOccurred()
-                    showingAddVehicle = true
+                    // In single-vehicle mode, edit the existing vehicle instead of adding
+                    if let currentVehicle = vehicleManager.currentVehicle {
+                        showingEditVehicle = currentVehicle
+                    } else {
+                        showingAddVehicle = true
+                    }
                 }) {
                     HStack(spacing: 8) {
                         Image(systemName: "plus")
@@ -232,8 +379,8 @@ struct VehicleParkingView: View {
                 // Expanded Vehicle Card Interface
                 enhancedVehicleActionsInterface(for: vehicleForActions)
             } else if isSettingLocation {
-                // Setting location mode UI
-                enhancedLocationSettingInterface()
+                // Unified location setting interface
+                unifiedLocationSettingInterface()
             } else {
                 // Normal mode - show vehicles
                 enhancedNormalVehicleInterface()
@@ -436,7 +583,11 @@ struct VehicleParkingView: View {
     
     // MARK: - Helper function to open vehicle in Maps
     private func openVehicleInMaps(_ vehicle: Vehicle) {
-        guard let parkingLocation = vehicle.parkingLocation else { return }
+        guard let parkingLocation = vehicle.parkingLocation else { 
+            // Provide haptic feedback when no parking location is set
+            impactFeedbackLight.impactOccurred()
+            return 
+        }
         
         let coordinate = parkingLocation.coordinate
         let placemark = MKPlacemark(coordinate: coordinate)
@@ -448,110 +599,69 @@ struct VehicleParkingView: View {
         ])
     }
     
-    // MARK: - Enhanced Location Setting Interface
-    private func enhancedLocationSettingInterface() -> some View {
+    // MARK: - Unified Location Setting Interface
+    private func unifiedLocationSettingInterface() -> some View {
         VStack(spacing: 0) {
-            // Drag handle
-            RoundedRectangle(cornerRadius: 2)
-                .fill(Color(.systemGray4))
-                .frame(width: 36, height: 4)
-                .padding(.top, 12)
-                .padding(.bottom, 8)
+            unifiedLocationContent()
+        }
+        .padding(.top, 20)
+        .transition(.asymmetric(
+            insertion: .move(edge: .bottom).combined(with: .opacity),
+            removal: .move(edge: .bottom).combined(with: .opacity)
+        ))
+    }
+    
+    // MARK: - Unified Location Content
+    private func unifiedLocationContent() -> some View {
+        VStack(spacing: 20) {
+            // Fixed-height status section
+            VStack(spacing: 16) {
+                // Address display (always shown)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(settingAddress ?? "Move map to select location")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(settingAddress != nil ? .primary : .secondary)
+                        .lineLimit(2)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(16)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(.systemBackground))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color(.systemGray4), lineWidth: 1)
+                        )
+                )
+                
+                // Street Sweeping section with title outside
+                streetSweepingSection()
+            }
+            .padding(.horizontal, 24)
             
-            VStack(spacing: 20) {
-                // Header with vehicle info
-                VStack(spacing: 16) {
-                    HStack {
-                        Text("Choose Parking Location")
-                            .font(.system(size: 22, weight: .bold))
-                            .foregroundColor(.primary)
-                        Spacer()
-                    }
-                    
-                    if let selectedVehicle = vehicleManager.selectedVehicle {
-                        HStack(spacing: 12) {
-                            // Mini vehicle icon - consistent style
-                            ZStack {
-                                Circle()
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [
-                                                selectedVehicle.color.color,
-                                                selectedVehicle.color.color.opacity(0.8)
-                                            ],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
-                                    )
-                                    .frame(width: 32, height: 32)
-                                
-                                Image(systemName: selectedVehicle.type.iconName)
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(.white)
-                            }
-                            .shadow(color: selectedVehicle.color.color.opacity(0.3), radius: 4, x: 0, y: 2)
-                            
-                            Text("Setting location for \(selectedVehicle.displayName)")
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.secondary)
-                            
-                            Spacer()
-                        }
-                        .padding(16)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color(.systemGray6))
-                        )
-                    }
-                    
-                    // Address preview if available
-                    if let address = settingAddress {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Selected Location")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(.secondary)
-                            
-                            Text(address)
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.primary)
-                                .lineLimit(3)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(16)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color(.systemBackground))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(Color(.systemGray4), lineWidth: 1)
-                                )
-                        )
+            // Action buttons
+            HStack(spacing: 12) {
+                Button(isSettingLocationForNewVehicle ? "Skip for Now" : "Cancel") {
+                    impactFeedbackLight.impactOccurred()
+                    withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+                        cancelSettingLocation()
                     }
                 }
-                .padding(.horizontal, 24)
-                .padding(.top, 20)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.secondary)
+                .frame(maxWidth: .infinity)
+                .frame(height: 52)
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color(.systemGray6))
+                )
                 
-                // Enhanced action buttons
-                HStack(spacing: 12) {
-                    Button(isSettingLocationForNewVehicle ? "Skip for Now" : "Cancel") {
-                        impactFeedbackLight.impactOccurred()
-                        withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
-                            cancelSettingLocation()
-                        }
-                    }
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.secondary)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 52)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(Color(.systemGray6))
-                    )
-                    
-                    Button("Set Location") {
+                VStack(spacing: 8) {
+
+                    Button("Confirm Location") {
                         notificationFeedback.notificationOccurred(.success)
                         withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
-                            confirmSetLocation()
+                            confirmUnifiedLocation()
                         }
                     }
                     .font(.system(size: 16, weight: .semibold))
@@ -560,33 +670,179 @@ struct VehicleParkingView: View {
                     .frame(height: 52)
                     .background(
                         LinearGradient(
-                            colors: [Color.green, Color.green.opacity(0.8)],
+                            colors: [Color.blue, Color.blue.opacity(0.8)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
                     .cornerRadius(16)
-                    .shadow(color: Color.green.opacity(0.3), radius: 6, x: 0, y: 3)
+                    .shadow(color: Color.blue.opacity(0.3), radius: 6, x: 0, y: 3)
                     .disabled(settingAddress == nil)
                     .opacity(settingAddress == nil ? 0.6 : 1.0)
                 }
-                .padding(.horizontal, 24)
-                .padding(.bottom, 32)
             }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 32)
         }
-        .transition(.asymmetric(
-            insertion: .move(edge: .bottom).combined(with: .opacity),
-            removal: .move(edge: .bottom).combined(with: .opacity)
-        ))
+    }
+    
+    // MARK: - Detected Schedule Card
+    private func detectedScheduleCard(_ schedule: SweepSchedule) -> some View {
+        let confidenceColor = scheduleConfidence > 0.7 ? Color.green : scheduleConfidence > 0.4 ? Color.orange : Color.red
+        let confidenceText = scheduleConfidence > 0.7 ? "High Confidence" : scheduleConfidence > 0.4 ? "Medium Confidence" : "Low Confidence"
+        let (timeUntil, nextDate) = calculateTimeUntilNextCleaning(schedule: schedule)
+        
+        return VStack(spacing: 16) {
+            // Header with animated icon
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(confidenceColor.opacity(0.1))
+                        .frame(width: 44, height: 44)
+                    
+                    Image(systemName: "calendar.badge.clock")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(confidenceColor)
+                }
+                .scaleEffect(scheduleConfidence > 0.7 ? 1.1 : 1.0)
+                .animation(.spring(response: 0.4, dampingFraction: 0.6), value: scheduleConfidence)
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Street Cleaning \(timeUntil)")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.primary)
+                    
+                    if let nextDate = nextDate {
+                        Text(formatFullDateTime(nextDate))
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.secondary)
+                    }
+                }
+                
+                Spacer()
+                
+                // Subtle confidence badge
+                Text(confidenceText)
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(confidenceColor)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(
+                        Capsule()
+                            .fill(confidenceColor.opacity(0.15))
+                    )
+            }
+            
+            // Main alert content
+            VStack(spacing: 16) {
+                // Street name and location  
+                HStack(spacing: 8) {
+                    Image(systemName: "mappin.circle.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(confidenceColor)
+                    
+                    Text(schedule.streetName)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
+                    
+                    Spacer()
+                    
+                    // Day badge
+                    Text(schedule.sweepDay)
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(
+                            Capsule()
+                                .fill(confidenceColor)
+                        )
+                }
+                
+                // Time range display
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Time Range")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundColor(.secondary)
+                        
+                        HStack(spacing: 8) {
+                            Image(systemName: "clock.fill")
+                                .font(.system(size: 14))
+                                .foregroundColor(confidenceColor)
+                            
+                            Text("\(schedule.startTime) - \(schedule.endTime)")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.primary)
+                        }
+                    }
+                    
+                    Spacer()
+                    
+                    // Prominent warning
+                    VStack(spacing: 2) {
+                        Image(systemName: "hand.raised.fill")
+                            .font(.system(size: 18))
+                            .foregroundColor(.white)
+                        Text("NO PARKING")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color.red, Color.red.opacity(0.8)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .shadow(color: Color.red.opacity(0.3), radius: 4, x: 0, y: 2)
+                    )
+                }
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(.systemGray6).opacity(0.5))
+            )
+        }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.systemBackground))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(
+                            LinearGradient(
+                                colors: [confidenceColor.opacity(0.4), confidenceColor.opacity(0.1)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 2
+                        )
+                )
+                .shadow(
+                    color: confidenceColor.opacity(0.2),
+                    radius: 12,
+                    x: 0,
+                    y: 4
+                )
+        )
+        .animation(.spring(response: 0.6, dampingFraction: 0.8), value: schedule.cnn)
     }
     
     // MARK: - Enhanced Normal Vehicle Interface
     private func enhancedNormalVehicleInterface() -> some View {
         VStack(spacing: 0) {
             if !vehicleManager.activeVehicles.isEmpty {
-                // Show upcoming reminders for selected vehicle
-                if let selectedVehicle = vehicleManager.selectedVehicle,
-                   let parkingLocation = selectedVehicle.parkingLocation {
+                // Show upcoming reminders for current vehicle
+                if let currentVehicle = vehicleManager.currentVehicle,
+                   let parkingLocation = currentVehicle.parkingLocation {
                     UpcomingRemindersSection(
                         streetDataManager: streetDataManager,
                         parkingLocation: parkingLocation
@@ -597,50 +853,62 @@ struct VehicleParkingView: View {
                         .padding(.horizontal, 20)
                 }
                 
-                // Enhanced header with vehicles list button
+                // Enhanced header with three-dot menu (Edit/Move)
                 HStack {
-                    Text("My Vehicles")
+                    Text("My Vehicle")
                         .font(.system(size: 24, weight: .bold))
                         .foregroundColor(.primary)
                     
                     Spacer()
                     
-                    // Vehicles list button
-                    Button(action: {
-                        impactFeedbackLight.impactOccurred()
-                        showingVehiclesList = true
-                    }) {
-                        HStack(spacing: 8) {
-                            Image(systemName: "car.2.fill")
-                                .font(.system(size: 14, weight: .semibold))
+                    // Three-dot menu for single vehicle
+                    if let currentVehicle = vehicleManager.currentVehicle {
+                        Menu {
+                            Button(action: {
+                                impactFeedbackLight.impactOccurred()
+                                showingEditVehicle = currentVehicle
+                            }) {
+                                HStack {
+                                    Text("Edit")
+                                    Image(systemName: "pencil")
+                                }
+                            }
                             
-                            Text("\(vehicleManager.activeVehicles.count)")
-                                .font(.system(size: 15, weight: .semibold))
+                            Button(action: {
+                                impactFeedbackLight.impactOccurred()
+                                isSettingLocationForNewVehicle = false
+                                startSettingLocationForVehicle(currentVehicle)
+                            }) {
+                                HStack {
+                                    Text("Move")
+                                    Image(systemName: "location")
+                                }
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.primary)
+                                .frame(width: 32, height: 32)
+                                .background(
+                                    Circle()
+                                        .fill(Color(.systemGray5))
+                                )
                         }
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color.blue)
-                                .shadow(color: Color.blue.opacity(0.3), radius: 4, x: 0, y: 2)
-                        )
                     }
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 20)
                 
-                // Swipeable vehicles section - already perfectly styled
+                // Vehicle section - single card
                 SwipeableVehicleSection(
                     vehicles: vehicleManager.activeVehicles,
-                    selectedVehicle: vehicleManager.selectedVehicle,
+                    selectedVehicle: vehicleManager.currentVehicle,
                     onVehicleSelected: { vehicle in
-                        selectVehicle(vehicle)
+                        // In single-vehicle mode, do nothing since there's only one vehicle
                     },
                     onVehicleTap: { vehicle in
-                        withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-                            showVehicleActions(vehicle)
-                        }
+                        // Open vehicle location in Maps
+                        openVehicleInMaps(vehicle)
                     }
                 )
                 .padding(.bottom, 20)
@@ -689,6 +957,7 @@ struct VehicleParkingView: View {
             // Enhanced add vehicle button
             Button(action: {
                 impactFeedbackLight.impactOccurred()
+                // In single-vehicle mode, should not reach here since currentVehicle should exist
                 showingAddVehicle = true
             }) {
                 HStack(spacing: 10) {
@@ -776,37 +1045,7 @@ struct VehicleParkingView: View {
                     .padding(.bottom, 16)
                 }
                 
-                // Big Add Vehicle Button at bottom
-                VStack(spacing: 0) {
-                    Divider()
-                    
-                    Button(action: {
-                        impactFeedbackLight.impactOccurred()
-                        showingAddVehicle = true
-                    }) {
-                        HStack(spacing: 12) {
-                            Image(systemName: "plus.circle.fill")
-                                .font(.system(size: 20, weight: .semibold))
-                            Text("Add Vehicle")
-                                .font(.system(size: 18, weight: .semibold))
-                        }
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 54)
-                        .background(
-                            LinearGradient(
-                                colors: [.blue, .blue.opacity(0.8)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .cornerRadius(16)
-                        .shadow(color: Color.blue.opacity(0.3), radius: 8, x: 0, y: 4)
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 20)
-                }
-                .background(Color(.systemBackground))
+                // Not used in single-vehicle mode
             }
         }
     }
@@ -819,7 +1058,15 @@ struct VehicleParkingView: View {
         
         if let parkingLocation = vehicle.parkingLocation {
             centerMapOnLocation(parkingLocation.coordinate)
-            fetchStreetDataAndScheduleNotifications(for: parkingLocation)
+            // Load persisted schedule if available, otherwise fetch new data
+            if let persistedSchedule = parkingLocation.selectedSchedule {
+                let schedule = StreetDataService.shared.convertToSweepSchedule(from: persistedSchedule)
+                streetDataManager.schedule = schedule
+                streetDataManager.processNextSchedule(for: schedule)
+                print("🎯 Loaded persisted schedule: \(schedule.streetName) (\(persistedSchedule.blockSide))")
+            } else if streetDataManager.schedule == nil {
+                fetchStreetDataAndScheduleNotifications(for: parkingLocation)
+            }
         }
     }
     
@@ -901,47 +1148,23 @@ struct VehicleParkingView: View {
                   let parkingLocation = selectedVehicle.parkingLocation {
             startCoordinate = parkingLocation.coordinate
         } else {
-            startCoordinate = CLLocationCoordinate2D(latitude: 37.783759, longitude: -122.442232)
+            // Use Market Street near Larkin (from CSV data - known to have street cleaning)
+            startCoordinate = CLLocationCoordinate2D(latitude: 37.7775, longitude: -122.4163)
         }
         
         settingCoordinate = startCoordinate
         centerMapOnLocation(startCoordinate)
         geocodeLocation(startCoordinate)
+        
+        // Trigger initial schedule detection
+        autoDetectSchedule(for: startCoordinate)
     }
     
     private func cancelSettingLocation() {
         impactFeedbackLight.impactOccurred()
-        isSettingLocation = false
-        settingAddress = nil
-        isSettingLocationForNewVehicle = false
+        completeUnifiedLocationSetting()
     }
     
-    private func confirmSetLocation() {
-        guard let selectedVehicle = vehicleManager.selectedVehicle,
-              let address = settingAddress else { return }
-        
-        notificationFeedback.notificationOccurred(.success)
-        
-        vehicleManager.setManualParkingLocation(
-            for: selectedVehicle,
-            coordinate: settingCoordinate,
-            address: address
-        )
-        
-        // Request notification permission if not already granted
-        if notificationManager.notificationPermissionStatus == .notDetermined {
-            notificationManager.requestNotificationPermission()
-        }
-        
-        isSettingLocation = false
-        settingAddress = nil
-        isSettingLocationForNewVehicle = false
-        
-        // Fetch street data for the new location
-        if let parkingLocation = selectedVehicle.parkingLocation {
-            fetchStreetDataAndScheduleNotifications(for: parkingLocation)
-        }
-    }
     
     private func geocodeLocation(_ coordinate: CLLocationCoordinate2D) {
         debouncedGeocoder.reverseGeocode(coordinate: coordinate) { address, _ in
@@ -950,6 +1173,322 @@ struct VehicleParkingView: View {
             }
         }
     }
+    
+    // MARK: - Unified Location Setting Functions
+    
+    private func autoDetectSchedule(for coordinate: CLLocationCoordinate2D) {
+        // Check if we need to skip this detection (debouncing)
+        if let lastCoordinate = lastDetectionCoordinate {
+            let distance = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+                .distance(from: CLLocation(latitude: lastCoordinate.latitude, longitude: lastCoordinate.longitude))
+            
+            // Only detect if we've moved more than 10 meters
+            if distance < 10 {
+                return
+            }
+        }
+        
+        // Cancel any existing timer
+        detectionDebounceTimer?.invalidate()
+        
+        // Start new detection timer
+        detectionDebounceTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { _ in
+            self.performScheduleDetection(for: coordinate)
+        }
+    }
+    
+    private func performScheduleDetection(for coordinate: CLLocationCoordinate2D) {
+        guard !isAutoDetectingSchedule else { return }
+        
+        isAutoDetectingSchedule = true
+        lastDetectionCoordinate = coordinate
+        
+        print("🔍 Detecting schedule at: \(coordinate.latitude), \(coordinate.longitude)")
+        
+        StreetDataService.shared.getNearbySchedulesForSelection(for: coordinate) { result in
+            DispatchQueue.main.async {
+                self.isAutoDetectingSchedule = false
+                
+                switch result {
+                case .success(let schedulesWithSides):
+                    if !schedulesWithSides.isEmpty {
+                        print("🎯 Found \(schedulesWithSides.count) nearby schedules")
+                        self.nearbySchedules = schedulesWithSides
+                        self.selectedScheduleIndex = 0 // Default to closest
+                        self.detectedSchedule = schedulesWithSides[0].schedule
+                        self.scheduleConfidence = 0.8
+                    } else {
+                        print("⚠️ No schedules found at coordinate: \(coordinate)")
+                        self.nearbySchedules = []
+                        self.selectedScheduleIndex = 0
+                        self.detectedSchedule = nil
+                        self.scheduleConfidence = 0.0
+                    }
+                case .failure(let error):
+                    print("❌ Schedule detection failed: \(error)")
+                    self.nearbySchedules = []
+                    self.selectedScheduleIndex = 0
+                    self.detectedSchedule = nil
+                    self.scheduleConfidence = 0.0
+                }
+            }
+        }
+    }
+    
+    
+    private func confirmUnifiedLocation() {
+        guard let selectedVehicle = vehicleManager.selectedVehicle,
+              let address = settingAddress else { return }
+        
+        notificationFeedback.notificationOccurred(.success)
+        
+        // Create persisted schedule if user selected one
+        let persistedSchedule = !nearbySchedules.isEmpty ? 
+            PersistedSweepSchedule(from: nearbySchedules[selectedScheduleIndex].schedule, side: nearbySchedules[selectedScheduleIndex].side) :
+            nil
+        
+        vehicleManager.setManualParkingLocation(
+            for: selectedVehicle,
+            coordinate: settingCoordinate,
+            address: address,
+            selectedSchedule: persistedSchedule
+        )
+        
+        // Request notification permission if not already granted
+        if notificationManager.notificationPermissionStatus == .notDetermined {
+            notificationManager.requestNotificationPermission()
+        }
+        
+        // Use the user's selected schedule for notifications
+        if !nearbySchedules.isEmpty {
+            let selectedSchedule = nearbySchedules[selectedScheduleIndex].schedule
+            streetDataManager.schedule = selectedSchedule
+            streetDataManager.processNextSchedule(for: selectedSchedule)
+            print("🎯 Using user-selected schedule: \(selectedSchedule.streetName) (\(nearbySchedules[selectedScheduleIndex].side))")
+        } else {
+            // No schedules detected - clear the street data manager
+            streetDataManager.schedule = nil
+            streetDataManager.nextUpcomingSchedule = nil
+            print("🟢 No restrictions - clearing upcoming reminders")
+        }
+        
+        // Complete location setting (this clears detected schedules)
+        completeUnifiedLocationSetting()
+        
+        // Don't fetch fresh street data since we're using the user's explicit selection or lack thereof
+        // The upcoming reminders will use the schedule we just set above (or nil for no restrictions)
+    }
+    
+    private func completeUnifiedLocationSetting() {
+        isSettingLocation = false
+        isSettingLocationForNewVehicle = false
+        settingAddress = nil
+        detectedSchedule = nil
+        scheduleConfidence = 0.0
+        isAutoDetectingSchedule = false
+        lastDetectionCoordinate = nil
+        detectionDebounceTimer?.invalidate()
+        detectionDebounceTimer = nil
+        
+        // Clear side-of-street selection
+        nearbySchedules = []
+        selectedScheduleIndex = 0
+        showingScheduleSelection = false
+    }
+    
+    // MARK: - Time Calculation
+    private func calculateTimeUntilNextCleaning(schedule: SweepSchedule) -> (String, Date?) {
+        let now = Date()
+        let calendar = Calendar.current
+        
+        guard let weekdayStr = schedule.weekday,
+              let fromHourStr = schedule.fromhour,
+              let toHourStr = schedule.tohour,
+              let fromHour = Int(fromHourStr),
+              let toHour = Int(toHourStr) else {
+            return ("Unknown", nil)
+        }
+        
+        let targetWeekday = dayStringToWeekday(weekdayStr)
+        guard targetWeekday > 0 else { return ("Unknown", nil) }
+        
+        // Find next valid occurrence based on week pattern
+        let nextOccurrence = findNextValidOccurrence(
+            targetWeekday: targetWeekday,
+            schedule: schedule,
+            from: now
+        )
+        
+        guard let nextDate = nextOccurrence,
+              let cleaningStart = calendar.date(bySettingHour: fromHour, minute: 0, second: 0, of: nextDate),
+              let _ = calendar.date(bySettingHour: toHour, minute: 0, second: 0, of: nextDate) else {
+            return ("Unknown", nil)
+        }
+        
+        let timeInterval = cleaningStart.timeIntervalSince(now)
+        let timeUntilText = formatTimeUntil(timeInterval)
+        
+        return (timeUntilText, cleaningStart)
+    }
+    
+    private func findNextValidOccurrence(targetWeekday: Int, schedule: SweepSchedule, from date: Date) -> Date? {
+        let calendar = Calendar.current
+        
+        // Check next 8 weeks to find a valid occurrence
+        for weekOffset in 0..<8 {
+            guard let futureDate = calendar.date(byAdding: .weekOfYear, value: weekOffset, to: date) else { continue }
+            
+            let targetDate = nextOccurrence(of: targetWeekday, from: futureDate, allowSameDay: weekOffset == 0)
+            let weekOfMonth = calendar.component(.weekOfMonth, from: targetDate)
+            
+            let appliesThisWeek: Bool
+            switch weekOfMonth {
+            case 1: appliesThisWeek = schedule.week1 == "1"
+            case 2: appliesThisWeek = schedule.week2 == "1"
+            case 3: appliesThisWeek = schedule.week3 == "1"
+            case 4: appliesThisWeek = schedule.week4 == "1"
+            case 5: appliesThisWeek = schedule.week5 == "1"
+            default: appliesThisWeek = false
+            }
+            
+            if appliesThisWeek {
+                return targetDate
+            }
+        }
+        
+        return nil
+    }
+    
+    private func nextOccurrence(of weekday: Int, from date: Date, allowSameDay: Bool = false) -> Date {
+        let calendar = Calendar.current
+        let currentWeekday = calendar.component(.weekday, from: date)
+        
+        var daysToAdd = weekday - currentWeekday
+        
+        if daysToAdd < 0 || (daysToAdd == 0 && !allowSameDay) {
+            daysToAdd += 7
+        }
+        
+        return calendar.date(byAdding: .day, value: daysToAdd, to: date) ?? date
+    }
+    
+    private func dayStringToWeekday(_ dayString: String) -> Int {
+        let normalized = dayString.lowercased().trimmingCharacters(in: .whitespaces)
+        switch normalized {
+        case "sun", "sunday": return 1
+        case "mon", "monday": return 2
+        case "tue", "tues", "tuesday": return 3
+        case "wed", "wednesday": return 4
+        case "thu", "thur", "thursday": return 5
+        case "fri", "friday": return 6
+        case "sat", "saturday": return 7
+        default: return 0
+        }
+    }
+    
+    private func formatTimeUntil(_ timeInterval: TimeInterval) -> String {
+        let totalSeconds = Int(timeInterval)
+        
+        // Handle past/current times
+        if totalSeconds <= 0 {
+            return "happening now"
+        }
+        
+        // Handle very soon (under 2 minutes)
+        if totalSeconds < 120 {
+            if totalSeconds < 60 {
+                return "in under 1 minute"
+            } else {
+                return "in 1 minute"
+            }
+        }
+        
+        let minutes = totalSeconds / 60
+        let hours = minutes / 60  
+        let days = hours / 24
+        
+        // Under 1 hour - show minutes only
+        if minutes < 60 {
+            return "in \(minutes) minute\(minutes == 1 ? "" : "s")"
+        }
+        
+        // Under 24 hours - be precise with hours and minutes
+        if hours < 24 {
+            let remainingMinutes = minutes % 60
+            if remainingMinutes == 0 {
+                return "in \(hours) hour\(hours == 1 ? "" : "s")"
+            } else if remainingMinutes < 15 {
+                return "in \(hours) hour\(hours == 1 ? "" : "s")"
+            } else if remainingMinutes < 45 {
+                return "in \(hours).5 hours"
+            } else {
+                return "in \(hours + 1) hours"
+            }
+        }
+        
+        // 1-6 days - show days with hour precision for first few days
+        if days < 7 {
+            let remainingHours = hours % 24
+            if days == 1 {
+                if remainingHours < 6 {
+                    return "in 1 day"
+                } else if remainingHours < 18 {
+                    return "in 1.5 days"
+                } else {
+                    return "in 2 days"
+                }
+            } else {
+                return "in \(days) day\(days == 1 ? "" : "s")"
+            }
+        }
+        
+        // 1-3 weeks
+        let weeks = days / 7
+        if weeks < 4 {
+            let remainingDays = days % 7
+            if weeks == 1 && remainingDays <= 1 {
+                return "in 1 week"
+            } else if remainingDays == 0 {
+                return "in \(weeks) week\(weeks == 1 ? "" : "s")"
+            } else if remainingDays <= 2 {
+                return "in \(weeks) week\(weeks == 1 ? "" : "s")"
+            } else {
+                return "in \(weeks + 1) weeks"
+            }
+        }
+        
+        // 1+ months
+        let months = days / 30
+        if months < 12 {
+            return "in \(months) month\(months == 1 ? "" : "s")"
+        }
+        
+        // 1+ years
+        let years = days / 365
+        return "in \(years) year\(years == 1 ? "" : "s")"
+    }
+    
+    private func formatFullDateTime(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        let calendar = Calendar.current
+        
+        let isToday = calendar.isDateInToday(date)
+        let isTomorrow = calendar.isDateInTomorrow(date)
+        let isThisWeek = calendar.component(.weekOfYear, from: date) == calendar.component(.weekOfYear, from: Date())
+        
+        if isToday {
+            formatter.dateFormat = "'Today,' h:mm a"
+        } else if isTomorrow {
+            formatter.dateFormat = "'Tomorrow,' h:mm a"  
+        } else if isThisWeek {
+            formatter.dateFormat = "EEEE, h:mm a"
+        } else {
+            formatter.dateFormat = "EEE, MMM d, h:mm a"
+        }
+        
+        return formatter.string(from: date)
+    }
+    
     
     // MARK: - Setup and Lifecycle
     
@@ -969,7 +1508,15 @@ struct VehicleParkingView: View {
         if let selectedVehicle = vehicleManager.selectedVehicle,
            let parkingLocation = selectedVehicle.parkingLocation {
             centerMapOnLocation(parkingLocation.coordinate)
-            fetchStreetDataAndScheduleNotifications(for: parkingLocation)
+            // Load persisted schedule if available, otherwise fetch new data
+            if let persistedSchedule = parkingLocation.selectedSchedule {
+                let schedule = StreetDataService.shared.convertToSweepSchedule(from: persistedSchedule)
+                streetDataManager.schedule = schedule
+                streetDataManager.processNextSchedule(for: schedule)
+                print("🎯 Setup loaded persisted schedule: \(schedule.streetName) (\(persistedSchedule.blockSide))")
+            } else if streetDataManager.schedule == nil {
+                fetchStreetDataAndScheduleNotifications(for: parkingLocation)
+            }
         } else {
             centerMapOnUserLocation()
         }
@@ -1006,8 +1553,271 @@ struct VehicleParkingView: View {
         // Handle notifications when vehicles are selected
     }
     
+    // MARK: - Street Sweeping Section (title outside, elegant simplicity)
+    private func streetSweepingSection() -> some View {
+        VStack(spacing: 8) {
+            // Title outside the box
+            HStack {
+                Text("Street Sweeping")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.secondary)
+                
+                Spacer()
+                
+                if isAutoDetectingSchedule {
+                    ProgressView()
+                        .scaleEffect(0.7)
+                        .tint(.secondary)
+                }
+            }
+            
+            // Content box - always same height
+            Group {
+                if nearbySchedules.isEmpty {
+                    // No schedules - centered text
+                    Text(settingAddress != nil ? "No restrictions" : "Move map to check")
+                        .font(.system(size: 15))
+                        .foregroundColor(settingAddress != nil ? .green : .secondary)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 80)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(.ultraThinMaterial)
+                        )
+                } else {
+                    // Scrollable schedule cards
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 12) {
+                            ForEach(Array(nearbySchedules.enumerated()), id: \.0) { index, scheduleWithSide in
+                                scheduleCard(scheduleWithSide, index: index)
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 4) // Extra padding to prevent clipping when scaled
+                    }
+                    .frame(height: 80)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .clipped()
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(.ultraThinMaterial)
+                    )
+                }
+            }
+        }
+    }
+    
+    // MARK: - Schedule Option Box (matches "no restrictions" styling)
+    // MARK: - Schedule Card (elegant, longer format with street name)
+    private func scheduleCard(_ scheduleWithSide: SweepScheduleWithSide, index: Int) -> some View {
+        let isSelected = index == selectedScheduleIndex
+        let schedule = scheduleWithSide.schedule
+        
+        return Button(action: {
+            selectScheduleOption(index)
+        }) {
+            VStack(alignment: .leading, spacing: 4) {
+                // Line 1: Street name + side
+                Text("\(schedule.streetName) (\(formatSideDescription(scheduleWithSide.side)))")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(.primary)
+                    .lineLimit(1)
+                
+                // Line 2: Schedule pattern
+                Text(formatElegantSchedule(schedule))
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+            }
+            .frame(width: 200, height: 48)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(
+                Group {
+                    if isSelected {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color.blue.opacity(0.15))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Color.blue, lineWidth: 1.5)
+                            )
+                            .shadow(color: .black.opacity(0.1), radius: 2)
+                    } else {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(.regularMaterial)
+                    }
+                }
+            )
+            .scaleEffect(isSelected ? 1.02 : 1.0)
+            .animation(.easeInOut(duration: 0.2), value: isSelected)
+            .allowsHitTesting(true)
+            .drawingGroup() // Prevents clipping issues with scaling
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+    
+    // MARK: - Elegant Schedule Formatter
+    private func formatElegantSchedule(_ schedule: SweepSchedule) -> String {
+        let pattern = getSimpleWeekPattern(schedule)
+        let time = "\(schedule.startTime)-\(schedule.endTime)"
+        return "\(pattern) \(schedule.sweepDay), \(time)"
+    }
+    
+    private func getSimpleWeekPattern(_ schedule: SweepSchedule) -> String {
+        let weeks = [
+            schedule.week1 == "1",
+            schedule.week2 == "1", 
+            schedule.week3 == "1",
+            schedule.week4 == "1",
+            schedule.week5 == "1"
+        ]
+        
+        if weeks == [true, false, true, false, true] {
+            return "1st, 3rd, 5th"
+        } else if weeks == [false, true, false, true, false] {
+            return "2nd, 4th"
+        } else if weeks == [true, false, true, false, false] {
+            return "1st, 3rd"
+        } else if weeks.allSatisfy({ $0 }) {
+            return "Every"
+        } else {
+            return "Select"
+        }
+    }
+    
+    // MARK: - Schedule Description Formatter
+    private func formatScheduleDescription(_ schedule: SweepSchedule) -> String {
+        let day = schedule.sweepDay
+        let time = "\(schedule.startTime) - \(schedule.endTime)"
+        
+        // Format week pattern for readability
+        let weekPattern = getWeekPattern(schedule)
+        
+        if weekPattern.isEmpty {
+            return "\(day), \(time)"
+        } else {
+            return "\(weekPattern) \(day), \(time)"
+        }
+    }
+    
+    private func getWeekPattern(_ schedule: SweepSchedule) -> String {
+        let weeks = [
+            schedule.week1 == "1",
+            schedule.week2 == "1", 
+            schedule.week3 == "1",
+            schedule.week4 == "1",
+            schedule.week5 == "1"
+        ]
+        
+        // Check common patterns
+        if weeks == [true, false, true, false, true] {
+            return "1st, 3rd, 5th"
+        } else if weeks == [false, true, false, true, false] {
+            return "2nd & 4th"
+        } else if weeks == [true, false, true, false, false] {
+            return "1st & 3rd"
+        } else if weeks == [false, true, false, true, true] {
+            return "2nd, 4th, 5th"
+        } else if weeks.allSatisfy({ $0 }) {
+            return "Every"
+        } else {
+            // Build custom pattern
+            let activeWeeks = weeks.enumerated().compactMap { index, isActive in
+                isActive ? getOrdinal(index + 1) : nil
+            }
+            return activeWeeks.joined(separator: ", ")
+        }
+    }
+    
+    private func getOrdinal(_ number: Int) -> String {
+        switch number {
+        case 1: return "1st"
+        case 2: return "2nd"
+        case 3: return "3rd"
+        case 4: return "4th"
+        case 5: return "5th"
+        default: return "\(number)th"
+        }
+    }
+    
+    // MARK: - Helper Methods
+    private func formatSideDescription(_ side: String) -> String {
+        let cleaned = side.lowercased()
+        if cleaned.contains("north") { return "North" }
+        if cleaned.contains("south") { return "South" }
+        if cleaned.contains("east") { return "East" }
+        if cleaned.contains("west") { return "West" }
+        return side.capitalized
+    }
+    
+    
+    // MARK: - Schedule Selection Methods
+    private func selectScheduleOption(_ index: Int) {
+        guard index >= 0 && index < nearbySchedules.count else { return }
+        
+        impactFeedbackLight.impactOccurred()
+        selectedScheduleIndex = index
+        detectedSchedule = nearbySchedules[index].schedule
+        
+        // Update the main pin location to the selected schedule's offset coordinate
+        settingCoordinate = nearbySchedules[index].offsetCoordinate
+        
+        // Update confidence based on distance (closer = higher confidence)
+        let distance = nearbySchedules[index].distance
+        scheduleConfidence = Float(max(0.3, min(0.9, 1.0 - (distance / 50.0)))) // Scale from 50ft max distance
+        
+        print("🎯 Selected schedule option \(index + 1): \(nearbySchedules[index].side) side")
+    }
+    
+    private func getStatusColor() -> Color {
+        if isAutoDetectingSchedule {
+            return .blue
+        } else if detectedSchedule != nil {
+            return scheduleConfidence > 0.7 ? .green : scheduleConfidence > 0.4 ? .orange : .red
+        } else if settingAddress != nil {
+            return .green
+        } else {
+            return .gray
+        }
+    }
+    
+    private func getStatusTitle() -> String {
+        if isAutoDetectingSchedule {
+            return "Checking schedule..."
+        } else if !nearbySchedules.isEmpty {
+            if nearbySchedules.count == 1 {
+                let (timeUntil, _) = calculateTimeUntilNextCleaning(schedule: nearbySchedules[0].schedule)
+                return "Street sweeping \(timeUntil)"
+            } else {
+                return "Multiple restrictions found"
+            }
+        } else if settingAddress != nil {
+            return "No restrictions"
+        } else {
+            return "Move map to check"
+        }
+    }
+    
+    private func getStatusSubtitle() -> String {
+        if isAutoDetectingSchedule {
+            return "Looking for street cleaning times"
+        } else if !nearbySchedules.isEmpty {
+            if nearbySchedules.count == 1 {
+                let schedule = nearbySchedules[0].schedule
+                return "\(schedule.streetName) • \(schedule.startTime)-\(schedule.endTime)"
+            } else {
+                return "Choose your parking side below"
+            }
+        } else if settingAddress != nil {
+            return "Clear to park"
+        } else {
+            return "Position pin to detect schedule"
+        }
+    }
+    
     private func cleanupResources() {
         autoResetTimer?.invalidate()
+        detectionDebounceTimer?.invalidate()
         cancellables.removeAll()
     }
 }
@@ -1135,6 +1945,7 @@ struct EnhancedVehicleListRow: View {
         .buttonStyle(PlainButtonStyle())
     }
 }
+
 
 #Preview {
     VehicleParkingView()

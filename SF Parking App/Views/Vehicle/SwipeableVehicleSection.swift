@@ -216,18 +216,12 @@ struct VehicleSwipeCard: View {
                         .foregroundColor(.primary)
                         .lineLimit(1)
                     
-                    HStack(spacing: 4) {
-                        Text(vehicle.type.displayName)
-                            .font(.subheadline)
+                    // Time stamp or parking address
+                    if let parkingLocation = vehicle.parkingLocation {
+                        Text(parkingLocation.address.components(separatedBy: ",").first ?? "Unknown Location")
+                            .font(.caption)
                             .foregroundColor(.secondary)
-                        
-                        Text("•")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                        
-                        Text(vehicle.color.displayName)
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .lineLimit(1)
                     }
                 }
                 
@@ -249,16 +243,16 @@ struct VehicleSwipeCard: View {
                 
                 Spacer()
                 
-                // Time stamp or parking address
+                // View in Maps link
                 if let parkingLocation = vehicle.parkingLocation {
-                    Text(parkingLocation.address.components(separatedBy: ",").first ?? "Unknown Location")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .lineLimit(1)
-                } else {
-                    Text(RelativeDateTimeFormatter().localizedString(for: vehicle.createdAt, relativeTo: Date()))
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                    HStack(spacing: 4) {
+                        Image(systemName: "map")
+                            .font(.caption2)
+                        Text("View in Maps")
+                            .font(.caption)
+                    }
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
                 }
             }
         }
@@ -285,17 +279,19 @@ struct VehicleSwipeCard: View {
     VStack {
         SwipeableVehicleSection(
             vehicles: [
-                Vehicle.sample,
                 Vehicle(
                     name: "My Truck",
                     type: .truck,
-                    color: .red
+                    color: .red,
+                    parkingLocation: ParkingLocation.sample
                 ),
                 Vehicle(
                     name: "My Bike",
                     type: .motorcycle,
-                    color: .green
-                )
+                    color: .green,
+                    parkingLocation: ParkingLocation.sample
+                ),
+                Vehicle.sample
             ],
             selectedVehicle: Vehicle.sample,
             onVehicleSelected: { _ in },
