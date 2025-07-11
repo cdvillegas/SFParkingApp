@@ -1516,39 +1516,55 @@ struct VehicleParkingView: View {
         let minutes = totalSeconds / 60
         let hours = minutes / 60  
         let days = hours / 24
+        let remainingHours = hours % 24
+        let remainingMinutes = minutes % 60
         
-        // Under 1 hour - show minutes only
-        if minutes < 60 {
+        // Under 1 hour - show minutes
+        if hours < 1 {
             return "in \(minutes) minute\(minutes == 1 ? "" : "s")"
         }
         
-        // Under 24 hours - be precise with hours and minutes
-        if hours < 24 {
-            let remainingMinutes = minutes % 60
-            if remainingMinutes == 0 {
+        // Under 12 hours - show hours and be precise
+        if hours < 12 {
+            if remainingMinutes < 10 {
                 return "in \(hours) hour\(hours == 1 ? "" : "s")"
-            } else if remainingMinutes < 15 {
-                return "in \(hours) hour\(hours == 1 ? "" : "s")"
-            } else if remainingMinutes < 45 {
-                return "in \(hours).5 hours"
+            } else if remainingMinutes < 40 {
+                return "in \(hours)½ hours"
             } else {
                 return "in \(hours + 1) hours"
             }
         }
         
-        // 1-6 days - show days with hour precision for first few days
-        if days < 7 {
-            let remainingHours = hours % 24
-            if days == 1 {
-                if remainingHours < 6 {
-                    return "in 1 day"
-                } else if remainingHours < 18 {
-                    return "in 1.5 days"
-                } else {
-                    return "in 2 days"
-                }
-            } else {
+        // 12-36 hours - special handling for "tomorrow"
+        if hours >= 12 && hours < 36 {
+            // Check if it's actually tomorrow
+            let calendar = Calendar.current
+            let targetDate = Date().addingTimeInterval(timeInterval)
+            if calendar.isDateInTomorrow(targetDate) {
+                return "tomorrow"
+            } else if hours < 24 {
+                return "in \(hours) hours"
+            }
+        }
+        
+        // 1.5 - 2.5 days - be more precise
+        if hours >= 36 && hours < 60 {
+            // Round to nearest half day
+            if remainingHours < 6 {
                 return "in \(days) day\(days == 1 ? "" : "s")"
+            } else if remainingHours < 18 {
+                return "in \(days)½ days"
+            } else {
+                return "in \(days + 1) days"
+            }
+        }
+        
+        // 2.5 - 6.5 days - round to nearest day
+        if days >= 2 && days < 7 {
+            if remainingHours < 12 {
+                return "in \(days) days"
+            } else {
+                return "in \(days + 1) days"
             }
         }
         
@@ -1727,7 +1743,10 @@ struct VehicleParkingView: View {
                     content.body = getStaticNotificationBody(for: option, schedule: schedule)
                     content.sound = calculatedOffset <= 1800 ? .defaultCritical : .default
                     
-                    let dateComponents = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: notificationDate)
+                    var calendar = Calendar.current
+                    calendar.timeZone = TimeZone(identifier: "America/Los_Angeles") ?? TimeZone.current
+                    var dateComponents = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: notificationDate)
+                    dateComponents.timeZone = TimeZone(identifier: "America/Los_Angeles") ?? TimeZone.current
                     let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
                     
                     let request = UNNotificationRequest(
@@ -1738,7 +1757,11 @@ struct VehicleParkingView: View {
                     
                     do {
                         try await center.add(request)
-                        print("✅ Auto-scheduled: \(option.title) at \(notificationDate)")
+                        let formatter = DateFormatter()
+                        formatter.dateStyle = .medium
+                        formatter.timeStyle = .short
+                        formatter.timeZone = TimeZone(identifier: "America/Los_Angeles") ?? TimeZone.current
+                        print("✅ Auto-scheduled: \(option.title) at \(formatter.string(from: notificationDate)) PST")
                     } catch {
                         print("❌ Failed to auto-schedule \(option.title): \(error)")
                     }
@@ -1758,15 +1781,15 @@ struct VehicleParkingView: View {
     private func getStaticNotificationTitle(for option: NotificationOption) -> String {
         switch option.title {
         case "3 Days Before":
-            return "🗓️ Street Cleaning Reminder"
+            return "📅 Street Sweeping This Week"
         case "Day Before":
-            return "🌙 Move Your Car"
+            return "🕐 Street Sweeping Tomorrow"
         case "Day Of":
-            return "☀️ Move Your Car"
+            return "⏰ Street Sweeping TODAY"
         case "Final Warning":
-            return "🚨 URGENT: Move Car Now"
+            return "🚨 Move Your Car NOW"
         case "All Clear":
-            return "✅ All Clear"
+            return "✅ Street Sweeping Has Ended"
         default:
             return "🅿️ Parking Reminder"
         }

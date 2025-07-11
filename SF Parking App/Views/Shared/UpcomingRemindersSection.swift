@@ -13,32 +13,32 @@ struct NotificationOption: Identifiable, Codable {
     static let staticTypes: [NotificationOption] = [
         NotificationOption(
             title: "3 Days Before",
-            subtitle: "Plan ahead",
+            subtitle: "A few days before at 9 AM",
             icon: "calendar.badge.exclamationmark",
             timeOffset: 0 // Calculated dynamically
         ),
         NotificationOption(
             title: "Day Before", 
-            subtitle: "Evening reminder",
-            icon: "moon.stars",
+            subtitle: "Preceding day at 9 AM",
+            icon: "clock.fill",
             timeOffset: 0 // Calculated dynamically
         ),
         NotificationOption(
             title: "Day Of",
-            subtitle: "Time to move",
-            icon: "sunrise",
+            subtitle: "9 AM or 2 hours before",
+            icon: "alarm.fill",
             timeOffset: 0 // Calculated dynamically
         ),
         NotificationOption(
             title: "Final Warning",
-            subtitle: "Move now",
-            icon: "exclamationmark.triangle",
+            subtitle: "30 minutes before",
+            icon: "exclamationmark.octagon.fill",
             timeOffset: 1800 // Always 30 minutes
         ),
         NotificationOption(
             title: "All Clear",
             subtitle: "Safe to park back",
-            icon: "checkmark.circle",
+            icon: "checkmark.circle.fill",
             timeOffset: 0 // Calculated dynamically
         )
     ]
@@ -51,22 +51,20 @@ struct NotificationOption: Identifiable, Codable {
         
         switch type.title {
         case "3 Days Before":
-            return 3 * 24 * 3600 // 3 days before
+            // Notify at 9 AM, 3 days before cleaning
+            return calculateTimeOffset(targetHour: 9, cleaningDate: cleaningDate, daysBefore: 3)
             
         case "Day Before":
-            let nightBeforeHour = startHour < 10 ? 20 : 22 // 8 PM for early, 10 PM for late
-            return calculateTimeOffset(targetHour: nightBeforeHour, cleaningDate: cleaningDate, daysBefore: 1)
+            // Always notify at 9 AM the day before
+            return calculateTimeOffset(targetHour: 9, cleaningDate: cleaningDate, daysBefore: 1)
             
         case "Day Of":
-            if startHour <= 8 {
-                // Very early cleaning - remind at bedtime
-                return calculateTimeOffset(targetHour: 23, cleaningDate: cleaningDate, daysBefore: 1)
-            } else if startHour <= 12 {
-                // Morning cleaning - 2 hours before
+            if startHour < 10 {
+                // For schedules earlier than 10 AM - remind 2 hours before
                 return 2 * 3600
             } else {
-                // Afternoon cleaning - 3 hours before
-                return 3 * 3600
+                // For schedules 10 AM or later - remind at 9 AM same day
+                return calculateTimeOffset(targetHour: 9, cleaningDate: cleaningDate, daysBefore: 0)
             }
             
         case "Final Warning":
@@ -174,7 +172,9 @@ struct NotificationOption: Identifiable, Codable {
     
     // Helper to calculate time offset for specific target hour
     private static func calculateTimeOffset(targetHour: Int, cleaningDate: Date, daysBefore: Int) -> TimeInterval {
-        let calendar = Calendar.current
+        var calendar = Calendar.current
+        calendar.timeZone = TimeZone(identifier: "America/Los_Angeles") ?? TimeZone.current
+        
         guard let targetDate = calendar.date(byAdding: .day, value: -daysBefore, to: cleaningDate),
               let targetDateTime = calendar.date(bySettingHour: targetHour, minute: 0, second: 0, of: targetDate) else {
             return TimeInterval(daysBefore * 24 * 3600 - targetHour * 3600)
@@ -385,29 +385,91 @@ extension UpcomingRemindersSection {
     
     private func formatPreciseTimeUntil(_ date: Date) -> String {
         let timeInterval = date.timeIntervalSinceNow
-        let totalMinutes = Int(timeInterval / 60)
+        let totalSeconds = Int(timeInterval)
         
-        if totalMinutes <= 0 {
-            return "now"
-        } else if totalMinutes < 60 {
-            let minutes = totalMinutes == 1 ? "minute" : "minutes"
-            return "in \(totalMinutes) \(minutes)"
-        } else if totalMinutes < 1440 { // Less than 24 hours
-            let hours = totalMinutes / 60
-            let minutes = totalMinutes % 60
-            let hourWord = hours == 1 ? "hour" : "hours"
-            let minuteWord = minutes == 1 ? "minute" : "minutes"
-            
-            if minutes == 0 {
-                return "in \(hours) \(hourWord)"
-            } else {
-                return "in \(hours) \(hourWord) \(minutes) \(minuteWord)"
-            }
-        } else {
-            let days = totalMinutes / 1440
-            let dayWord = days == 1 ? "day" : "days"
-            return "in \(days) \(dayWord)"
+        // Handle past/current times
+        if totalSeconds <= 0 {
+            return "happening now"
         }
+        
+        // Handle very soon (under 2 minutes)
+        if totalSeconds < 120 {
+            if totalSeconds < 60 {
+                return "in under 1 minute"
+            } else {
+                return "in 1 minute"
+            }
+        }
+        
+        let minutes = totalSeconds / 60
+        let hours = minutes / 60  
+        let days = hours / 24
+        let remainingHours = hours % 24
+        let remainingMinutes = minutes % 60
+        
+        // Under 1 hour - show minutes
+        if hours < 1 {
+            return "in \(minutes) minute\(minutes == 1 ? "" : "s")"
+        }
+        
+        // Under 12 hours - show hours and be precise
+        if hours < 12 {
+            if remainingMinutes < 10 {
+                return "in \(hours) hour\(hours == 1 ? "" : "s")"
+            } else if remainingMinutes < 40 {
+                return "in \(hours)½ hours"
+            } else {
+                return "in \(hours + 1) hours"
+            }
+        }
+        
+        // 12-36 hours - special handling for "tomorrow"
+        if hours >= 12 && hours < 36 {
+            // Check if it's actually tomorrow
+            let calendar = Calendar.current
+            if calendar.isDateInTomorrow(date) {
+                return "tomorrow"
+            } else if hours < 24 {
+                return "in \(hours) hours"
+            }
+        }
+        
+        // 1.5 - 2.5 days - be more precise
+        if hours >= 36 && hours < 60 {
+            // Round to nearest half day
+            if remainingHours < 6 {
+                return "in \(days) day\(days == 1 ? "" : "s")"
+            } else if remainingHours < 18 {
+                return "in \(days)½ days"
+            } else {
+                return "in \(days + 1) days"
+            }
+        }
+        
+        // 2.5 - 6.5 days - round to nearest day
+        if days >= 2 && days < 7 {
+            if remainingHours < 12 {
+                return "in \(days) days"
+            } else {
+                return "in \(days + 1) days"
+            }
+        }
+        
+        // 1+ weeks
+        let weeks = days / 7
+        if weeks >= 1 && weeks < 4 {
+            let remainingDays = days % 7
+            if weeks == 1 && remainingDays <= 1 {
+                return "in 1 week"
+            } else if remainingDays <= 3 {
+                return "in \(weeks) week\(weeks == 1 ? "" : "s")"
+            } else {
+                return "in \(weeks + 1) weeks"
+            }
+        }
+        
+        // Default for longer periods
+        return "in \(days) days"
     }
     
     
@@ -859,7 +921,11 @@ struct NotificationSettingsSheet: View {
             let calculatedOffset = NotificationOption.calculateTiming(for: option, schedule: schedule)
             let notificationDate = schedule.date.addingTimeInterval(-calculatedOffset)
             
-            print("📅 \(option.title): Scheduled for \(notificationDate) (offset: \(calculatedOffset)s)")
+            let formatter = DateFormatter()
+            formatter.dateStyle = .medium
+            formatter.timeStyle = .short
+            formatter.timeZone = TimeZone(identifier: "America/Los_Angeles") ?? TimeZone.current
+            print("📅 \(option.title): Scheduled for \(formatter.string(from: notificationDate)) PST (offset: \(calculatedOffset / 3600) hours)")
             
             guard notificationDate > Date() else { 
                 print("⚠️ Skipping \(option.title) - date is in the past")
@@ -871,8 +937,20 @@ struct NotificationSettingsSheet: View {
             content.body = getNotificationBody(for: option)
             content.sound = calculatedOffset <= 1800 ? .defaultCritical : .default
             content.badge = 1
+            content.categoryIdentifier = "STREET_CLEANING"
+            var userInfo: [String: Any] = [
+                "option": option.title,
+                "streetName": schedule.streetName
+            ]
+            if let locationId = parkingLocation?.id {
+                userInfo["parkingLocationId"] = locationId.uuidString
+            }
+            content.userInfo = userInfo
             
-            let dateComponents = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: notificationDate)
+            var calendar = Calendar.current
+            calendar.timeZone = TimeZone(identifier: "America/Los_Angeles") ?? TimeZone.current
+            var dateComponents = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: notificationDate)
+            dateComponents.timeZone = TimeZone(identifier: "America/Los_Angeles") ?? TimeZone.current
             let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
             
             let request = UNNotificationRequest(
@@ -895,10 +973,18 @@ struct NotificationSettingsSheet: View {
         print("🎯 Total notifications scheduled: \(scheduledCount)")
         print("🔍 Verified pending notifications: \(pendingRequests.count)")
         
+        let formatter = DateFormatter()
+        formatter.dateStyle = .full
+        formatter.timeStyle = .short
+        formatter.timeZone = TimeZone(identifier: "America/Los_Angeles") ?? TimeZone.current
+        
         for request in pendingRequests {
             if let trigger = request.trigger as? UNCalendarNotificationTrigger,
                let nextDate = trigger.nextTriggerDate() {
-                print("📋 \(request.content.title) - fires at \(nextDate)")
+                let timeUntil = nextDate.timeIntervalSince(Date())
+                let hoursUntil = timeUntil / 3600
+                let daysUntil = hoursUntil / 24
+                print("📋 \(request.content.title) - fires at \(formatter.string(from: nextDate)) (in \(String(format: "%.1f", daysUntil)) days)")
             }
         }
     }
@@ -906,15 +992,15 @@ struct NotificationSettingsSheet: View {
     private func getNotificationTitle(for option: NotificationOption) -> String {
         switch option.title {
         case "3 Days Before":
-            return "🗓️ Street Cleaning Reminder"
+            return "📅 Street Sweeping In 3 Days"
         case "Day Before":
-            return "🌙 Move Your Car"
+            return "🕐 Street Sweeping Tomorrow"
         case "Day Of":
-            return "☀️ Move Your Car"
+            return "⏰ Street Sweeping TODAY"
         case "Final Warning":
-            return "🚨 URGENT: Move Car Now"
+            return "🚨 Move Your Car NOW"
         case "All Clear":
-            return "✅ All Clear"
+            return "✅ Street Sweeping Has Ended"
         default:
             return "🅿️ Parking Reminder"
         }
@@ -923,15 +1009,15 @@ struct NotificationSettingsSheet: View {
     private func getNotificationBody(for option: NotificationOption) -> String {
         switch option.title {
         case "3 Days Before":
-            return "Street cleaning on \(schedule.dayOfWeek) at \(schedule.startTime) on \(schedule.streetName)"
+            return "Starts \(schedule.dayOfWeek) at \(schedule.startTime) on \(schedule.streetName)"
         case "Day Before":
-            return "Street cleaning tomorrow at \(schedule.startTime) on \(schedule.streetName)"
-        case "Day Of":
-            return "Street cleaning today at \(schedule.startTime) on \(schedule.streetName)"
+            return "Starts at \(schedule.startTime) on \(schedule.streetName)"
+        case "Morning Of":
+            return "Starts at \(schedule.startTime) on \(schedule.streetName)"
         case "Final Warning":
-            return "Street cleaning starts in 30 minutes on \(schedule.streetName)"
+            return "Starts in 30 minutes on \(schedule.streetName)"
         case "All Clear":
-            return "Street cleaning finished on \(schedule.streetName) - safe to park back"
+            return "Ended just now on \(schedule.streetName)"
         default:
             return "Parking reminder for \(schedule.streetName)"
         }
