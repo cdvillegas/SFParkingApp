@@ -37,6 +37,7 @@ struct VehicleParkingView: View {
     // Side-of-street selection
     @State private var nearbySchedules: [SweepScheduleWithSide] = []
     @State private var selectedScheduleIndex: Int = 0
+    @State private var hasSelectedSchedule: Bool = true
     @State private var showingScheduleSelection = false
     
     // Auto-center functionality
@@ -197,29 +198,21 @@ struct VehicleParkingView: View {
                         .frame(width: 24, height: 24)
                         .offset(y: -24)
                         
-                        // Schedule confidence ring with animation
-                        if scheduleConfidence > 0 {
+                        // Schedule selected glow
+                        if !nearbySchedules.isEmpty && hasSelectedSchedule {
                             ZStack {
                                 // Outer glow ring
                                 Circle()
-                                    .stroke(
-                                        (scheduleConfidence > 0.7 ? Color.green :
-                                         scheduleConfidence > 0.4 ? Color.orange : Color.red).opacity(0.3),
-                                        lineWidth: 6
-                                    )
+                                    .stroke(Color.blue.opacity(0.3), lineWidth: 6)
                                     .frame(width: 50, height: 50)
                                 
-                                // Main confidence ring  
+                                // Main glow ring  
                                 Circle()
-                                    .stroke(
-                                        scheduleConfidence > 0.7 ? Color.green :
-                                        scheduleConfidence > 0.4 ? Color.orange : Color.red,
-                                        lineWidth: 3
-                                    )
+                                    .stroke(Color.blue, lineWidth: 3)
                                     .frame(width: 40, height: 40)
                             }
                             .offset(y: -24)
-                            .animation(.easeInOut(duration: 0.3), value: scheduleConfidence)
+                            .animation(.easeInOut(duration: 0.3), value: !nearbySchedules.isEmpty)
                         }
                     }
                     .allowsHitTesting(false)
@@ -307,9 +300,9 @@ struct VehicleParkingView: View {
                         // Main parking zone line
                         MapPolyline(coordinates: streetEdgeCoords)
                             .stroke(
-                                index == selectedScheduleIndex ? Color.blue : Color.secondary.opacity(0.4),
+                                (index == selectedScheduleIndex && hasSelectedSchedule) ? Color.blue : Color.secondary.opacity(0.4),
                                 style: StrokeStyle(
-                                    lineWidth: index == selectedScheduleIndex ? 8 : 6,
+                                    lineWidth: (index == selectedScheduleIndex && hasSelectedSchedule) ? 8 : 6,
                                     lineCap: .round, 
                                     lineJoin: .round
                                 )
@@ -328,7 +321,7 @@ struct VehicleParkingView: View {
                         }
                         
                         // Elegant selection indicator with subtle glow
-                        if index == selectedScheduleIndex {
+                        if index == selectedScheduleIndex && hasSelectedSchedule {
                             MapPolyline(coordinates: streetEdgeCoords)
                                 .stroke(
                                     Color.blue.opacity(0.3),
@@ -767,7 +760,7 @@ struct VehicleParkingView: View {
                 }
                 
                 Button(action: {
-                    notificationFeedback.notificationOccurred(.success)
+                    impactFeedbackLight.impactOccurred()
                     withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
                         confirmUnifiedLocation()
                     }
@@ -1338,6 +1331,7 @@ struct VehicleParkingView: View {
                         print("🎯 Found \(schedulesWithSides.count) nearby schedules")
                         self.nearbySchedules = schedulesWithSides
                         self.selectedScheduleIndex = 0 // Default to closest
+                        self.hasSelectedSchedule = true // Auto-select first schedule
                         self.detectedSchedule = schedulesWithSides[0].schedule
                         self.scheduleConfidence = 0.8
                     } else {
@@ -1363,10 +1357,8 @@ struct VehicleParkingView: View {
         guard let selectedVehicle = vehicleManager.selectedVehicle,
               let address = settingAddress else { return }
         
-        notificationFeedback.notificationOccurred(.success)
-        
         // Create persisted schedule if user selected one
-        let persistedSchedule = !nearbySchedules.isEmpty ? 
+        let persistedSchedule = (!nearbySchedules.isEmpty && hasSelectedSchedule) ? 
             PersistedSweepSchedule(from: nearbySchedules[selectedScheduleIndex].schedule, side: nearbySchedules[selectedScheduleIndex].side) :
             nil
         
@@ -1378,13 +1370,13 @@ struct VehicleParkingView: View {
         )
         
         // Use the user's selected schedule for notifications
-        if !nearbySchedules.isEmpty {
+        if !nearbySchedules.isEmpty && hasSelectedSchedule {
             let selectedSchedule = nearbySchedules[selectedScheduleIndex].schedule
             streetDataManager.schedule = selectedSchedule
             streetDataManager.processNextSchedule(for: selectedSchedule)
             print("🎯 Using user-selected schedule: \(selectedSchedule.streetName) (\(nearbySchedules[selectedScheduleIndex].side))")
         } else {
-            // No schedules detected - clear the street data manager
+            // No schedule selected or no schedules detected - clear the street data manager
             streetDataManager.schedule = nil
             streetDataManager.nextUpcomingSchedule = nil
             print("🟢 No restrictions - clearing upcoming reminders")
@@ -1831,25 +1823,27 @@ struct VehicleParkingView: View {
                 .frame(maxWidth: .infinity)
                 .frame(height: 88)
             } else {
-                // Standalone schedule cards with proper padding to prevent clipping
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        ForEach(Array(nearbySchedules.enumerated()), id: \.0) { index, scheduleWithSide in
-                            elegantScheduleCard(scheduleWithSide, index: index)
+                VStack(spacing: 8) {
+                    // Standalone schedule cards with proper padding to prevent clipping
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 12) {
+                            ForEach(Array(nearbySchedules.enumerated()), id: \.0) { index, scheduleWithSide in
+                                elegantScheduleCard(scheduleWithSide, index: index)
+                            }
                         }
+                        .padding(.leading, 4) // Minimal leading padding to prevent clipping
+                        .padding(.trailing, 20) // Trailing padding for right side
+                        .padding(.vertical, 12) // Extra padding to prevent clipping when cards scale up
                     }
-                    .padding(.leading, 4) // Minimal leading padding to prevent clipping
-                    .padding(.trailing, 20) // Trailing padding for right side
-                    .padding(.vertical, 12) // Extra padding to prevent clipping when cards scale up
+                    .frame(height: 88)
                 }
-                .frame(height: 88)
             }
         }.padding(20)
     }
     
     // MARK: - Elegant Schedule Card (redesigned for beautiful light/dark mode)
     private func elegantScheduleCard(_ scheduleWithSide: SweepScheduleWithSide, index: Int) -> some View {
-        let isSelected = index == selectedScheduleIndex
+        let isSelected = index == selectedScheduleIndex && hasSelectedSchedule
         let schedule = scheduleWithSide.schedule
         
         return Button(action: {
@@ -2070,17 +2064,32 @@ struct VehicleParkingView: View {
         guard index >= 0 && index < nearbySchedules.count else { return }
         
         impactFeedbackLight.impactOccurred()
-        selectedScheduleIndex = index
-        detectedSchedule = nearbySchedules[index].schedule
         
-        // Update the main pin location to the selected schedule's offset coordinate
-        settingCoordinate = nearbySchedules[index].offsetCoordinate
+        // Toggle selection if the same index is selected
+        if selectedScheduleIndex == index && hasSelectedSchedule {
+            hasSelectedSchedule = false
+            detectedSchedule = nil
+        } else {
+            selectedScheduleIndex = index
+            detectedSchedule = nearbySchedules[index].schedule
+            hasSelectedSchedule = true
+        }
         
-        // Update confidence based on distance (closer = higher confidence)
-        let distance = nearbySchedules[index].distance
-        scheduleConfidence = Float(max(0.3, min(0.9, 1.0 - (distance / 50.0)))) // Scale from 50ft max distance
+        // Update the main pin location and confidence only if a schedule is selected
+        if hasSelectedSchedule {
+            settingCoordinate = nearbySchedules[index].offsetCoordinate
+            // Update confidence based on distance (closer = higher confidence)
+            let distance = nearbySchedules[index].distance
+            scheduleConfidence = Float(max(0.3, min(0.9, 1.0 - (distance / 50.0)))) // Scale from 50ft max distance
+        } else {
+            scheduleConfidence = 0.0
+        }
         
-        print("🎯 Selected schedule option \(index + 1): \(nearbySchedules[index].side) side")
+        if hasSelectedSchedule {
+            print("🎯 Selected schedule option \(index + 1): \(nearbySchedules[index].side) side")
+        } else {
+            print("🎯 Deselected schedule - no parking restrictions")
+        }
     }
     
     private func getStatusColor() -> Color {

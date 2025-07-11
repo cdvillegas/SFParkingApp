@@ -32,6 +32,10 @@ struct AddEditVehicleView: View {
     
     private var displayName: String {
         let trimmedName = vehicleName.trimmingCharacters(in: .whitespaces)
+        // If editing an existing vehicle with no custom name, show its default display name
+        if trimmedName.isEmpty && editingVehicle != nil && editingVehicle!.name == nil {
+            return editingVehicle!.displayName
+        }
         return trimmedName.isEmpty ? generatedName : trimmedName
     }
     
@@ -292,8 +296,14 @@ struct AddEditVehicleView: View {
         if let vehicle = editingVehicle {
             selectedType = vehicle.type
             selectedColor = vehicle.color
+            // If vehicle has no custom name, show the display name (e.g., "My Car")
             vehicleName = vehicle.name ?? ""
             originalName = vehicle.name ?? ""
+            // Keep track of whether this vehicle is using the default "My" naming
+            if vehicle.name == nil && vehicle.displayName.starts(with: "My ") {
+                vehicleName = ""  // Keep empty to show default name
+                originalName = ""
+            }
         }
     }
     
