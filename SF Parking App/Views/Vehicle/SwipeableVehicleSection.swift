@@ -7,63 +7,21 @@ struct SwipeableVehicleSection: View {
     let onVehicleSelected: (Vehicle) -> Void
     let onVehicleTap: (Vehicle) -> Void
     
-    @State private var currentIndex: Int = 0
-    @State private var dragOffset: CGFloat = 0
-    @State private var isAnimating = false
-    
-    private let cardWidth: CGFloat = UIScreen.main.bounds.width - 32 // Just small side margins
-    private let cardSpacing: CGFloat = 16
-    
     var body: some View {
         VStack(spacing: 0) {
             if !vehicles.isEmpty {
-                // Cards container
-                GeometryReader { geometry in
-                    HStack(spacing: cardSpacing) {
-                        ForEach(Array(vehicles.enumerated()), id: \.element.id) { index, vehicle in
-                            VehicleSwipeCard(
-                                vehicle: vehicle,
-                                isSelected: selectedVehicle?.id == vehicle.id,
-                                onTap: {
-                                    impactFeedback()
-                                    onVehicleTap(vehicle)
-                                }
-                            )
-                            .frame(width: cardWidth)
-                            .scaleEffect(scaleForCard(at: index))
-                            .opacity(opacityForCard(at: index))
-                            .animation(.spring(response: 0.6, dampingFraction: 0.8), value: currentIndex)
-                            .animation(.spring(response: 0.6, dampingFraction: 0.8), value: dragOffset)
+                // Single vehicle card - no swiping
+                if let vehicle = vehicles.first {
+                    VehicleSwipeCard(
+                        vehicle: vehicle,
+                        isSelected: selectedVehicle?.id == vehicle.id,
+                        onTap: {
+                            impactFeedback()
+                            onVehicleTap(vehicle)
                         }
-                    }
-                    .offset(x: offsetForCurrentIndex() + dragOffset)
-                }
-                .simultaneousGesture(
-                    DragGesture(minimumDistance: 20)
-                        .onChanged { value in
-                            if !isAnimating {
-                                dragOffset = value.translation.width
-                            }
-                        }
-                        .onEnded { value in
-                            handleDragEnd(value: value)
-                        }
-                )
-                .frame(height: 120)
-                .clipped()
-                
-                // Page indicators
-                if vehicles.count > 1 {
-                    HStack(spacing: 8) {
-                        ForEach(0..<vehicles.count, id: \.self) { index in
-                            Circle()
-                                .fill(index == currentIndex ? vehicles[currentIndex].color.color : Color.gray.opacity(0.3))
-                                .frame(width: 8, height: 8)
-                                .scaleEffect(index == currentIndex ? 1.2 : 1.0)
-                                .animation(.spring(response: 0.4, dampingFraction: 0.7), value: currentIndex)
-                        }
-                    }
-                    .padding(.top, 12)
+                    )
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 16)
                 }
             } else {
                 // Empty state
@@ -88,89 +46,6 @@ struct SwipeableVehicleSection: View {
                 .padding(.horizontal, 20)
             }
         }
-        .onAppear {
-            updateCurrentIndex()
-        }
-        .onChange(of: selectedVehicle) {
-            updateCurrentIndex()
-        }
-    }
-    
-    // MARK: - Helper Methods
-    
-    private func updateCurrentIndex() {
-        if let selectedVehicle = selectedVehicle,
-           let index = vehicles.firstIndex(where: { $0.id == selectedVehicle.id }) {
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-                currentIndex = index
-            }
-        }
-    }
-    
-    private func offsetForCurrentIndex() -> CGFloat {
-        let totalWidth = cardWidth + cardSpacing
-        let screenWidth = UIScreen.main.bounds.width
-        let centerOffset = (screenWidth - cardWidth) / 2
-        return centerOffset - (CGFloat(currentIndex) * totalWidth)
-    }
-    
-    private func scaleForCard(at index: Int) -> CGFloat {
-        let distance = abs(index - currentIndex)
-        if distance == 0 {
-            return 1.0
-        } else if distance == 1 {
-            return 0.95
-        } else {
-            return 0.9
-        }
-    }
-    
-    private func opacityForCard(at index: Int) -> Double {
-        let distance = abs(index - currentIndex)
-        if distance == 0 {
-            return 1.0
-        } else if distance == 1 {
-            return 0.7
-        } else {
-            return 0.4
-        }
-    }
-    
-    private func handleDragEnd(value: DragGesture.Value) {
-        isAnimating = true
-        
-        let threshold: CGFloat = 50
-        let velocity = value.predictedEndTranslation.width - value.translation.width
-        
-        if value.translation.width > threshold || velocity > 500 {
-            // Swipe right - go to previous
-            if currentIndex > 0 {
-                currentIndex -= 1
-                selectCurrentVehicle()
-            }
-        } else if value.translation.width < -threshold || velocity < -500 {
-            // Swipe left - go to next
-            if currentIndex < vehicles.count - 1 {
-                currentIndex += 1
-                selectCurrentVehicle()
-            }
-        }
-        
-        withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-            dragOffset = 0
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-            isAnimating = false
-        }
-    }
-    
-    private func selectCurrentVehicle() {
-        if currentIndex >= 0 && currentIndex < vehicles.count {
-            let vehicle = vehicles[currentIndex]
-            onVehicleSelected(vehicle)
-            impactFeedback()
-        }
     }
     
     private func impactFeedback() {
@@ -183,6 +58,8 @@ struct VehicleSwipeCard: View {
     let vehicle: Vehicle
     let isSelected: Bool
     let onTap: () -> Void
+    
+    @State private var isPressed = false
     
     var body: some View {
         VStack(spacing: 12) {
@@ -210,53 +87,34 @@ struct VehicleSwipeCard: View {
                 
                 // Vehicle info
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(vehicle.displayName)
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.primary)
-                        .lineLimit(1)
-                    
-                    // Time stamp or parking address
+                    // Parking address
                     if let parkingLocation = vehicle.parkingLocation {
-                        Text(parkingLocation.address.components(separatedBy: ",").first ?? "Unknown Location")
+                        Text(parkingLocation.address.components(separatedBy: ",").prefix(2).joined(separator: ","))
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.primary)
+                            .lineLimit(2)
+                        
+                        Text("View In Maps")
                             .font(.caption)
+                            .foregroundColor(.blue)
+                    } else {
+                        Text("No parking location set")
+                            .font(.headline)
+                            .fontWeight(.semibold)
                             .foregroundColor(.secondary)
                             .lineLimit(1)
-                    }
-                }
-                
-                Spacer()
-            }
-            
-            // Parking status
-            HStack(spacing: 16) {
-                // Parking indicator
-                HStack(spacing: 4) {
-                    Image(systemName: vehicle.parkingLocation != nil ? "location.fill" : "location.slash")
-                        .font(.caption)
-                        .foregroundColor(vehicle.parkingLocation != nil ? .green : .secondary)
-                    
-                    Text(vehicle.parkingLocation != nil ? "Parked" : "Not Parked")
-                        .font(.caption)
-                        .foregroundColor(vehicle.parkingLocation != nil ? .green : .secondary)
-                }
-                
-                Spacer()
-                
-                // View in Maps link
-                if let parkingLocation = vehicle.parkingLocation {
-                    HStack(spacing: 4) {
-                        Image(systemName: "map")
-                            .font(.caption2)
-                        Text("View in Maps")
+                        
+                        Text("Tap to set location")
                             .font(.caption)
+                            .foregroundColor(.blue)
                     }
-                    .foregroundColor(.secondary)
-                    .lineLimit(1)
                 }
+                
+                Spacer()
             }
         }
-        .padding(16)
+        .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color(.systemBackground))
@@ -267,11 +125,32 @@ struct VehicleSwipeCard: View {
                     y: isSelected ? 3 : 1
                 )
         )
-        .scaleEffect(isSelected ? 1.02 : 1.0)
-        .animation(.spring(response: 0.4, dampingFraction: 0.7), value: isSelected)
-        .onTapGesture {
-            onTap()
-        }
+        .padding(.horizontal, 4)
+        .padding(.vertical, 2)
+        .scaleEffect(isPressed ? 0.98 : 1.0)
+        .animation(.spring(response: 0.2, dampingFraction: 0.9), value: isPressed)
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { _ in
+                    if !isPressed {
+                        withAnimation(.spring(response: 0.2, dampingFraction: 0.9)) {
+                            isPressed = true
+                        }
+                    }
+                }
+                .onEnded { _ in
+                    withAnimation(.spring(response: 0.2, dampingFraction: 0.9)) {
+                        isPressed = false
+                    }
+                    
+                    // Enhanced haptic feedback
+                    let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                    impactFeedback.prepare()
+                    impactFeedback.impactOccurred()
+                    
+                    onTap()
+                }
+        )
     }
 }
 

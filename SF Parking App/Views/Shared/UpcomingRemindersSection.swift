@@ -250,6 +250,8 @@ struct UpcomingRemindersSection: View {
         let urgencyStyle = getUrgencyStyle(urgencyLevel)
         
         return Button(action: {
+            let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+            impactFeedback.impactOccurred()
             showingReminderSheet = true
         }) {
             HStack(spacing: 16) {
@@ -284,6 +286,8 @@ struct UpcomingRemindersSection: View {
     // MARK: - Error State
     private var errorState: some View {
         Button(action: {
+            let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+            impactFeedback.impactOccurred()
             if let location = parkingLocation {
                 streetDataManager.fetchSchedules(for: location.coordinate)
             }
@@ -998,7 +1002,7 @@ struct NotificationSettingsSheet: View {
         case "Day Of":
             return "⏰ Street Sweeping TODAY"
         case "Final Warning":
-            return "🚨 Move Your Car NOW"
+            return "🚨 Move Your Vehicle NOW"
         case "All Clear":
             return "✅ Street Sweeping Has Ended"
         default:

@@ -708,6 +708,10 @@ struct VehicleParkingView: View {
             return 
         }
         
+        // Haptic feedback for successful action
+        impactFeedbackLight.prepare()
+        impactFeedbackLight.impactOccurred()
+        
         let coordinate = parkingLocation.coordinate
         let placemark = MKPlacemark(coordinate: coordinate)
         let mapItem = MKMapItem(placemark: placemark)
@@ -737,15 +741,15 @@ struct VehicleParkingView: View {
             
             // Action buttons
             HStack(spacing: 12) {
-                // Only show cancel button if parking location exists
-                if vehicleManager.currentVehicle?.parkingLocation != nil {
+                // Show cancel/skip button if parking location exists OR during initial setup OR no location set
+                if vehicleManager.currentVehicle?.parkingLocation != nil || isSettingLocationForNewVehicle || vehicleManager.currentVehicle?.parkingLocation == nil {
                     Button(action: {
                         impactFeedbackLight.impactOccurred()
                         withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
                             cancelSettingLocation()
                         }
                     }) {
-                        Text(isSettingLocationForNewVehicle ? "Skip for Now" : "Cancel")
+                        Text(isSettingLocationForNewVehicle || vehicleManager.currentVehicle?.parkingLocation == nil ? "Set Later" : "Cancel")
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundColor(.secondary)
                             .frame(maxWidth: .infinity)
@@ -957,7 +961,7 @@ struct VehicleParkingView: View {
                         .padding(.horizontal, 20)
                 }
                 
-                // Enhanced header with three-dot menu (Edit/Move)
+                // Enhanced header with reminders button
                 HStack {
                     Text("My Vehicle")
                         .font(.system(size: 24, weight: .bold))
@@ -965,46 +969,16 @@ struct VehicleParkingView: View {
                     
                     Spacer()
                     
-                    // Three-dot menu for single vehicle
-                    if let currentVehicle = vehicleManager.currentVehicle {
-                        Menu {
-                            Button(action: {
-                                impactFeedbackLight.impactOccurred()
-                                showingEditVehicle = currentVehicle
-                            }) {
-                                HStack {
-                                    Text("Edit")
-                                    Image(systemName: "pencil")
-                                }
-                            }
-                            
-                            Button(action: {
-                                impactFeedbackLight.impactOccurred()
-                                isSettingLocationForNewVehicle = false
-                                startSettingLocationForVehicle(currentVehicle)
-                            }) {
-                                HStack {
-                                    Text("Move")
-                                    Image(systemName: "location")
-                                }
-                            }
-                            
-                            if currentVehicle.parkingLocation != nil {
-                                Button(action: {
-                                    impactFeedbackLight.impactOccurred()
-                                    showingReminderSheet = true
-                                }) {
-                                    HStack {
-                                        Text("Reminders")
-                                        Image(systemName: "bell")
-                                    }
-                                }
-                            }
-                        } label: {
-                            Image(systemName: "ellipsis")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.primary)
-                                .frame(width: 32, height: 32)
+                    // Reminders button
+                    if let currentVehicle = vehicleManager.currentVehicle, currentVehicle.parkingLocation != nil {
+                        Button(action: {
+                            impactFeedbackLight.impactOccurred()
+                            showingReminderSheet = true
+                        }) {
+                            Image(systemName: "bell.fill")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(.secondary)
+                                .frame(width: 36, height: 36)
                                 .background(
                                     Circle()
                                         .fill(Color(.systemGray5))
@@ -1013,7 +987,8 @@ struct VehicleParkingView: View {
                     }
                 }
                 .padding(.horizontal, 20)
-                .padding(.vertical, 20)
+                .padding(.bottom, 12)
+                .padding(.top, 20)
                 
                 // Vehicle section - single card
                 SwipeableVehicleSection(
@@ -1023,11 +998,45 @@ struct VehicleParkingView: View {
                         // In single-vehicle mode, do nothing since there's only one vehicle
                     },
                     onVehicleTap: { vehicle in
-                        // Open vehicle location in Maps
-                        openVehicleInMaps(vehicle)
+                        if vehicle.parkingLocation != nil {
+                            // Open vehicle location in Maps
+                            openVehicleInMaps(vehicle)
+                        } else {
+                            // Start location setting if no parking location
+                            impactFeedbackLight.impactOccurred()
+                            isSettingLocationForNewVehicle = false
+                            startSettingLocationForVehicle(vehicle)
+                        }
                     }
-                )
-                .padding(.bottom, 20)
+                ).padding(.bottom, 12)
+                
+                // Move Parking Location button
+                if let currentVehicle = vehicleManager.currentVehicle {
+                    Button(action: {
+                        impactFeedbackLight.impactOccurred()
+                        isSettingLocationForNewVehicle = false
+                        startSettingLocationForVehicle(currentVehicle)
+                    }) {
+                        HStack(spacing: 10) {
+                            Text(currentVehicle.parkingLocation != nil ? "Move Vehicle" : "Set Vehicle Location")
+                                .font(.system(size: 18, weight: .semibold))
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 54)
+                        .background(
+                            LinearGradient(
+                                colors: [.blue, .blue.opacity(0.8)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .cornerRadius(16)
+                        .shadow(color: Color.blue.opacity(0.3), radius: 8, x: 0, y: 4)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 20)
+                }
                 
             } else {
                 // Enhanced empty state
