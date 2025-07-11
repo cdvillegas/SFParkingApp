@@ -1,0 +1,288 @@
+{
+  "source": "/Users/chrisvillegas/Code/SF Parking App/SF Parking App/Views/VehicleParkingView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Enable Notifications",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 151
+        }
+      },
+      {
+        "comment": "",
+        "key": "Settings",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 152
+        }
+      },
+      {
+        "comment": "",
+        "key": "Not Now",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 157
+        }
+      },
+      {
+        "comment": "",
+        "key": "Enable notifications to get reminders about street cleaning and avoid parking tickets.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 159
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add Vehicle",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 454
+        }
+      },
+      {
+        "comment": "",
+        "key": "Back",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 519
+        }
+      },
+      {
+        "comment": "",
+        "key": "Parked",
+        "location": {
+          "startingColumn": 67,
+          "startingLine": 573
+        }
+      },
+      {
+        "comment": "",
+        "key": "Not Parked",
+        "location": {
+          "startingColumn": 78,
+          "startingLine": 573
+        }
+      },
+      {
+        "comment": "",
+        "key": "Edit",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 641
+        }
+      },
+      {
+        "comment": "",
+        "key": "Move",
+        "location": {
+          "startingColumn": 63,
+          "startingLine": 663
+        }
+      },
+      {
+        "comment": "",
+        "key": "Park",
+        "location": {
+          "startingColumn": 72,
+          "startingLine": 663
+        }
+      },
+      {
+        "comment": "",
+        "key": "Reminders",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 688
+        }
+      },
+      {
+        "comment": "",
+        "key": "Skip for Now",
+        "location": {
+          "startingColumn": 57,
+          "startingLine": 770
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 74,
+          "startingLine": 770
+        }
+      },
+      {
+        "comment": "",
+        "key": "Confirm",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 787
+        }
+      },
+      {
+        "comment": "",
+        "key": "Street Cleaning %@",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 837
+        }
+      },
+      {
+        "comment": "",
+        "key": "Time Range",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 892
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ - %@",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 902
+        }
+      },
+      {
+        "comment": "",
+        "key": "NO PARKING",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 915
+        }
+      },
+      {
+        "comment": "",
+        "key": "My Vehicle",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 984
+        }
+      },
+      {
+        "comment": "",
+        "key": "Edit",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 998
+        }
+      },
+      {
+        "comment": "",
+        "key": "Move",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 1009
+        }
+      },
+      {
+        "comment": "",
+        "key": "Reminders",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 1020
+        }
+      },
+      {
+        "comment": "",
+        "key": "No Vehicles Yet",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 1082
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add a vehicle to track parking and get cleaning reminders.",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 1086
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add Vehicle",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 1102
+        }
+      },
+      {
+        "comment": "",
+        "key": "My Vehicles",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 1129
+        }
+      },
+      {
+        "comment": "",
+        "key": "Done",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 1135
+        }
+      },
+      {
+        "comment": "",
+        "key": "Street Sweeping",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 1825
+        }
+      },
+      {
+        "comment": "",
+        "key": "No parking restrictions",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 1846
+        }
+      },
+      {
+        "comment": "",
+        "key": "Move map to check area",
+        "location": {
+          "startingColumn": 78,
+          "startingLine": 1846
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ (%@)",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 1955
+        }
+      },
+      {
+        "comment": "",
+        "key": "•",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 2204
+        }
+      },
+      {
+        "comment": "",
+        "key": "Parked",
+        "location": {
+          "startingColumn": 63,
+          "startingLine": 2219
+        }
+      },
+      {
+        "comment": "",
+        "key": "Not Parked",
+        "location": {
+          "startingColumn": 74,
+          "startingLine": 2219
+        }
+      }
+    ]
+  },
+  "version": 1
+}

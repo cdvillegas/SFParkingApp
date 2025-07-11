@@ -27,7 +27,7 @@ struct OnboardingView: View {
                         OnboardingProgressView(
                             currentStep: currentStep,
                             totalSteps: onboardingSteps.count,
-                            gradientColors: onboardingSteps[currentStep].gradientColors
+                            color: onboardingSteps[currentStep].color
                         )
                         .padding(.horizontal, 32)
                         .padding(.top, 20)

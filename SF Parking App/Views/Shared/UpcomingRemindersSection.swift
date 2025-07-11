@@ -6,8 +6,80 @@ struct NotificationOption: Identifiable, Codable {
     let title: String
     let subtitle: String
     let icon: String
-    let timeOffset: TimeInterval // Seconds before street cleaning
+    let timeOffset: TimeInterval // Placeholder - calculated dynamically
     var isEnabled: Bool = false
+    
+    // Static notification types that persist across all locations
+    static let staticTypes: [NotificationOption] = [
+        NotificationOption(
+            title: "3 Days Before",
+            subtitle: "Plan ahead",
+            icon: "calendar.badge.exclamationmark",
+            timeOffset: 0 // Calculated dynamically
+        ),
+        NotificationOption(
+            title: "Day Before", 
+            subtitle: "Evening reminder",
+            icon: "moon.stars",
+            timeOffset: 0 // Calculated dynamically
+        ),
+        NotificationOption(
+            title: "Day Of",
+            subtitle: "Time to move",
+            icon: "sunrise",
+            timeOffset: 0 // Calculated dynamically
+        ),
+        NotificationOption(
+            title: "Final Warning",
+            subtitle: "Move now",
+            icon: "exclamationmark.triangle",
+            timeOffset: 1800 // Always 30 minutes
+        ),
+        NotificationOption(
+            title: "All Clear",
+            subtitle: "Safe to park back",
+            icon: "checkmark.circle",
+            timeOffset: 0 // Calculated dynamically
+        )
+    ]
+    
+    // Calculate smart timing for each static type based on schedule
+    static func calculateTiming(for type: NotificationOption, schedule: UpcomingSchedule) -> TimeInterval {
+        let startHour = extractHour(from: schedule.startTime) ?? 8
+        let endHour = extractHour(from: schedule.endTime) ?? 10
+        let cleaningDate = schedule.date
+        
+        switch type.title {
+        case "3 Days Before":
+            return 3 * 24 * 3600 // 3 days before
+            
+        case "Day Before":
+            let nightBeforeHour = startHour < 10 ? 20 : 22 // 8 PM for early, 10 PM for late
+            return calculateTimeOffset(targetHour: nightBeforeHour, cleaningDate: cleaningDate, daysBefore: 1)
+            
+        case "Day Of":
+            if startHour <= 8 {
+                // Very early cleaning - remind at bedtime
+                return calculateTimeOffset(targetHour: 23, cleaningDate: cleaningDate, daysBefore: 1)
+            } else if startHour <= 12 {
+                // Morning cleaning - 2 hours before
+                return 2 * 3600
+            } else {
+                // Afternoon cleaning - 3 hours before
+                return 3 * 3600
+            }
+            
+        case "Final Warning":
+            return 1800 // Always 30 minutes
+            
+        case "All Clear":
+            let cleaningDuration = endHour - startHour
+            return TimeInterval(-(cleaningDuration * 3600)) // After cleaning ends
+            
+        default:
+            return 3600 // 1 hour default
+        }
+    }
     
     // Smart notification options that adapt to the actual schedule
     static func smartOptions(for schedule: UpcomingSchedule) -> [NotificationOption] {
@@ -79,7 +151,7 @@ struct NotificationOption: Identifiable, Codable {
         options.append(NotificationOption(
             title: "All Clear",
             subtitle: "Safe to park back",
-            icon: "checkmark.circle.fill",
+            icon: "checkmark.circle",
             timeOffset: allClearOffset
         ))
         
@@ -130,9 +202,16 @@ struct UpcomingRemindersSection: View {
             }
         }
         .sheet(isPresented: $showingReminderSheet) {
-            if let nextSchedule = streetDataManager.nextUpcomingSchedule {
-                NotificationSettingsSheet(schedule: nextSchedule, parkingLocation: parkingLocation)
-            }
+            // Always use the same NotificationSettingsSheet, create dummy schedule if needed
+            let schedule = streetDataManager.nextUpcomingSchedule ?? UpcomingSchedule(
+                streetName: parkingLocation?.address ?? "Your Location",
+                date: Date().addingTimeInterval(7 * 24 * 3600), // 1 week from now
+                endDate: Date().addingTimeInterval(7 * 24 * 3600 + 7200), // 2 hours later
+                dayOfWeek: "Next Week",
+                startTime: "8:00 AM",
+                endTime: "10:00 AM"
+            )
+            NotificationSettingsSheet(schedule: schedule, parkingLocation: parkingLocation)
         }
     }
     
@@ -162,7 +241,6 @@ struct UpcomingRemindersSection: View {
             Spacer()
         }
         .padding(.vertical, 16)
-        .padding(.horizontal, 20)
     }
     
     // MARK: - Upcoming Alert
@@ -196,9 +274,10 @@ struct UpcomingRemindersSection: View {
                     }
                 }
             }
+            .padding(.vertical, 16)
         }
         .buttonStyle(PlainButtonStyle())
-        .padding(.vertical, 16)
+        .contentShape(Rectangle())
     }
     
     
@@ -211,10 +290,6 @@ struct UpcomingRemindersSection: View {
         }) {
             HStack(spacing: 16) {
                 ZStack {
-                    Circle()
-                        .fill(Color.orange.opacity(0.15))
-                        .frame(width: 40, height: 40)
-                    
                     Image(systemName: "exclamationmark.triangle")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.orange)
@@ -236,39 +311,41 @@ struct UpcomingRemindersSection: View {
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.orange)
             }
+            .padding(.vertical, 16)
         }
         .buttonStyle(PlainButtonStyle())
-        .padding(.vertical, 16)
-        .padding(.horizontal, 20)
+        .contentShape(Rectangle())
     }
     
     // MARK: - No Restrictions State
     private var noRestrictionsState: some View {
-        HStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .fill(Color.green.opacity(0.15))
-                    .frame(width: 40, height: 40)
+        Button(action: {
+            // Create a dummy schedule for settings access
+            showingReminderSheet = true
+        }) {
+            HStack(spacing: 16) {
+                ZStack {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.green)
+                }
                 
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.green)
-            }
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text("All clear!")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(.primary)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("You're all clear!")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.primary)
+                    
+                    Text("No upcoming street sweeping")
+                        .font(.system(size: 14))
+                        .foregroundColor(.secondary)
+                }
                 
-                Text("No upcoming street cleaning")
-                    .font(.system(size: 14))
-                    .foregroundColor(.secondary)
+                Spacer()
             }
-            
-            Spacer()
+            .padding(.vertical, 16)
         }
-        .padding(.vertical, 16)
-        .padding(.horizontal, 20)
+        .buttonStyle(PlainButtonStyle())
+        .contentShape(Rectangle())
     }
     
 }
@@ -359,7 +436,7 @@ struct ScaleButtonStyle: ButtonStyle {
     }
 }
 
-// MARK: - Improved Notification Settings Sheet
+// MARK: - Notification Settings Sheet
 struct NotificationSettingsSheet: View {
     let schedule: UpcomingSchedule
     let parkingLocation: ParkingLocation?
@@ -369,6 +446,8 @@ struct NotificationSettingsSheet: View {
     @State private var showingPermissionAlert = false
     @State private var isSettingUpNotifications = false
     @State private var setupComplete = false
+    @State private var notificationsEnabled = false
+    @State private var showingPermissionPrompt = false
     
     var body: some View {
         ZStack {
@@ -381,21 +460,43 @@ struct NotificationSettingsSheet: View {
                         // Header section
                         headerSection
                         
-                        // Street info card
-                        streetInfoCard
+                        // Street info card - only show if there's a real upcoming schedule
+                        if schedule.dayOfWeek != "Next Week" {
+                            streetInfoCard
+                        }
                         
-                        // Notification options
-                        notificationOptionsSection
+                        // Notification options or permission prompt
+                        if notificationsEnabled {
+                            notificationOptionsSection
+                        } else {
+                            notificationPermissionPrompt
+                        }
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 40)
                     
                     Spacer()
                     
-                    // Big "Looks Good" button at bottom
-                    actionButton
+                    // Bottom button
+                    if notificationsEnabled {
+                        actionButton
+                            .padding(.horizontal, 20)
+                            .padding(.bottom, 20)
+                    } else {
+                        Button(action: {
+                            dismiss()
+                        }) {
+                            Text("Done")
+                                .font(.system(size: 18, weight: .bold))
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 56)
+                                .background(Color.gray)
+                                .cornerRadius(16)
+                        }
                         .padding(.horizontal, 20)
                         .padding(.bottom, 20)
+                    }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color.clear)
@@ -404,7 +505,17 @@ struct NotificationSettingsSheet: View {
             .background(Color.clear)
         }
         .onAppear {
+            checkNotificationPermissions()
             setupNotificationOptions()
+            
+            // Listen for app becoming active (user returning from Settings)
+            NotificationCenter.default.addObserver(
+                forName: UIApplication.didBecomeActiveNotification,
+                object: nil,
+                queue: .main
+            ) { _ in
+                checkNotificationPermissions()
+            }
         }
         .alert("Enable Notifications", isPresented: $showingPermissionAlert) {
             Button("Settings") {
@@ -549,67 +660,124 @@ struct NotificationSettingsSheet: View {
                     ProgressView()
                         .scaleEffect(0.8)
                         .tint(.white)
-                } else if setupComplete {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 18, weight: .bold))
                 } else {
                     Image(systemName: "bell.badge.plus")
                         .font(.system(size: 18, weight: .bold))
                 }
                 
-                Text(setupComplete ? "All Set!" : "Looks Good")
+                Text("Looks Good")
                     .font(.system(size: 18, weight: .bold))
             }
             .foregroundColor(.white)
             .frame(maxWidth: .infinity)
             .frame(height: 56)
-            .background(setupComplete ? Color.green : Color.blue)
+            .background(Color.blue)
             .cornerRadius(16)
         }
         .disabled(isSettingUpNotifications || !notificationOptions.contains { $0.isEnabled })
     }
     
-    // MARK: - Helper Methods
-    private func setupNotificationOptions() {
-        // Use smart options based on the actual schedule
-        notificationOptions = NotificationOption.smartOptions(for: schedule)
-        
-        // Load saved preferences first
-        loadNotificationPreferences()
-        
-        // If no saved preferences, set smart defaults based on cleaning time
-        if !notificationOptions.contains(where: { $0.isEnabled }) {
-            let startHour = NotificationOption.extractHour(from: schedule.startTime) ?? 8
+    private var notificationPermissionPrompt: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Enable Notifications")
+                .font(.headline)
             
-            // Always enable Night Before and Final Warning
-            if let nightBeforeIndex = notificationOptions.firstIndex(where: { $0.title == "Night Before" }) {
-                notificationOptions[nightBeforeIndex].isEnabled = true
-            }
-            if let finalWarningIndex = notificationOptions.firstIndex(where: { $0.title == "Final Warning" }) {
-                notificationOptions[finalWarningIndex].isEnabled = true
-            }
-            
-            // Smart default for the middle reminder based on time
-            if startHour <= 8 {
-                // For very early cleaning, enable the bed reminder
-                if let bedReminderIndex = notificationOptions.firstIndex(where: { $0.title == "Before Bed" }) {
-                    notificationOptions[bedReminderIndex].isEnabled = true
+            VStack(spacing: 16) {
+                HStack(spacing: 16) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.red.opacity(0.1))
+                            .frame(width: 40, height: 40)
+                        
+                        Image(systemName: "bell.slash")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.red)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Notifications Disabled")
+                            .font(.system(size: 16, weight: .medium))
+                        
+                        Text("Reminders won't work without notification permissions")
+                            .font(.system(size: 14))
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    Spacer()
                 }
-            } else {
-                // For normal cleaning, enable morning/midday reminder
-                if let reminderIndex = notificationOptions.firstIndex(where: { $0.title == "Morning" || $0.title == "Midday" }) {
-                    notificationOptions[reminderIndex].isEnabled = true
+                .padding(16)
+                .background(.clear)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.red.opacity(0.3), lineWidth: 1)
+                )
+                
+                Button(action: {
+                    requestNotificationPermission()
+                }) {
+                    HStack {
+                        Image(systemName: "bell")
+                        Text("Enable Notifications")
+                    }
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 44)
+                    .background(Color.blue)
+                    .cornerRadius(12)
                 }
             }
         }
     }
     
-    private func loadNotificationPreferences() {
-        let streetKey = "NotificationPreferences_\(schedule.streetName)"
-        let globalKey = "GlobalNotificationPreferences"
+    // MARK: - Helper Methods
+    private func checkNotificationPermissions() {
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            DispatchQueue.main.async {
+                notificationsEnabled = settings.authorizationStatus == .authorized
+            }
+        }
+    }
+    
+    private func requestNotificationPermission() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
+            DispatchQueue.main.async {
+                if granted {
+                    notificationsEnabled = true
+                } else {
+                    // If permission denied, show alert to go to settings
+                    if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
+                        UIApplication.shared.open(settingsURL)
+                    }
+                }
+            }
+        }
+    }
+    
+    private func setupNotificationOptions() {
+        // Use static notification types that persist across locations
+        notificationOptions = NotificationOption.staticTypes
         
-        // Try to load street-specific preferences first
-        if let data = UserDefaults.standard.data(forKey: streetKey),
+        // Load saved preferences first
+        loadNotificationPreferences()
+        
+        // If no saved preferences, set smart defaults
+        if !notificationOptions.contains(where: { $0.isEnabled }) {
+            // Enable Day Before and Final Warning by default
+            if let dayBeforeIndex = notificationOptions.firstIndex(where: { $0.title == "Day Before" }) {
+                notificationOptions[dayBeforeIndex].isEnabled = true
+            }
+            if let finalWarningIndex = notificationOptions.firstIndex(where: { $0.title == "Final Warning" }) {
+                notificationOptions[finalWarningIndex].isEnabled = true
+            }
+        }
+    }
+    
+    private func loadNotificationPreferences() {
+        let globalKey = "StaticNotificationPreferences"
+        
+        // Load global static preferences (no street-specific preferences for static types)
+        if let data = UserDefaults.standard.data(forKey: globalKey),
            let savedPreferences = try? JSONDecoder().decode([String: Bool].self, from: data) {
             
             // Apply saved preferences to notification options
@@ -618,21 +786,11 @@ struct NotificationSettingsSheet: View {
                     notificationOptions[index].isEnabled = savedValue
                 }
             }
-        } else if let data = UserDefaults.standard.data(forKey: globalKey),
-                  let globalPreferences = try? JSONDecoder().decode([String: Bool].self, from: data) {
-            
-            // Apply global preferences if no street-specific ones exist
-            for index in notificationOptions.indices {
-                if let savedValue = globalPreferences[notificationOptions[index].title] {
-                    notificationOptions[index].isEnabled = savedValue
-                }
-            }
         }
     }
     
     private func saveNotificationPreferences() {
-        let streetKey = "NotificationPreferences_\(schedule.streetName)"
-        let globalKey = "GlobalNotificationPreferences"
+        let globalKey = "StaticNotificationPreferences"
         var preferences: [String: Bool] = [:]
         
         for option in notificationOptions {
@@ -640,15 +798,16 @@ struct NotificationSettingsSheet: View {
         }
         
         if let data = try? JSONEncoder().encode(preferences) {
-            // Save street-specific preferences
-            UserDefaults.standard.set(data, forKey: streetKey)
-            
-            // Also save as global preferences for future streets
+            // Save static preferences globally
             UserDefaults.standard.set(data, forKey: globalKey)
         }
     }
     
     private func setupNotifications() {
+        // Add haptic feedback
+        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+        impactFeedback.impactOccurred()
+        
         isSettingUpNotifications = true
         
         Task {
@@ -665,18 +824,11 @@ struct NotificationSettingsSheet: View {
                 await scheduleSelectedNotifications()
                 
                 await MainActor.run {
-                    withAnimation(.easeInOut(duration: 0.5)) {
-                        setupComplete = true
-                        isSettingUpNotifications = false
-                    }
-                    
                     // Save preferences
                     saveNotificationPreferences()
                     
-                    // Auto-dismiss after success
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                        dismiss()
-                    }
+                    // Dismiss immediately when done
+                    dismiss()
                 }
             } else {
                 await MainActor.run {
@@ -703,9 +855,11 @@ struct NotificationSettingsSheet: View {
         var scheduledCount = 0
         
         for option in enabledOptions {
-            let notificationDate = schedule.date.addingTimeInterval(-option.timeOffset)
+            // Calculate dynamic timing based on the current schedule
+            let calculatedOffset = NotificationOption.calculateTiming(for: option, schedule: schedule)
+            let notificationDate = schedule.date.addingTimeInterval(-calculatedOffset)
             
-            print("📅 \(option.title): Scheduled for \(notificationDate)")
+            print("📅 \(option.title): Scheduled for \(notificationDate) (offset: \(calculatedOffset)s)")
             
             guard notificationDate > Date() else { 
                 print("⚠️ Skipping \(option.title) - date is in the past")
@@ -715,7 +869,7 @@ struct NotificationSettingsSheet: View {
             let content = UNMutableNotificationContent()
             content.title = getNotificationTitle(for: option)
             content.body = getNotificationBody(for: option)
-            content.sound = option.timeOffset <= 1800 ? .defaultCritical : .default
+            content.sound = calculatedOffset <= 1800 ? .defaultCritical : .default
             content.badge = 1
             
             let dateComponents = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: notificationDate)
@@ -753,14 +907,10 @@ struct NotificationSettingsSheet: View {
         switch option.title {
         case "3 Days Before":
             return "🗓️ Street Cleaning Reminder"
-        case "Night Before":
+        case "Day Before":
             return "🌙 Move Your Car"
-        case "Before Bed":
-            return "🛏️ Tonight Reminder"
-        case "Morning":
+        case "Day Of":
             return "☀️ Move Your Car"
-        case "Midday":
-            return "🌞 Move Your Car"
         case "Final Warning":
             return "🚨 URGENT: Move Car Now"
         case "All Clear":
@@ -774,13 +924,9 @@ struct NotificationSettingsSheet: View {
         switch option.title {
         case "3 Days Before":
             return "Street cleaning on \(schedule.dayOfWeek) at \(schedule.startTime) on \(schedule.streetName)"
-        case "Night Before":
+        case "Day Before":
             return "Street cleaning tomorrow at \(schedule.startTime) on \(schedule.streetName)"
-        case "Before Bed":
-            return "Move your car tonight - early cleaning tomorrow at \(schedule.startTime)"
-        case "Morning":
-            return "Street cleaning in 2 hours on \(schedule.streetName)"
-        case "Midday":
+        case "Day Of":
             return "Street cleaning today at \(schedule.startTime) on \(schedule.streetName)"
         case "Final Warning":
             return "Street cleaning starts in 30 minutes on \(schedule.streetName)"

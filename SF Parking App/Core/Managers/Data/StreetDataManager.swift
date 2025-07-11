@@ -138,6 +138,13 @@ class StreetDataManager: ObservableObject {
     }
     
     func processNextSchedule(for schedule: SweepSchedule) {
+        // Move heavy calculations off main thread
+        Task {
+            await processNextScheduleAsync(for: schedule)
+        }
+    }
+    
+    private func processNextScheduleAsync(for schedule: SweepSchedule) async {
         let now = Date()
         
         guard let weekday = schedule.weekday,
@@ -161,6 +168,7 @@ class StreetDataManager: ObservableObject {
         
         print("🔍 Processing schedule for \(schedule.streetName): \(weekday) \(schedule.startTime)-\(schedule.endTime)")
         
+        // Perform heavy calculations on background thread
         let nextOccurrences = findNextOccurrences(weekday: weekdayNum, schedule: schedule, from: now)
         
         var upcomingSchedules: [UpcomingSchedule] = []
@@ -183,7 +191,12 @@ class StreetDataManager: ObservableObject {
             }
         }
         
-        nextUpcomingSchedule = upcomingSchedules.sorted { $0.date < $1.date }.first
+        let result = upcomingSchedules.sorted { $0.date < $1.date }.first
+        
+        // Update UI on main thread
+        await MainActor.run {
+            nextUpcomingSchedule = result
+        }
         
         if let next = nextUpcomingSchedule {
             let formatter = DateFormatter()
@@ -198,8 +211,8 @@ class StreetDataManager: ObservableObject {
         let calendar = Calendar.current
         var occurrences: [Date] = []
         
-        // Look ahead for up to 6 months to find valid occurrences
-        for monthOffset in 0..<6 {
+        // Look ahead for up to 3 months to find valid occurrences (optimization: reduced from 6 months)
+        for monthOffset in 0..<3 {
             guard let futureMonth = calendar.date(byAdding: .month, value: monthOffset, to: date) else { continue }
             
             // Get all occurrences of the target weekday in this month
@@ -217,6 +230,11 @@ class StreetDataManager: ObservableObject {
                     // Only include if the schedule time is in the future
                     if scheduleDateTime > date {
                         occurrences.append(weekdayDate)
+                        
+                        // Early exit optimization: stop after finding 3 occurrences
+                        if occurrences.count >= 3 {
+                            return occurrences.sorted()
+                        }
                     }
                 }
             }

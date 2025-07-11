@@ -1,7 +1,5 @@
 import SwiftUI
 import CoreLocation
-import CoreMotion
-import CoreBluetooth
 import UserNotifications
 
 struct OnboardingStepView: View {
@@ -14,7 +12,6 @@ struct OnboardingStepView: View {
     @State private var showingPermissionDeniedAlert = false
     @State private var permissionDeniedMessage = ""
     @State private var locationDelegate: LocationPermissionDelegate?
-    @State private var bluetoothDelegate: BluetoothPermissionDelegate?
     @State private var locationManager: CLLocationManager?
     
     var body: some View {
@@ -24,24 +21,30 @@ struct OnboardingStepView: View {
             // Hero Image/Icon Section
             VStack(spacing: 24) {
                 ZStack {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: step.gradientColors,
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 120, height: 120)
-                        .scaleEffect(isAnimating ? 1.0 : 0.8)
-                        .animation(.easeInOut(duration: 0.8).delay(0.2), value: isAnimating)
-                    
-                    Image(systemName: step.systemImage)
-                        .font(.system(size: 50, weight: .medium))
-                        .foregroundColor(.white)
-                        .scaleEffect(isAnimating ? 1.0 : 0.6)
-                        .animation(.easeInOut(duration: 0.8).delay(0.4), value: isAnimating)
-                        .id(step.systemImage) // Ensure stable identity
+                    if step.title == "Welcome to SF Parking" {
+                        // Use app icon for welcome step
+                        Image("AppIconImage")
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: 120, height: 120)
+                            .clipShape(Circle())
+                            .scaleEffect(isAnimating ? 1.0 : 0.8)
+                            .animation(.easeInOut(duration: 0.8).delay(0.2), value: isAnimating)
+                    } else {
+                        // Use system icons for other steps
+                        Circle()
+                            .fill(step.color)
+                            .frame(width: 120, height: 120)
+                            .scaleEffect(isAnimating ? 1.0 : 0.8)
+                            .animation(.easeInOut(duration: 0.8).delay(0.2), value: isAnimating)
+                        
+                        Image(systemName: step.systemImage)
+                            .font(.system(size: 50, weight: .medium))
+                            .foregroundColor(.white)
+                            .scaleEffect(isAnimating ? 1.0 : 0.6)
+                            .animation(.easeInOut(duration: 0.8).delay(0.4), value: isAnimating)
+                            .id(step.systemImage) // Ensure stable identity
+                    }
                 }
                 
                 VStack(spacing: 16) {
@@ -83,21 +86,15 @@ struct OnboardingStepView: View {
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
-                    .background(
-                        LinearGradient(
-                            colors: step.gradientColors,
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
+                    .background(step.color)
                     .cornerRadius(16)
-                    .shadow(color: step.gradientColors.first?.opacity(0.3) ?? Color.blue.opacity(0.3), radius: 12, x: 0, y: 6)
+                    .shadow(color: step.color.opacity(0.3), radius: 12, x: 0, y: 6)
                 }
                 .scaleEffect(isAnimating ? 1.0 : 0.9)
                 .opacity(isAnimating ? 1.0 : 0.0)
                 .animation(.easeInOut(duration: 0.6).delay(1.0), value: isAnimating)
                 
-                if !isLastStep && step.permissionType != nil {
+                if step.permissionType != nil {
                     Button("Skip for now") {
                         withAnimation(.easeInOut(duration: 0.3)) {
                             onNext()
@@ -113,13 +110,15 @@ struct OnboardingStepView: View {
             .padding(.bottom, 50)
         }
         .onAppear {
-            // Reset animation state first
-            isAnimating = false
-            // Then trigger animations
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                withAnimation {
-                    isAnimating = true
-                }
+            triggerAnimation()
+        }
+        .onChange(of: step.id) { _ in
+            triggerAnimation()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+            // Re-trigger animation when app becomes active (after system dialogs dismiss)
+            if !isAnimating {
+                triggerAnimation()
             }
         }
         .alert("Permission Required", isPresented: $showingPermissionDeniedAlert) {
@@ -155,10 +154,6 @@ struct OnboardingStepView: View {
         switch type {
         case .location:
             requestLocationPermission()
-        case .motion:
-            requestMotionPermission()
-        case .bluetooth:
-            requestBluetoothPermission()
         case .notifications:
             requestNotificationPermission()
         }
@@ -195,39 +190,6 @@ struct OnboardingStepView: View {
         }
     }
     
-    private func requestMotionPermission() {
-        let motionManager = CMMotionActivityManager()
-        
-        if CMMotionActivityManager.isActivityAvailable() {
-            motionManager.queryActivityStarting(from: Date(), to: Date(), to: .main) { _, error in
-                DispatchQueue.main.async {
-                    if let error = error {
-                        let cmError = error as NSError
-                        if cmError.domain == CMErrorDomain && cmError.code == CMErrorMotionActivityNotAuthorized.rawValue {
-                            showPermissionDeniedAlert(message: "Motion activity access helps us automatically detect when you've finished driving. Please enable it in Settings for the best experience.")
-                        } else {
-                            onNext()
-                        }
-                    } else {
-                        onNext()
-                    }
-                }
-            }
-        } else {
-            onNext()
-        }
-    }
-    
-    private func requestBluetoothPermission() {
-        // Create a delegate to handle Bluetooth permission request
-        bluetoothDelegate = BluetoothPermissionDelegate { [self] in
-            DispatchQueue.main.async {
-                let successFeedback = UINotificationFeedbackGenerator()
-                successFeedback.notificationOccurred(.success)
-                self.onNext()
-            }
-        }
-    }
     
     private func requestNotificationPermission() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
@@ -246,6 +208,17 @@ struct OnboardingStepView: View {
     private func showPermissionDeniedAlert(message: String) {
         permissionDeniedMessage = message
         showingPermissionDeniedAlert = true
+    }
+    
+    private func triggerAnimation() {
+        // Reset animation state first
+        isAnimating = false
+        // Then trigger animations with delay to allow transition to complete
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            withAnimation {
+                isAnimating = true
+            }
+        }
     }
 }
 

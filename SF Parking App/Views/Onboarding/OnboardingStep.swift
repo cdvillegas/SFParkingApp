@@ -5,55 +5,37 @@ struct OnboardingStep {
     let title: String
     let description: String
     let systemImage: String
-    let gradientColors: [Color]
+    let color: Color
     let permissionType: PermissionType?
     let buttonText: String
     
     enum PermissionType {
         case location
-        case motion
-        case bluetooth
         case notifications
     }
     
     static let allSteps: [OnboardingStep] = [
         OnboardingStep(
             title: "Welcome to SF Parking",
-            description: "Never worry about street cleaning tickets again. We'll help you track your parking and remind you when it's time to move.",
+            description: "Leave parking tickets in the past. We've built the smartest way to park in San Francisco.",
             systemImage: "car.fill",
-            gradientColors: [Color.blue, Color.cyan],
+            color: .blue,
             permissionType: nil,
             buttonText: "Get Started"
         ),
         OnboardingStep(
-            title: "Find Your Location",
-            description: "We'll use your location to show you exactly where you parked and provide accurate street cleaning information for your area.",
+            title: "Know Your Spot",
+            description: "See street cleaning schedules right where you are. Location data stays on your device and is never tracked or stored.",
             systemImage: "location.fill",
-            gradientColors: [Color.green, Color.mint],
+            color: .green,
             permissionType: .location,
             buttonText: "Enable Location"
         ),
         OnboardingStep(
-            title: "Smart Parking Detection",
-            description: "We can automatically detect when you stop driving and set your parking location, making the process seamless and effortless.",
-            systemImage: "figure.walk.motion",
-            gradientColors: [Color.orange, Color.yellow],
-            permissionType: .motion,
-            buttonText: "Enable Auto Detection"
-        ),
-        OnboardingStep(
-            title: "Car Connection Awareness",
-            description: "When you disconnect from your car's Bluetooth, we'll automatically mark your parking spot so you never forget where you parked.",
-            systemImage: "car.side.and.exclamationmark",
-            gradientColors: [Color.purple, Color.pink],
-            permissionType: .bluetooth,
-            buttonText: "Enable Car Detection"
-        ),
-        OnboardingStep(
-            title: "Street Cleaning Reminders",
-            description: "Get timely notifications before street cleaning so you can move your car and avoid expensive tickets. Stay informed, stay ticket-free.",
-            systemImage: "bell.fill",
-            gradientColors: [Color.red, Color.orange],
+            title: "Get Timely Reminders",
+            description: "Get perfectly timed reminders before street cleaning starts. Choose when and how you want to be notified—we'll handle the rest.",
+            systemImage: "bell.badge.fill",
+            color: .orange,
             permissionType: .notifications,
             buttonText: "Enable Notifications"
         )

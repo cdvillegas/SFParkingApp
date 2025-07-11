@@ -1,0 +1,48 @@
+{
+  "source": "/Users/chrisvillegas/Code/SF Parking App/SF Parking App/Views/Vehicle/SwipeableVehicleSection.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "No Vehicles",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 76
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add your first vehicle to get started",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 81
+        }
+      },
+      {
+        "comment": "",
+        "key": "Parked",
+        "location": {
+          "startingColumn": 59,
+          "startingLine": 239
+        }
+      },
+      {
+        "comment": "",
+        "key": "Not Parked",
+        "location": {
+          "startingColumn": 70,
+          "startingLine": 239
+        }
+      },
+      {
+        "comment": "",
+        "key": "View in Maps",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 251
+        }
+      }
+    ]
+  },
+  "version": 1
+}

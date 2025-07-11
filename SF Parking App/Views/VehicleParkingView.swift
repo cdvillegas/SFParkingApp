@@ -8,8 +8,6 @@ struct VehicleParkingView: View {
     @StateObject private var streetDataManager = StreetDataManager()
     @StateObject private var vehicleManager = VehicleManager()
     @StateObject private var debouncedGeocoder = DebouncedGeocodingHandler()
-    @StateObject private var motionActivityManager = MotionActivityManager()
-    @StateObject private var bluetoothManager = BluetoothManager()
     @StateObject private var notificationManager = NotificationManager.shared
     
     @State private var mapPosition = MapCameraPosition.region(
@@ -117,10 +115,18 @@ struct VehicleParkingView: View {
         }
         .sheet(isPresented: $showingReminderSheet) {
             if let currentVehicle = vehicleManager.currentVehicle,
-               let parkingLocation = currentVehicle.parkingLocation,
-               let nextSchedule = streetDataManager.nextUpcomingSchedule {
+               let parkingLocation = currentVehicle.parkingLocation {
+                // Always use the same NotificationSettingsSheet, create dummy schedule if needed
+                let schedule = streetDataManager.nextUpcomingSchedule ?? UpcomingSchedule(
+                    streetName: parkingLocation.address,
+                    date: Date().addingTimeInterval(7 * 24 * 3600), // 1 week from now
+                    endDate: Date().addingTimeInterval(7 * 24 * 3600 + 7200), // 2 hours later
+                    dayOfWeek: "Next Week",
+                    startTime: "8:00 AM",
+                    endTime: "10:00 AM"
+                )
                 NotificationSettingsSheet(
-                    schedule: nextSchedule,
+                    schedule: schedule,
                     parkingLocation: parkingLocation
                 )
             }
@@ -130,6 +136,11 @@ struct VehicleParkingView: View {
             prepareHaptics()
             setupNotificationHandling()
             NotificationManager.shared.validateAndRecoverNotifications()
+            
+            // Check if we should start in location setting mode
+            if vehicleManager.currentVehicle?.parkingLocation == nil {
+                isSettingLocation = true
+            }
         }
         .onDisappear {
             cleanupResources()
@@ -719,7 +730,6 @@ struct VehicleParkingView: View {
         VStack(spacing: 0) {
             unifiedLocationContent()
         }
-        .padding(.top, 20)
         .transition(.asymmetric(
             insertion: .move(edge: .bottom).combined(with: .opacity),
             removal: .move(edge: .bottom).combined(with: .opacity)
@@ -728,76 +738,62 @@ struct VehicleParkingView: View {
     
     // MARK: - Unified Location Content
     private func unifiedLocationContent() -> some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 0) {
             // Fixed-height status section
-            VStack(spacing: 16) {
-                // Address display (always shown)
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(settingAddress ?? "Move map to select location")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(settingAddress != nil ? .primary : .secondary)
-                        .lineLimit(2)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(16)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(.systemBackground))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color(.systemGray4), lineWidth: 1)
-                        )
-                )
-                
-                // Street Sweeping section with title outside
-                streetSweepingSection()
-            }
-            .padding(.horizontal, 24)
+            setParkingLocationSection()
             
             // Action buttons
             HStack(spacing: 12) {
-                Button(isSettingLocationForNewVehicle ? "Skip for Now" : "Cancel") {
-                    impactFeedbackLight.impactOccurred()
-                    withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
-                        cancelSettingLocation()
-                    }
-                }
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.secondary)
-                .frame(maxWidth: .infinity)
-                .frame(height: 52)
-                .background(
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(Color(.systemGray6))
-                )
-                
-                VStack(spacing: 8) {
-
-                    Button("Confirm") {
-                        notificationFeedback.notificationOccurred(.success)
+                // Only show cancel button if parking location exists
+                if vehicleManager.currentVehicle?.parkingLocation != nil {
+                    Button(action: {
+                        impactFeedbackLight.impactOccurred()
                         withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
-                            confirmUnifiedLocation()
+                            cancelSettingLocation()
                         }
+                    }) {
+                        Text(isSettingLocationForNewVehicle ? "Skip for Now" : "Cancel")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.secondary)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 52)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(Color(.systemGray6))
+                            )
+                            .contentShape(Rectangle())
                     }
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 52)
-                    .background(
-                        LinearGradient(
-                            colors: [Color.blue, Color.blue.opacity(0.8)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .cornerRadius(16)
-                    .shadow(color: Color.blue.opacity(0.3), radius: 6, x: 0, y: 3)
-                    .disabled(settingAddress == nil)
-                    .opacity(settingAddress == nil ? 0.6 : 1.0)
+                    .buttonStyle(PlainButtonStyle())
                 }
+                
+                Button(action: {
+                    notificationFeedback.notificationOccurred(.success)
+                    withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+                        confirmUnifiedLocation()
+                    }
+                }) {
+                    Text("Confirm")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 52)
+                        .background(
+                            LinearGradient(
+                                colors: [Color.blue, Color.blue.opacity(0.8)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .cornerRadius(16)
+                        .shadow(color: Color.blue.opacity(0.3), radius: 6, x: 0, y: 3)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(PlainButtonStyle())
+                .disabled(settingAddress == nil)
+                .opacity(settingAddress == nil ? 0.6 : 1.0)
             }
             .padding(.horizontal, 24)
-            .padding(.bottom, 32)
+            .padding(.bottom, 20)
         }
     }
     
@@ -1381,11 +1377,6 @@ struct VehicleParkingView: View {
             selectedSchedule: persistedSchedule
         )
         
-        // Request notification permission if not already granted
-        if notificationManager.notificationPermissionStatus == .notDetermined {
-            notificationManager.requestNotificationPermission()
-        }
-        
         // Use the user's selected schedule for notifications
         if !nearbySchedules.isEmpty {
             let selectedSchedule = nearbySchedules[selectedScheduleIndex].schedule
@@ -1620,15 +1611,14 @@ struct VehicleParkingView: View {
     // MARK: - Setup and Lifecycle
     
     private func setupView() {
-        // Link managers together (for auto-parking detection)
-        motionActivityManager.locationManager = locationManager
-        bluetoothManager.locationManager = locationManager
-        
-        // Only request permissions if onboarding has been completed
+        // Only request location permission if onboarding has been completed
         if OnboardingManager.hasCompletedOnboarding {
             locationManager.requestLocationPermission()
-            motionActivityManager.requestMotionPermission()
-            bluetoothManager.requestBluetoothPermission()
+        }
+        
+        // Auto-start in location setting mode if no vehicle has a parking location
+        if vehicleManager.currentVehicle?.parkingLocation == nil {
+            isSettingLocation = true
         }
         
         // Center map on selected vehicle or user location
@@ -1656,8 +1646,10 @@ struct VehicleParkingView: View {
                 locationManager.requestLocationPermission()
             }
             
-            motionActivityManager.requestMotionPermission()
-            bluetoothManager.requestBluetoothPermission()
+            // Auto-start in location setting mode after onboarding
+            if vehicleManager.currentVehicle?.parkingLocation == nil {
+                isSettingLocation = true
+            }
         }
     }
     
@@ -1680,8 +1672,8 @@ struct VehicleParkingView: View {
         // Monitor schedule changes and auto-update notifications
         streetDataManager.$nextUpcomingSchedule
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] newSchedule in
-                self?.handleScheduleChange(newSchedule)
+            .sink { newSchedule in
+                handleScheduleChange(newSchedule)
             }
             .store(in: &cancellables)
     }
@@ -1693,12 +1685,9 @@ struct VehicleParkingView: View {
             return
         }
         
-        // Check if this schedule is different from what we had before
-        let scheduleKey = "\(schedule.streetName)_\(schedule.date)"
-        
-        // Only update if we have existing notification preferences for any location
-        let hasExistingPreferences = UserDefaults.standard.dictionaryRepresentation().keys
-            .contains { $0.hasPrefix("NotificationPreferences_") }
+        // Only update if we have existing static notification preferences
+        let staticPrefsKey = "StaticNotificationPreferences"
+        let hasExistingPreferences = UserDefaults.standard.data(forKey: staticPrefsKey) != nil
         
         if hasExistingPreferences {
             print("🔔 Schedule changed - auto-updating notifications for \(schedule.streetName)")
@@ -1716,14 +1705,14 @@ struct VehicleParkingView: View {
             let settings = await center.notificationSettings()
             guard settings.authorizationStatus == .authorized else { return }
             
-            // Get the smart options for this new schedule
-            let smartOptions = NotificationOption.smartOptions(for: schedule)
+            // Get the static notification types
+            let staticTypes = NotificationOption.staticTypes
             
-            // Load previous preferences to see which types were enabled
-            let globalKey = "GlobalNotificationPreferences"
+            // Load static preferences to see which types were enabled
+            let staticPrefsKey = "StaticNotificationPreferences"
             var enabledTypes: [String] = []
             
-            if let data = UserDefaults.standard.data(forKey: globalKey),
+            if let data = UserDefaults.standard.data(forKey: staticPrefsKey),
                let preferences = try? JSONDecoder().decode([String: Bool].self, from: data) {
                 enabledTypes = preferences.compactMap { key, isEnabled in
                     isEnabled ? key : nil
@@ -1734,15 +1723,17 @@ struct VehicleParkingView: View {
             center.removeAllPendingNotificationRequests()
             
             // Re-schedule notifications with new schedule but same preferences
-            for option in smartOptions {
+            for option in staticTypes {
                 if enabledTypes.contains(option.title) {
-                    let notificationDate = schedule.date.addingTimeInterval(-option.timeOffset)
+                    // Calculate dynamic timing based on the new schedule
+                    let calculatedOffset = NotificationOption.calculateTiming(for: option, schedule: schedule)
+                    let notificationDate = schedule.date.addingTimeInterval(-calculatedOffset)
                     guard notificationDate > Date() else { continue }
                     
                     let content = UNMutableNotificationContent()
-                    content.title = getSmartNotificationTitle(for: option)
-                    content.body = getSmartNotificationBody(for: option, schedule: schedule)
-                    content.sound = option.timeOffset <= 1800 ? .defaultCritical : .default
+                    content.title = getStaticNotificationTitle(for: option)
+                    content.body = getStaticNotificationBody(for: option, schedule: schedule)
+                    content.sound = calculatedOffset <= 1800 ? .defaultCritical : .default
                     
                     let dateComponents = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: notificationDate)
                     let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
@@ -1755,23 +1746,15 @@ struct VehicleParkingView: View {
                     
                     do {
                         try await center.add(request)
-                        print("✅ Auto-scheduled: \(option.title)")
+                        print("✅ Auto-scheduled: \(option.title) at \(notificationDate)")
                     } catch {
                         print("❌ Failed to auto-schedule \(option.title): \(error)")
                     }
                 }
             }
             
-            // Save the new preferences for this street
-            let streetKey = "NotificationPreferences_\(schedule.streetName)"
-            var newPreferences: [String: Bool] = [:]
-            for option in smartOptions {
-                newPreferences[option.title] = enabledTypes.contains(option.title)
-            }
-            
-            if let data = try? JSONEncoder().encode(newPreferences) {
-                UserDefaults.standard.set(data, forKey: streetKey)
-            }
+            // Static preferences don't need to be re-saved per street
+            // They persist globally across all locations
             
             print("✅ Auto-updated notifications for new location: \(schedule.streetName)")
             
@@ -1780,18 +1763,14 @@ struct VehicleParkingView: View {
         }
     }
     
-    private func getSmartNotificationTitle(for option: NotificationOption) -> String {
+    private func getStaticNotificationTitle(for option: NotificationOption) -> String {
         switch option.title {
         case "3 Days Before":
             return "🗓️ Street Cleaning Reminder"
-        case "Night Before":
+        case "Day Before":
             return "🌙 Move Your Car"
-        case "Before Bed":
-            return "🛏️ Tonight Reminder"
-        case "Morning":
+        case "Day Of":
             return "☀️ Move Your Car"
-        case "Midday":
-            return "🌞 Move Your Car"
         case "Final Warning":
             return "🚨 URGENT: Move Car Now"
         case "All Clear":
@@ -1801,17 +1780,13 @@ struct VehicleParkingView: View {
         }
     }
     
-    private func getSmartNotificationBody(for option: NotificationOption, schedule: UpcomingSchedule) -> String {
+    private func getStaticNotificationBody(for option: NotificationOption, schedule: UpcomingSchedule) -> String {
         switch option.title {
         case "3 Days Before":
             return "Street cleaning on \(schedule.dayOfWeek) at \(schedule.startTime) on \(schedule.streetName)"
-        case "Night Before":
+        case "Day Before":
             return "Street cleaning tomorrow at \(schedule.startTime) on \(schedule.streetName)"
-        case "Before Bed":
-            return "Move your car tonight - early cleaning tomorrow at \(schedule.startTime)"
-        case "Morning":
-            return "Street cleaning in 2 hours on \(schedule.streetName)"
-        case "Midday":
+        case "Day Of":
             return "Street cleaning today at \(schedule.startTime) on \(schedule.streetName)"
         case "Final Warning":
             return "Street cleaning starts in 30 minutes on \(schedule.streetName)"
@@ -1823,11 +1798,11 @@ struct VehicleParkingView: View {
     }
     
     // MARK: - Street Sweeping Section (redesigned for beautiful light/dark mode)
-    private func streetSweepingSection() -> some View {
+    private func setParkingLocationSection() -> some View {
         VStack(spacing: 12) {
             // Title with refined styling
             HStack {
-                Text("Street Sweeping")
+                Text("Set Parking Location")
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(.primary)
                 
@@ -1869,7 +1844,7 @@ struct VehicleParkingView: View {
                 }
                 .frame(height: 88)
             }
-        }
+        }.padding(20)
     }
     
     // MARK: - Elegant Schedule Card (redesigned for beautiful light/dark mode)

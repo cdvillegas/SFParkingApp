@@ -1,0 +1,24 @@
+{
+  "source": "/Users/chrisvillegas/Code/SF Parking App/SF Parking App/Views/Onboarding/OnboardingCompletionView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "You're All Set!",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 46
+        }
+      },
+      {
+        "comment": "",
+        "key": "Welcome to the future of parking",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 53
+        }
+      }
+    ]
+  },
+  "version": 1
+}

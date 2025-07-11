@@ -135,7 +135,7 @@ struct Vehicle: Identifiable, Codable, Equatable {
     }
     
     private func generateDefaultName() -> String {
-        return "\(type.displayName) \(id.uuidString.prefix(3).uppercased())"
+        return "My \(type.displayName)"
     }
     
     // Equatable conformance

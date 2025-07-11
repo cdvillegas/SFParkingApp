@@ -3,15 +3,15 @@ import SwiftUI
 struct OnboardingProgressView: View {
     let currentStep: Int
     let totalSteps: Int
-    let gradientColors: [Color]
+    let color: Color
     
     var body: some View {
         // Page dots only
         HStack(spacing: 8) {
             ForEach(0..<totalSteps, id: \.self) { index in
                 Circle()
-                    .fill(index <= currentStep ? 
-                          LinearGradient(colors: gradientColors, startPoint: .leading, endPoint: .trailing) :
+                    .fill(index == currentStep ? 
+                          LinearGradient(colors: [color], startPoint: .leading, endPoint: .trailing) :
                           LinearGradient(colors: [Color.gray.opacity(0.3)], startPoint: .leading, endPoint: .trailing)
                     )
                     .frame(width: 8, height: 8)
@@ -31,7 +31,7 @@ struct OnboardingProgressView: View {
     OnboardingProgressView(
         currentStep: 2,
         totalSteps: 6,
-        gradientColors: [Color.blue, Color.cyan]
+        color: Color.blue
     )
     .padding()
     .preferredColorScheme(.light)
@@ -41,7 +41,7 @@ struct OnboardingProgressView: View {
     OnboardingProgressView(
         currentStep: 2,
         totalSteps: 6,
-        gradientColors: [Color.blue, Color.cyan]
+        color: Color.blue
     )
     .padding()
     .preferredColorScheme(.dark)
