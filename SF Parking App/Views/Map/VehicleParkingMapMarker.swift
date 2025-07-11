@@ -67,7 +67,7 @@ struct VehicleParkingMapMarker: View {
     }
 }
 
-#Preview {
+#Preview("Light Mode") {
     VStack(spacing: 20) {
         VehicleParkingMapMarker(
             vehicle: Vehicle.sample,
@@ -82,4 +82,23 @@ struct VehicleParkingMapMarker: View {
         )
     }
     .padding()
+    .preferredColorScheme(.light)
+}
+
+#Preview("Dark Mode") {
+    VStack(spacing: 20) {
+        VehicleParkingMapMarker(
+            vehicle: Vehicle.sample,
+            isSelected: false,
+            onTap: {}
+        )
+
+        VehicleParkingMapMarker(
+            vehicle: Vehicle.sample,
+            isSelected: true,
+            onTap: {}
+        )
+    }
+    .padding()
+    .preferredColorScheme(.dark)
 }

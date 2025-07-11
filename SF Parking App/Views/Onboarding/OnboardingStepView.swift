@@ -249,11 +249,22 @@ struct OnboardingStepView: View {
     }
 }
 
-#Preview {
+#Preview("Light Mode") {
     OnboardingStepView(
         step: OnboardingStep.allSteps[1],
         isLastStep: false,
         onNext: {},
         onSkip: {}
     )
+    .preferredColorScheme(.light)
+}
+
+#Preview("Dark Mode") {
+    OnboardingStepView(
+        step: OnboardingStep.allSteps[1],
+        isLastStep: false,
+        onNext: {},
+        onSkip: {}
+    )
+    .preferredColorScheme(.dark)
 }

@@ -275,7 +275,7 @@ struct VehicleSwipeCard: View {
     }
 }
 
-#Preview {
+#Preview("Light Mode") {
     VStack {
         SwipeableVehicleSection(
             vehicles: [
@@ -301,4 +301,34 @@ struct VehicleSwipeCard: View {
         Spacer()
     }
     .background(Color(.systemGroupedBackground))
+    .preferredColorScheme(.light)
+}
+
+#Preview("Dark Mode") {
+    VStack {
+        SwipeableVehicleSection(
+            vehicles: [
+                Vehicle(
+                    name: "My Truck",
+                    type: .truck,
+                    color: .red,
+                    parkingLocation: ParkingLocation.sample
+                ),
+                Vehicle(
+                    name: "My Bike",
+                    type: .motorcycle,
+                    color: .green,
+                    parkingLocation: ParkingLocation.sample
+                ),
+                Vehicle.sample
+            ],
+            selectedVehicle: Vehicle.sample,
+            onVehicleSelected: { _ in },
+            onVehicleTap: { _ in }
+        )
+        
+        Spacer()
+    }
+    .background(Color(.systemGroupedBackground))
+    .preferredColorScheme(.dark)
 }

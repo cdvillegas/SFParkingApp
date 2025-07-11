@@ -27,11 +27,22 @@ struct OnboardingProgressView: View {
     }
 }
 
-#Preview {
+#Preview("Light Mode") {
     OnboardingProgressView(
         currentStep: 2,
         totalSteps: 6,
         gradientColors: [Color.blue, Color.cyan]
     )
     .padding()
+    .preferredColorScheme(.light)
+}
+
+#Preview("Dark Mode") {
+    OnboardingProgressView(
+        currentStep: 2,
+        totalSteps: 6,
+        gradientColors: [Color.blue, Color.cyan]
+    )
+    .padding()
+    .preferredColorScheme(.dark)
 }

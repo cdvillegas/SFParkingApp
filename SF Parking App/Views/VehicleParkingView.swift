@@ -48,6 +48,7 @@ struct VehicleParkingView: View {
     // Notification tracking
     @State private var showingNotificationPermissionAlert = false
     @State private var lastNotificationLocationId: UUID?
+    @State private var showingReminderSheet = false
     @State private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Haptic Feedback
@@ -113,6 +114,16 @@ struct VehicleParkingView: View {
                 editingVehicle: vehicle,
                 onVehicleCreated: nil
             )
+        }
+        .sheet(isPresented: $showingReminderSheet) {
+            if let currentVehicle = vehicleManager.currentVehicle,
+               let parkingLocation = currentVehicle.parkingLocation,
+               let nextSchedule = streetDataManager.nextUpcomingSchedule {
+                NotificationSettingsSheet(
+                    schedule: nextSchedule,
+                    parkingLocation: parkingLocation
+                )
+            }
         }
         .onAppear {
             setupView()
@@ -513,7 +524,7 @@ struct VehicleParkingView: View {
             
             // Compact Vehicle Card
             VStack(spacing: 12) {
-                HStack(spacing: 12) {
+                HStack(alignment: .center, spacing: 12) {
                     // Vehicle icon with gradient shadow
                     ZStack {
                         Circle()
@@ -651,7 +662,33 @@ struct VehicleParkingView: View {
             }
             .padding(.horizontal, 20)
             .padding(.top, 20)
-            .padding(.bottom, 28)
+            
+            // Additional Action Buttons
+            if vehicle.parkingLocation != nil {
+                // Reminders Button
+                Button(action: {
+                    impactFeedbackLight.impactOccurred()
+                    showingReminderSheet = true
+                    showingVehicleActions = nil
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "bell.fill")
+                            .font(.system(size: 14, weight: .medium))
+                        Text("Reminders")
+                            .font(.system(size: 16, weight: .semibold))
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 48)
+                    .background(Color.blue)
+                    .cornerRadius(14)
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 12)
+            }
+            
+            Spacer()
+                .frame(height: 28)
         }
         .transition(.asymmetric(
             insertion: .move(edge: .bottom).combined(with: .opacity).combined(with: .scale(scale: 0.95)),
@@ -960,6 +997,18 @@ struct VehicleParkingView: View {
                                 HStack {
                                     Text("Move")
                                     Image(systemName: "location")
+                                }
+                            }
+                            
+                            if currentVehicle.parkingLocation != nil {
+                                Button(action: {
+                                    impactFeedbackLight.impactOccurred()
+                                    showingReminderSheet = true
+                                }) {
+                                    HStack {
+                                        Text("Reminders")
+                                        Image(systemName: "bell")
+                                    }
                                 }
                             }
                         } label: {
@@ -1628,7 +1677,149 @@ struct VehicleParkingView: View {
     }
     
     private func setupNotificationHandling() {
-        // Handle notifications when vehicles are selected
+        // Monitor schedule changes and auto-update notifications
+        streetDataManager.$nextUpcomingSchedule
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] newSchedule in
+                self?.handleScheduleChange(newSchedule)
+            }
+            .store(in: &cancellables)
+    }
+    
+    private func handleScheduleChange(_ newSchedule: UpcomingSchedule?) {
+        guard let schedule = newSchedule,
+              let currentVehicle = vehicleManager.currentVehicle,
+              let parkingLocation = currentVehicle.parkingLocation else {
+            return
+        }
+        
+        // Check if this schedule is different from what we had before
+        let scheduleKey = "\(schedule.streetName)_\(schedule.date)"
+        
+        // Only update if we have existing notification preferences for any location
+        let hasExistingPreferences = UserDefaults.standard.dictionaryRepresentation().keys
+            .contains { $0.hasPrefix("NotificationPreferences_") }
+        
+        if hasExistingPreferences {
+            print("🔔 Schedule changed - auto-updating notifications for \(schedule.streetName)")
+            Task {
+                await autoUpdateNotificationsForNewSchedule(schedule: schedule, parkingLocation: parkingLocation)
+            }
+        }
+    }
+    
+    private func autoUpdateNotificationsForNewSchedule(schedule: UpcomingSchedule, parkingLocation: ParkingLocation) async {
+        let center = UNUserNotificationCenter.current()
+        
+        do {
+            // Check if we have notification permission
+            let settings = await center.notificationSettings()
+            guard settings.authorizationStatus == .authorized else { return }
+            
+            // Get the smart options for this new schedule
+            let smartOptions = NotificationOption.smartOptions(for: schedule)
+            
+            // Load previous preferences to see which types were enabled
+            let globalKey = "GlobalNotificationPreferences"
+            var enabledTypes: [String] = []
+            
+            if let data = UserDefaults.standard.data(forKey: globalKey),
+               let preferences = try? JSONDecoder().decode([String: Bool].self, from: data) {
+                enabledTypes = preferences.compactMap { key, isEnabled in
+                    isEnabled ? key : nil
+                }
+            }
+            
+            // Clear existing notifications
+            center.removeAllPendingNotificationRequests()
+            
+            // Re-schedule notifications with new schedule but same preferences
+            for option in smartOptions {
+                if enabledTypes.contains(option.title) {
+                    let notificationDate = schedule.date.addingTimeInterval(-option.timeOffset)
+                    guard notificationDate > Date() else { continue }
+                    
+                    let content = UNMutableNotificationContent()
+                    content.title = getSmartNotificationTitle(for: option)
+                    content.body = getSmartNotificationBody(for: option, schedule: schedule)
+                    content.sound = option.timeOffset <= 1800 ? .defaultCritical : .default
+                    
+                    let dateComponents = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: notificationDate)
+                    let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
+                    
+                    let request = UNNotificationRequest(
+                        identifier: "parking-\(option.id.uuidString)",
+                        content: content,
+                        trigger: trigger
+                    )
+                    
+                    do {
+                        try await center.add(request)
+                        print("✅ Auto-scheduled: \(option.title)")
+                    } catch {
+                        print("❌ Failed to auto-schedule \(option.title): \(error)")
+                    }
+                }
+            }
+            
+            // Save the new preferences for this street
+            let streetKey = "NotificationPreferences_\(schedule.streetName)"
+            var newPreferences: [String: Bool] = [:]
+            for option in smartOptions {
+                newPreferences[option.title] = enabledTypes.contains(option.title)
+            }
+            
+            if let data = try? JSONEncoder().encode(newPreferences) {
+                UserDefaults.standard.set(data, forKey: streetKey)
+            }
+            
+            print("✅ Auto-updated notifications for new location: \(schedule.streetName)")
+            
+        } catch {
+            print("❌ Failed to auto-update notifications: \(error)")
+        }
+    }
+    
+    private func getSmartNotificationTitle(for option: NotificationOption) -> String {
+        switch option.title {
+        case "3 Days Before":
+            return "🗓️ Street Cleaning Reminder"
+        case "Night Before":
+            return "🌙 Move Your Car"
+        case "Before Bed":
+            return "🛏️ Tonight Reminder"
+        case "Morning":
+            return "☀️ Move Your Car"
+        case "Midday":
+            return "🌞 Move Your Car"
+        case "Final Warning":
+            return "🚨 URGENT: Move Car Now"
+        case "All Clear":
+            return "✅ All Clear"
+        default:
+            return "🅿️ Parking Reminder"
+        }
+    }
+    
+    private func getSmartNotificationBody(for option: NotificationOption, schedule: UpcomingSchedule) -> String {
+        switch option.title {
+        case "3 Days Before":
+            return "Street cleaning on \(schedule.dayOfWeek) at \(schedule.startTime) on \(schedule.streetName)"
+        case "Night Before":
+            return "Street cleaning tomorrow at \(schedule.startTime) on \(schedule.streetName)"
+        case "Before Bed":
+            return "Move your car tonight - early cleaning tomorrow at \(schedule.startTime)"
+        case "Morning":
+            return "Street cleaning in 2 hours on \(schedule.streetName)"
+        case "Midday":
+            return "Street cleaning today at \(schedule.startTime) on \(schedule.streetName)"
+        case "Final Warning":
+            return "Street cleaning starts in 30 minutes on \(schedule.streetName)"
+        case "All Clear":
+            return "Street cleaning finished on \(schedule.streetName) - safe to park back"
+        default:
+            return "Parking reminder for \(schedule.streetName)"
+        }
     }
     
     // MARK: - Street Sweeping Section (redesigned for beautiful light/dark mode)
@@ -1636,7 +1827,7 @@ struct VehicleParkingView: View {
         VStack(spacing: 12) {
             // Title with refined styling
             HStack {
-                Text("My Vehicle")
+                Text("Street Sweeping")
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(.primary)
                 
@@ -2095,6 +2286,12 @@ struct EnhancedVehicleListRow: View {
 }
 
 
-#Preview {
+#Preview("Light Mode") {
     VehicleParkingView()
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark Mode") {
+    VehicleParkingView()
+        .preferredColorScheme(.dark)
 }
