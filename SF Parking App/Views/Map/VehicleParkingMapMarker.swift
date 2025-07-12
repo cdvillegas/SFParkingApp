@@ -25,15 +25,11 @@ struct VehicleParkingMapMarker: View {
                             endPoint: .bottomTrailing
                         )
                     )
-                    .frame(width: isSelected ? 28 : 22, height: isSelected ? 28 : 22)
-                    .overlay(
-                        Circle()
-                            .stroke(Color.white, lineWidth: isSelected ? 1.5 : 1.2)
-                    )
+                    .frame(width: 24, height: 24) // Slightly bigger
 
                 // Vehicle icon
                 Image(systemName: vehicle.type.iconName)
-                    .font(.system(size: isSelected ? 12 : 8, weight: .semibold))
+                    .font(.system(size: 12, weight: .semibold)) // Slightly bigger icon
                     .foregroundColor(.white)
             }
             .shadow(
@@ -42,7 +38,7 @@ struct VehicleParkingMapMarker: View {
                 x: 0,
                 y: isSelected ? 3 : 1.5
             )
-            .scaleEffect(isSelected ? 1.1 : 1.0)
+            .scaleEffect(1.0) // No scaling on selection
             .animation(.spring(response: 0.4, dampingFraction: 0.6), value: isSelected)
             .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isAnimating)
         }

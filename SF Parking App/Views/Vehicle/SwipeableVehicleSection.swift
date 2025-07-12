@@ -21,7 +21,7 @@ struct SwipeableVehicleSection: View {
                         }
                     )
                     .padding(.horizontal, 16)
-                    .padding(.bottom, 16)
+                    .padding(.bottom, 12)
                 }
             } else {
                 // Empty state

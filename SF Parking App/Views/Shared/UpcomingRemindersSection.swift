@@ -249,37 +249,29 @@ struct UpcomingRemindersSection: View {
         let urgencyLevel = getUrgencyLevel(for: schedule.date)
         let urgencyStyle = getUrgencyStyle(urgencyLevel)
         
-        return Button(action: {
-            let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-            impactFeedback.impactOccurred()
-            showingReminderSheet = true
-        }) {
-            HStack(spacing: 16) {
-                Image(systemName: urgencyStyle.1)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(urgencyStyle.0)
+        return HStack(spacing: 16) {
+            Image(systemName: urgencyStyle.1)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(urgencyStyle.0)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text("Street cleaning \(timeUntil)")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(.primary)
+                    Spacer()
+                }
                 
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text("Street cleaning \(timeUntil)")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(.primary)
-                        Spacer()
-                    }
-                    
-                    HStack {
-                        Text(formatDateAndTime(schedule.date, startTime: schedule.startTime, endTime: schedule.endTime))
-                            .font(.system(size: 15))
-                            .foregroundColor(.secondary)
-                            .lineLimit(1)
-                        Spacer()
-                    }
+                HStack {
+                    Text(formatDateAndTime(schedule.date, startTime: schedule.startTime, endTime: schedule.endTime))
+                        .font(.system(size: 15))
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                    Spacer()
                 }
             }
-            .padding(.vertical, 16)
         }
-        .buttonStyle(PlainButtonStyle())
-        .contentShape(Rectangle())
+        .padding(.vertical, 16)
     }
     
     
@@ -335,45 +327,26 @@ struct UpcomingRemindersSection: View {
     
     // MARK: - No Restrictions State
     private var noRestrictionsState: some View {
-        Button(action: {
-            // Create a dummy schedule for settings access
-            showingReminderSheet = true
-        }) {
-            HStack(spacing: 16) {
-                ZStack {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.green)
-                }
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("You're all clear!")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.primary)
-                    
-                    Text("No upcoming street sweeping")
-                        .font(.system(size: 14))
-                        .foregroundColor(.secondary)
-                }
-                
-                Spacer()
+        HStack(spacing: 16) {
+            ZStack {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.green)
             }
-            .padding(20)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(.systemBackground))
-                    .shadow(
-                        color: Color.green.opacity(0.2),
-                        radius: 6,
-                        x: 0,
-                        y: 3
-                    )
-            )
-            .padding(.horizontal, 4)
-            .padding(.vertical, 2)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text("You're all clear!")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(.primary)
+                
+                Text("No upcoming street sweeping")
+                    .font(.system(size: 14))
+                    .foregroundColor(.secondary)
+            }
+            
+            Spacer()
         }
-        .buttonStyle(PlainButtonStyle())
-        .contentShape(Rectangle())
+        .padding(.vertical, 16)
     }
     
 }

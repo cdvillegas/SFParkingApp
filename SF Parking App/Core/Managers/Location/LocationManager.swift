@@ -12,6 +12,7 @@ import Combine
 class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     private let locationManager = CLLocationManager()
     @Published var userLocation: CLLocation?
+    @Published var userHeading: CLLocationDirection = 0
     @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
     
     override init() {
@@ -19,9 +20,15 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
         locationManager.distanceFilter = 10
+        locationManager.headingFilter = 5 // Update heading every 5 degrees
         
         authorizationStatus = locationManager.authorizationStatus
         print("LocationManager initialized with status: \(authorizationStatus.rawValue)")
+        
+        // Set default location for preview (2455 Post Street, SF)
+        #if DEBUG
+        setDefaultLocation()
+        #endif
     }
     
     func requestLocationPermission() {
@@ -62,6 +69,12 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         
         print("Starting continuous location updates")
         locationManager.startUpdatingLocation()
+        
+        // Start heading updates if available
+        if CLLocationManager.headingAvailable() {
+            print("Starting heading updates")
+            locationManager.startUpdatingHeading()
+        }
     }
     
     // MARK: - CLLocationManagerDelegate
@@ -111,4 +124,30 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             }
         }
     }
+    
+    func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
+        // Use magnetic heading for better accuracy
+        let heading = newHeading.magneticHeading >= 0 ? newHeading.magneticHeading : newHeading.trueHeading
+        
+        DispatchQueue.main.async {
+            self.userHeading = heading
+        }
+    }
+    
+    #if DEBUG
+    private func setDefaultLocation() {
+        // 2455 Post Street, San Francisco, CA coordinates
+        let defaultLocation = CLLocation(
+            latitude: 37.785834,
+            longitude: -122.442947
+        )
+        
+        DispatchQueue.main.async {
+            self.userLocation = defaultLocation
+            self.userHeading = 45 // Default northeast direction
+        }
+        
+        print("Set default location: 2455 Post Street, SF")
+    }
+    #endif
 }
