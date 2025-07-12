@@ -312,6 +312,7 @@ struct VehicleParkingView: View {
                         let midPoint = calculateMidpoint(streetEdgeCoords)
                         Annotation("", coordinate: midPoint) {
                             Button(action: {
+                                impactFeedbackLight.impactOccurred()
                                 selectScheduleOption(index)
                             }) {
                                 Rectangle()
@@ -471,11 +472,8 @@ struct VehicleParkingView: View {
             if let vehicleForActions = showingVehicleActions {
                 // Expanded Vehicle Card Interface
                 enhancedVehicleActionsInterface(for: vehicleForActions)
-            } else if isSettingLocation {
-                // Unified location setting interface
-                unifiedLocationSettingInterface()
             } else {
-                // Normal mode - show vehicles
+                // Unified interface - handles both location setting and normal modes
                 enhancedNormalVehicleInterface()
             }
         }
@@ -722,77 +720,6 @@ struct VehicleParkingView: View {
         ])
     }
     
-    // MARK: - Unified Location Setting Interface
-    private func unifiedLocationSettingInterface() -> some View {
-        VStack(spacing: 0) {
-            unifiedLocationContent()
-        }
-        .transition(.asymmetric(
-            insertion: .move(edge: .bottom).combined(with: .opacity),
-            removal: .move(edge: .bottom).combined(with: .opacity)
-        ))
-    }
-    
-    // MARK: - Unified Location Content
-    private func unifiedLocationContent() -> some View {
-        VStack(spacing: 0) {
-            // Fixed-height status section
-            setParkingLocationSection()
-            
-            // Action buttons
-            HStack(spacing: 12) {
-                // Show cancel/skip button if parking location exists OR during initial setup OR no location set
-                if vehicleManager.currentVehicle?.parkingLocation != nil || isSettingLocationForNewVehicle || vehicleManager.currentVehicle?.parkingLocation == nil {
-                    Button(action: {
-                        impactFeedbackLight.impactOccurred()
-                        withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
-                            cancelSettingLocation()
-                        }
-                    }) {
-                        Text(isSettingLocationForNewVehicle || vehicleManager.currentVehicle?.parkingLocation == nil ? "Set Later" : "Cancel")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.secondary)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 52)
-                            .background(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(Color(.systemGray6))
-                            )
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                }
-                
-                Button(action: {
-                    impactFeedbackLight.impactOccurred()
-                    withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
-                        confirmUnifiedLocation()
-                    }
-                }) {
-                    Text("Confirm")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 52)
-                        .background(
-                            LinearGradient(
-                                colors: [Color.blue, Color.blue.opacity(0.8)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .cornerRadius(16)
-                        .shadow(color: Color.blue.opacity(0.3), radius: 6, x: 0, y: 3)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(PlainButtonStyle())
-                .disabled(settingAddress == nil)
-                .opacity(settingAddress == nil ? 0.6 : 1.0)
-            }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 20)
-        }
-    }
     
     // MARK: - Detected Schedule Card
     private func detectedScheduleCard(_ schedule: SweepSchedule) -> some View {
@@ -948,8 +875,9 @@ struct VehicleParkingView: View {
     private func enhancedNormalVehicleInterface() -> some View {
         VStack(spacing: 0) {
             if !vehicleManager.activeVehicles.isEmpty {
-                // Show upcoming reminders for current vehicle
-                if let currentVehicle = vehicleManager.currentVehicle,
+                // Show upcoming reminders for current vehicle - only when NOT setting location
+                if !isSettingLocation,
+                   let currentVehicle = vehicleManager.currentVehicle,
                    let parkingLocation = currentVehicle.parkingLocation {
                     UpcomingRemindersSection(
                         streetDataManager: streetDataManager,
@@ -961,14 +889,51 @@ struct VehicleParkingView: View {
                         .padding(.horizontal, 20)
                 }
                 
-                // Enhanced header with reminders button
-                HStack {
-                    Text("My Vehicle")
-                        .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(.primary)
-                    
-                    Spacer()
-                    
+                // Unified content container
+                unifiedContentContainer()
+                
+            } else {
+                // Enhanced empty state
+                enhancedEmptyStateInterface()
+            }
+        }
+    }
+    
+    // MARK: - Unified Content Container
+    private func unifiedContentContainer() -> some View {
+        VStack(spacing: 0) {
+            // Header section
+            HStack {
+                Text(isSettingLocation ? "Move Vehicle" : "My Vehicle")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(.primary)
+                
+                Spacer()
+                
+                if isSettingLocation {
+                    HStack(spacing: 12) {
+                        // Navigate to my location button
+                        Button(action: {
+                            impactFeedbackLight.impactOccurred()
+                            centerMapOnUserLocation()
+                        }) {
+                            Image(systemName: "location.fill")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(.secondary)
+                                .frame(width: 36, height: 36)
+                                .background(
+                                    Circle()
+                                        .fill(Color(.systemGray5))
+                                )
+                        }
+                        
+                        if isAutoDetectingSchedule {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                                .tint(.blue)
+                        }
+                    }
+                } else {
                     // Reminders button
                     if let currentVehicle = vehicleManager.currentVehicle, currentVehicle.parkingLocation != nil {
                         Button(action: {
@@ -986,62 +951,205 @@ struct VehicleParkingView: View {
                         }
                     }
                 }
-                .padding(.horizontal, 20)
-                .padding(.bottom, 12)
-                .padding(.top, 20)
-                
-                // Vehicle section - single card
-                SwipeableVehicleSection(
-                    vehicles: vehicleManager.activeVehicles,
-                    selectedVehicle: vehicleManager.currentVehicle,
-                    onVehicleSelected: { vehicle in
-                        // In single-vehicle mode, do nothing since there's only one vehicle
-                    },
-                    onVehicleTap: { vehicle in
-                        if vehicle.parkingLocation != nil {
-                            // Open vehicle location in Maps
-                            openVehicleInMaps(vehicle)
-                        } else {
-                            // Start location setting if no parking location
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
+            
+            // Cards section - EXACT same structure as SwipeableVehicleSection
+            VStack(spacing: 0) {
+                if isSettingLocation {
+                    // Location setting cards - match SwipeableVehicleSection structure exactly
+                    if nearbySchedules.isEmpty {
+                        // No schedules state - EXACT SwipeableVehicleSection structure
+                        VStack(spacing: 12) {
+                            HStack(spacing: 12) {
+                                // Icon with same structure as vehicle icon
+                                ZStack {
+                                    Circle()
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [
+                                                    settingAddress != nil ? Color.green : Color.blue.opacity(0.7),
+                                                    settingAddress != nil ? Color.green.opacity(0.8) : Color.blue.opacity(0.5)
+                                                ],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
+                                        .frame(width: 40, height: 40)
+                                    
+                                    Image(systemName: settingAddress != nil ? "checkmark" : "location")
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundColor(.white)
+                                }
+                                .shadow(color: (settingAddress != nil ? Color.green : Color.blue).opacity(0.3), radius: 4, x: 0, y: 2)
+                                
+                                // Text with same structure as vehicle info
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(settingAddress != nil ? "No parking restrictions" : "Move map to check area")
+                                        .font(.headline)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(.primary)
+                                        .lineLimit(2)
+                                    
+                                    Text(settingAddress != nil ? "Safe to park here" : "Position to detect schedule")
+                                        .font(.caption)
+                                        .foregroundColor(.blue)
+                                }
+                                
+                                Spacer()
+                            }
+                        }
+                        .padding(20)  // Same as VehicleSwipeCard
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(Color(.systemBackground))
+                                .shadow(
+                                    color: settingAddress != nil ? Color.green.opacity(0.2) : Color.black.opacity(0.08),
+                                    radius: settingAddress != nil ? 6 : 3,
+                                    x: 0,
+                                    y: settingAddress != nil ? 3 : 1
+                                )
+                        )
+                        .padding(.horizontal, 4)  // Same as VehicleSwipeCard
+                        .padding(.vertical, 2)    // Same as VehicleSwipeCard
+                        .padding(.horizontal, 16) // Same as SwipeableVehicleSection
+                        .padding(.bottom, 16)     // Same as SwipeableVehicleSection
+                        .transition(.asymmetric(
+                            insertion: .opacity.combined(with: .scale(scale: 0.95)),
+                            removal: .opacity.combined(with: .scale(scale: 0.95))
+                        ))
+                    } else {
+                        // Schedule selection cards - elegant style with no left padding
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 12) {
+                                ForEach(Array(nearbySchedules.enumerated()), id: \.0) { index, scheduleWithSide in
+                                    scheduleSelectionCard(scheduleWithSide, index: index)
+                                }
+                            }
+                            .padding(.leading, 4) // Align with title (20pt title padding - 16pt scroll padding = 4pt)
+                            .padding(.trailing, 20) // Right padding for scroll
+                        }
+                        .padding(.horizontal, 16) // Same as SwipeableVehicleSection
+                        .padding(.bottom, 16)     // Same as SwipeableVehicleSection
+                        .transition(.asymmetric(
+                            insertion: .opacity.combined(with: .move(edge: .trailing)),
+                            removal: .opacity.combined(with: .move(edge: .trailing))
+                        ))
+                    }
+                } else {
+                    // Vehicle card section
+                    SwipeableVehicleSection(
+                        vehicles: vehicleManager.activeVehicles,
+                        selectedVehicle: vehicleManager.currentVehicle,
+                        onVehicleSelected: { vehicle in
+                            // In single-vehicle mode, do nothing since there's only one vehicle
+                        },
+                        onVehicleTap: { vehicle in
+                            if vehicle.parkingLocation != nil {
+                                // Open vehicle location in Maps
+                                openVehicleInMaps(vehicle)
+                            } else {
+                                // Start location setting if no parking location
+                                impactFeedbackLight.impactOccurred()
+                                isSettingLocationForNewVehicle = false
+                                startSettingLocationForVehicle(vehicle)
+                            }
+                        }
+                    )
+                    .transition(.asymmetric(
+                        insertion: .opacity.combined(with: .move(edge: .leading)),
+                        removal: .opacity.combined(with: .move(edge: .leading))
+                    ))
+                }
+            }
+            .padding(.vertical, 8) // Reduced spacing above and below cards
+            .animation(.spring(response: 0.5, dampingFraction: 0.8), value: isSettingLocation)
+            .animation(.spring(response: 0.4, dampingFraction: 0.9), value: nearbySchedules.isEmpty)
+            
+            // Bottom buttons section - consistent spacing
+            VStack(spacing: 0) {
+                if isSettingLocation {
+                    // Location setting buttons
+                    HStack(spacing: 12) {
+                        // Cancel/Set Later button
+                        if vehicleManager.currentVehicle?.parkingLocation != nil || isSettingLocationForNewVehicle || vehicleManager.currentVehicle?.parkingLocation == nil {
+                            Button(action: {
+                                impactFeedbackLight.impactOccurred()
+                                withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+                                    cancelSettingLocation()
+                                }
+                            }) {
+                                Text(isSettingLocationForNewVehicle || vehicleManager.currentVehicle?.parkingLocation == nil ? "Set Later" : "Cancel")
+                                    .font(.system(size: 17, weight: .semibold))
+                                    .foregroundColor(.secondary)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 52)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 16)
+                                            .fill(Color(.systemGray6))
+                                    )
+                                    .contentShape(Rectangle())
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                        }
+                        
+                        // Confirm button
+                        Button(action: {
+                            impactFeedbackLight.impactOccurred()
+                            withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+                                confirmUnifiedLocation()
+                            }
+                        }) {
+                            Text("Confirm")
+                                .font(.system(size: 17, weight: .semibold))
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 52)
+                                .background(
+                                    LinearGradient(
+                                        colors: [Color.blue, Color.blue.opacity(0.8)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .cornerRadius(16)
+                                .shadow(color: Color.blue.opacity(0.3), radius: 6, x: 0, y: 3)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .disabled(settingAddress == nil)
+                        .opacity(settingAddress == nil ? 0.6 : 1.0)
+                    }
+                } else {
+                    // Move Vehicle button
+                    if let currentVehicle = vehicleManager.currentVehicle {
+                        Button(action: {
                             impactFeedbackLight.impactOccurred()
                             isSettingLocationForNewVehicle = false
-                            startSettingLocationForVehicle(vehicle)
-                        }
-                    }
-                ).padding(.bottom, 12)
-                
-                // Move Parking Location button
-                if let currentVehicle = vehicleManager.currentVehicle {
-                    Button(action: {
-                        impactFeedbackLight.impactOccurred()
-                        isSettingLocationForNewVehicle = false
-                        startSettingLocationForVehicle(currentVehicle)
-                    }) {
-                        HStack(spacing: 10) {
+                            startSettingLocationForVehicle(currentVehicle)
+                        }) {
                             Text(currentVehicle.parkingLocation != nil ? "Move Vehicle" : "Set Vehicle Location")
-                                .font(.system(size: 18, weight: .semibold))
+                                .font(.system(size: 17, weight: .semibold))
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 52)
+                                .background(
+                                    LinearGradient(
+                                        colors: [.blue, .blue.opacity(0.8)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .cornerRadius(16)
+                                .shadow(color: Color.blue.opacity(0.3), radius: 8, x: 0, y: 4)
                         }
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 54)
-                        .background(
-                            LinearGradient(
-                                colors: [.blue, .blue.opacity(0.8)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .cornerRadius(16)
-                        .shadow(color: Color.blue.opacity(0.3), radius: 8, x: 0, y: 4)
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 20)
                 }
-                
-            } else {
-                // Enhanced empty state
-                enhancedEmptyStateInterface()
             }
+            .padding(.horizontal, 20)
+            .padding(.top, 12)
+            .padding(.bottom, 16)
         }
     }
     
@@ -1263,7 +1371,9 @@ struct VehicleParkingView: View {
     
     private func startSettingLocation() {
         impactFeedbackLight.impactOccurred()
-        isSettingLocation = true
+        withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+            isSettingLocation = true
+        }
         
         // Start from user location or last known location
         let startCoordinate: CLLocationCoordinate2D
@@ -1821,57 +1931,6 @@ struct VehicleParkingView: View {
         }
     }
     
-    // MARK: - Street Sweeping Section (redesigned for beautiful light/dark mode)
-    private func setParkingLocationSection() -> some View {
-        VStack(spacing: 12) {
-            // Title with refined styling
-            HStack {
-                Text("Set Parking Location")
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(.primary)
-                
-                Spacer()
-                
-                if isAutoDetectingSchedule {
-                    ProgressView()
-                        .scaleEffect(0.8)
-                        .tint(.blue)
-                }
-            }
-            
-            // Schedule cards with consistent height but no background container
-            if nearbySchedules.isEmpty {
-                // No schedules - centered beautiful state
-                VStack(spacing: 8) {
-                    Image(systemName: settingAddress != nil ? "checkmark.circle.fill" : "location.circle")
-                        .font(.system(size: 24, weight: .medium))
-                        .foregroundColor(settingAddress != nil ? .green : .blue.opacity(0.7))
-                    
-                    Text(settingAddress != nil ? "No parking restrictions" : "Move map to check area")
-                        .font(.system(size: 15, weight: .medium))
-                        .foregroundColor(settingAddress != nil ? .green : .secondary)
-                        .multilineTextAlignment(.center)
-                }
-                .frame(maxWidth: .infinity)
-                .frame(height: 88)
-            } else {
-                VStack(spacing: 8) {
-                    // Standalone schedule cards with proper padding to prevent clipping
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 12) {
-                            ForEach(Array(nearbySchedules.enumerated()), id: \.0) { index, scheduleWithSide in
-                                elegantScheduleCard(scheduleWithSide, index: index)
-                            }
-                        }
-                        .padding(.leading, 4) // Minimal leading padding to prevent clipping
-                        .padding(.trailing, 20) // Trailing padding for right side
-                        .padding(.vertical, 12) // Extra padding to prevent clipping when cards scale up
-                    }
-                    .frame(height: 88)
-                }
-            }
-        }.padding(20)
-    }
     
     // MARK: - Elegant Schedule Card (redesigned for beautiful light/dark mode)
     private func elegantScheduleCard(_ scheduleWithSide: SweepScheduleWithSide, index: Int) -> some View {
@@ -1879,6 +1938,7 @@ struct VehicleParkingView: View {
         let schedule = scheduleWithSide.schedule
         
         return Button(action: {
+            impactFeedbackLight.impactOccurred()
             selectScheduleOption(index)
         }) {
             VStack(alignment: .leading, spacing: 4) {
@@ -1907,36 +1967,92 @@ struct VehicleParkingView: View {
                     .foregroundColor(.secondary)
                     .lineLimit(1)
             }
-            .frame(width: 220, height: 56)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
             .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(
-                        isSelected ? 
-                        Color.blue.opacity(0.12) : 
-                        Color(.systemBackground)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(
-                                isSelected ? 
-                                Color.blue.opacity(0.4) : 
-                                Color(.systemGray4).opacity(0.6), 
-                                lineWidth: isSelected ? 2 : 1
-                            )
-                    )
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color(.systemBackground))
                     .shadow(
-                        color: isSelected ? 
-                        Color.blue.opacity(0.15) : 
-                        Color.black.opacity(0.06), 
-                        radius: isSelected ? 6 : 2, 
-                        x: 0, 
+                        color: isSelected ? Color.blue.opacity(0.2) : Color.black.opacity(0.08),
+                        radius: isSelected ? 6 : 3,
+                        x: 0,
                         y: isSelected ? 3 : 1
                     )
             )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(isSelected ? Color.blue.opacity(0.4) : Color.clear, lineWidth: isSelected ? 2 : 0)
+            )
+            .padding(.horizontal, 4)
+            .padding(.vertical, 2)
             .scaleEffect(isSelected ? 1.02 : 1.0)
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+    
+    // MARK: - Schedule Selection Card (EXACT SwipeableVehicleSection structure)
+    private func scheduleSelectionCard(_ scheduleWithSide: SweepScheduleWithSide, index: Int) -> some View {
+        let isSelected = index == selectedScheduleIndex && hasSelectedSchedule
+        let schedule = scheduleWithSide.schedule
+        
+        return Button(action: {
+            impactFeedbackLight.impactOccurred()
+            selectScheduleOption(index)
+        }) {
+            VStack(spacing: 12) { // EXACT same as VehicleSwipeCard
+                HStack(spacing: 12) { // EXACT same as VehicleSwipeCard
+                    // NO ICON/CIRCLE - skip the left side
+                    
+                    // Schedule info - EXACT same structure as vehicle info
+                    VStack(alignment: .leading, spacing: 4) {
+                        // Street name with side indicator pill - PRIMARY TEXT
+                        HStack(spacing: 6) {
+                            Text(schedule.streetName)
+                                .font(.headline) // EXACT same as vehicle primary text
+                                .fontWeight(.semibold) // EXACT same as vehicle primary text
+                                .foregroundColor(.primary) // EXACT same as vehicle primary text
+                                .lineLimit(2) // EXACT same as vehicle primary text
+                            
+                            // Side badge pill
+                            Text(formatSideDescription(scheduleWithSide.side))
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundColor(.secondary)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(
+                                    Capsule()
+                                        .fill(Color(.systemGray5))
+                                )
+                        }
+                        
+                        // Schedule timing - SECONDARY TEXT
+                        Text(formatConciseSchedule(schedule))
+                            .font(.caption) // EXACT same as vehicle secondary text
+                            .foregroundColor(.secondary) // Changed from .blue to .secondary
+                    }
+                    
+                    Spacer() // EXACT same as VehicleSwipeCard
+                }
+            }
+            .padding(20) // EXACT same as VehicleSwipeCard
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(isSelected ? Color.blue.opacity(0.05) : Color(.systemBackground))
+                    .shadow(
+                        color: isSelected ? Color.blue.opacity(0.4) : Color.blue.opacity(0.25), // Same glow as vehicle
+                        radius: 8,
+                        x: 0,
+                        y: 4
+                    )
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(isSelected ? Color.blue.opacity(0.4) : Color.clear, lineWidth: isSelected ? 2 : 0)
+            )
+            .padding(.horizontal, 4) // EXACT same as VehicleSwipeCard
+            .padding(.vertical, 2)   // EXACT same as VehicleSwipeCard
+            .frame(width: 280) // Slightly wider for schedule text
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -1954,6 +2070,7 @@ struct VehicleParkingView: View {
         let schedule = scheduleWithSide.schedule
         
         return Button(action: {
+            impactFeedbackLight.impactOccurred()
             selectScheduleOption(index)
         }) {
             VStack(alignment: .leading, spacing: 4) {

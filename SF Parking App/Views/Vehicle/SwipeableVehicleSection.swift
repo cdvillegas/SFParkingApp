@@ -119,10 +119,10 @@ struct VehicleSwipeCard: View {
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color(.systemBackground))
                 .shadow(
-                    color: isSelected ? vehicle.color.color.opacity(0.2) : Color.black.opacity(0.08),
-                    radius: isSelected ? 6 : 3,
+                    color: vehicle.color.color.opacity(0.2), // Always show vehicle glow
+                    radius: 6,
                     x: 0,
-                    y: isSelected ? 3 : 1
+                    y: 3
                 )
         )
         .padding(.horizontal, 4)

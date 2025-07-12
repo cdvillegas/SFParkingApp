@@ -315,7 +315,19 @@ struct UpcomingRemindersSection: View {
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.orange)
             }
-            .padding(.vertical, 16)
+            .padding(20)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color(.systemBackground))
+                    .shadow(
+                        color: Color.orange.opacity(0.2),
+                        radius: 6,
+                        x: 0,
+                        y: 3
+                    )
+            )
+            .padding(.horizontal, 4)
+            .padding(.vertical, 2)
         }
         .buttonStyle(PlainButtonStyle())
         .contentShape(Rectangle())
@@ -346,7 +358,19 @@ struct UpcomingRemindersSection: View {
                 
                 Spacer()
             }
-            .padding(.vertical, 16)
+            .padding(20)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color(.systemBackground))
+                    .shadow(
+                        color: Color.green.opacity(0.2),
+                        radius: 6,
+                        x: 0,
+                        y: 3
+                    )
+            )
+            .padding(.horizontal, 4)
+            .padding(.vertical, 2)
         }
         .buttonStyle(PlainButtonStyle())
         .contentShape(Rectangle())
