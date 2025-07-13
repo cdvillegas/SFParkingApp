@@ -3,36 +3,39 @@ import CoreLocation
 
 struct UserDirectionCone: View {
     let heading: CLLocationDirection
+    let mapHeading: CLLocationDirection
     
     var body: some View {
         ZStack {
-            // Flashlight beam - wider and more spread out
+            // Flashlight beam - bigger and more visible with fade at tip
             FlashlightBeam()
                 .fill(
                     LinearGradient(
-                        colors: [
-                            Color.blue.opacity(0.8),
-                            Color.blue.opacity(0.4),
-                            Color.blue.opacity(0.1)
-                        ],
+                        gradient: Gradient(stops: [
+                            .init(color: Color.blue.opacity(0.9), location: 0.0),    // Strong at base
+                            .init(color: Color.blue.opacity(0.7), location: 0.3),    // Still visible
+                            .init(color: Color.blue.opacity(0.4), location: 0.6),    // Fading
+                            .init(color: Color.blue.opacity(0.15), location: 0.85),  // Nearly transparent
+                            .init(color: Color.blue.opacity(0.0), location: 1.0)     // Fully transparent at tip
+                        ]),
                         startPoint: .bottom,
                         endPoint: .top
                     )
                 )
-                .frame(width: 32, height: 22)
-                .offset(y: -15) // Position beam pointing outward from center
-                .rotationEffect(.degrees(heading))
+                .frame(width: 40, height: 28) // Bigger cone
+                .offset(y: -18) // Position beam pointing outward from center
+                .rotationEffect(.degrees(heading - mapHeading)) // Relative to map rotation
             
-            // User location dot - centered
+            // User location dot - bigger and more visible
             Circle()
                 .fill(Color.blue)
-                .frame(width: 12, height: 12)
+                .frame(width: 18, height: 18) // A tiny bit bigger dot
                 .overlay(
                     Circle()
-                        .stroke(Color.white, lineWidth: 0.5)
+                        .stroke(Color.white, lineWidth: 1)
                 )
         }
-        .shadow(color: Color.blue.opacity(0.2), radius: 3, x: 0, y: 1)
+        .shadow(color: Color.blue.opacity(0.3), radius: 4, x: 0, y: 2)
     }
 }
 
@@ -67,10 +70,10 @@ struct FlashlightBeam: Shape {
 
 #Preview {
     VStack(spacing: 20) {
-        UserDirectionCone(heading: 0)   // North
-        UserDirectionCone(heading: 90)  // East
-        UserDirectionCone(heading: 180) // South
-        UserDirectionCone(heading: 270) // West
+        UserDirectionCone(heading: 0, mapHeading: 0)   // North
+        UserDirectionCone(heading: 90, mapHeading: 0)  // East
+        UserDirectionCone(heading: 180, mapHeading: 0) // South
+        UserDirectionCone(heading: 270, mapHeading: 0) // West
     }
     .padding()
 }

@@ -2,6 +2,7 @@ import SwiftUI
 import MapKit
 import CoreLocation
 import Combine
+import UIKit
 
 struct VehicleParkingView: View {
     @StateObject private var locationManager = LocationManager()
@@ -12,8 +13,8 @@ struct VehicleParkingView: View {
     
     @State private var mapPosition = MapCameraPosition.region(
         MKCoordinateRegion(
-            center: CLLocationCoordinate2D(latitude: 37.783759, longitude: -122.442232),
-            span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+            center: CLLocationCoordinate2D(latitude: 37.7551, longitude: -122.4528), // Sutro Tower
+            span: MKCoordinateSpan(latitudeDelta: 0.18, longitudeDelta: 0.18) // More zoomed out city view
         )
     )
     
@@ -50,6 +51,9 @@ struct VehicleParkingView: View {
     @State private var showingReminderSheet = false
     @State private var cancellables = Set<AnyCancellable>()
     
+    // Map camera tracking for direction cone
+    @State private var currentMapHeading: CLLocationDirection = 0
+    
     // MARK: - Haptic Feedback
     private let impactFeedbackLight = UIImpactFeedbackGenerator(style: .light)
     private let notificationFeedback = UINotificationFeedbackGenerator()
@@ -62,30 +66,56 @@ struct VehicleParkingView: View {
                     topControls
                 }
                 
-                // Center on vehicles button - bottom right of map
-                if !vehicleManager.activeVehicles.isEmpty {
-                    VStack {
-                        Spacer()
-                        HStack {
-                            Spacer()
+                // Map buttons - bottom area
+                VStack {
+                    Spacer()
+                    ZStack {
+                        // Location permission button (center bottom)
+                        if locationManager.authorizationStatus == .denied || locationManager.authorizationStatus == .notDetermined {
                             Button(action: {
                                 impactFeedbackLight.impactOccurred()
-                                centerMapOnVehicles()
+                                handleLocationPermission()
                             }) {
-                                Image(systemName: "scope")
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(.white)
-                                    .padding(12)
-                                    .background(
-                                        Circle()
-                                            .fill(.ultraThinMaterial)
-                                            .shadow(color: .black.opacity(0.15), radius: 6, x: 0, y: 3)
-                                    )
+                                HStack(spacing: 6) {
+                                    Image(systemName: locationManager.authorizationStatus == .denied ? "location.slash" : "location")
+                                        .font(.system(size: 14, weight: .medium))
+                                    Text("Enable Location")
+                                        .font(.system(size: 14, weight: .semibold))
+                                }
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 10)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .fill(Color.blue.opacity(0.9))
+                                        .shadow(color: .blue, radius: 6, x: 0, y: 3)
+                                )
                             }
-                            .padding(.trailing, 20)
-                            .padding(.bottom, 20) // Bottom right of map area
+                        }
+                        
+                        // Center on vehicles button (bottom right)
+                        HStack {
+                            Spacer()
+                            if !vehicleManager.activeVehicles.isEmpty && vehicleManager.activeVehicles.contains(where: { $0.parkingLocation != nil }) {
+                                Button(action: {
+                                    impactFeedbackLight.impactOccurred()
+                                    centerMapOnVehiclesWithConsistentZoom()
+                                }) {
+                                    Image(systemName: "scope")
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundColor(.white)
+                                        .padding(12)
+                                        .background(
+                                            Circle()
+                                                .fill(.ultraThinMaterial)
+                                                .shadow(color: .black.opacity(0.15), radius: 6, x: 0, y: 3)
+                                            )
+                                }
+                                .padding(.trailing, 20)
+                            }
                         }
                     }
+                    .padding(.bottom, 20)
                 }
             }
 
@@ -115,11 +145,10 @@ struct VehicleParkingView: View {
             )
         }
         .sheet(isPresented: $showingReminderSheet) {
-            if let currentVehicle = vehicleManager.currentVehicle,
-               let parkingLocation = currentVehicle.parkingLocation {
+            if let currentVehicle = vehicleManager.currentVehicle {
                 // Always use the same NotificationSettingsSheet, create dummy schedule if needed
                 let schedule = streetDataManager.nextUpcomingSchedule ?? UpcomingSchedule(
-                    streetName: parkingLocation.address,
+                    streetName: currentVehicle.parkingLocation?.address ?? "Your Location",
                     date: Date().addingTimeInterval(7 * 24 * 3600), // 1 week from now
                     endDate: Date().addingTimeInterval(7 * 24 * 3600 + 7200), // 2 hours later
                     dayOfWeek: "Next Week",
@@ -128,7 +157,7 @@ struct VehicleParkingView: View {
                 )
                 NotificationSettingsSheet(
                     schedule: schedule,
-                    parkingLocation: parkingLocation
+                    parkingLocation: currentVehicle.parkingLocation
                 )
             }
         }
@@ -138,16 +167,33 @@ struct VehicleParkingView: View {
             setupNotificationHandling()
             NotificationManager.shared.validateAndRecoverNotifications()
             
-            // Check if we should start in location setting mode
-            if vehicleManager.currentVehicle?.parkingLocation == nil {
-                isSettingLocation = true
-            }
+            // Note: Removed auto-start in location setting mode to avoid forcing users
         }
         .onDisappear {
             cleanupResources()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("OnboardingCompleted"))) { _ in
             setupPermissionsAfterOnboarding()
+        }
+        .onReceive(locationManager.$userLocation) { userLocation in
+            // Center on user location when it becomes available (only if no parking location exists)
+            if let userLocation = userLocation {
+                // Check if any vehicle has a parking location
+                let hasAnyParkingLocation = vehicleManager.activeVehicles.contains { $0.parkingLocation != nil }
+                
+                // Only center on user location if no vehicles have parking locations
+                if !hasAnyParkingLocation {
+                    // Just center without dramatic zoom
+                    withAnimation(.easeInOut(duration: 0.8)) {
+                        mapPosition = .region(
+                            MKCoordinateRegion(
+                                center: userLocation.coordinate,
+                                span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005) // Standard zoom level
+                            )
+                        )
+                    }
+                }
+            }
         }
         .alert("Enable Notifications", isPresented: $showingNotificationPermissionAlert) {
             Button("Settings") {
@@ -163,8 +209,9 @@ struct VehicleParkingView: View {
     
     private var mapView: some View {
         Map(position: $mapPosition, interactionModes: .all) {
-            // User location
-            if let userLocation = locationManager.userLocation {
+            // User location - only show when permission is granted
+            if locationManager.authorizationStatus == .authorizedWhenInUse || locationManager.authorizationStatus == .authorizedAlways,
+               let userLocation = locationManager.userLocation {
                 Annotation("", coordinate: userLocation.coordinate) {
                     Circle()
                         .fill(Color.blue)
@@ -180,8 +227,10 @@ struct VehicleParkingView: View {
                 vehicleAnnotations
             }
             
-            // User location with direction cone
-            userLocationAnnotation
+            // User location with direction cone - only show when permission is granted
+            if locationManager.authorizationStatus == .authorizedWhenInUse || locationManager.authorizationStatus == .authorizedAlways {
+                userLocationAnnotation
+            }
             
             // Street sweeping schedule edge lines (when detected)
             if isSettingLocation && !nearbySchedules.isEmpty {
@@ -199,7 +248,7 @@ struct VehicleParkingView: View {
                             onTap: {}
                         )
                         .frame(width: 24, height: 24)
-                        .offset(y: -24)
+                        .offset(y: -12) // Bottom of marker aligns with map center
                         
                         // Schedule selected glow
                         if !nearbySchedules.isEmpty && hasSelectedSchedule {
@@ -214,7 +263,7 @@ struct VehicleParkingView: View {
                                     .stroke(Color.blue, lineWidth: 2)
                                     .frame(width: 28, height: 28)
                             }
-                            .offset(y: -24)
+                            .offset(y: -12) // Match marker position
                             .animation(.easeInOut(duration: 0.3), value: !nearbySchedules.isEmpty)
                         }
                     }
@@ -223,11 +272,20 @@ struct VehicleParkingView: View {
             }
         )
         .mapStyle(.standard)
-        .onMapCameraChange { context in
+        .onMapCameraChange(frequency: .continuous) { context in
+            // Track map heading for direction cone with continuous updates
+            currentMapHeading = context.camera.heading
+            
             if isSettingLocation {
-                settingCoordinate = context.camera.centerCoordinate
-                geocodeLocation(settingCoordinate)
-                autoDetectSchedule(for: settingCoordinate)
+                let newCoordinate = context.camera.centerCoordinate
+                settingCoordinate = newCoordinate
+                geocodeLocation(newCoordinate)
+                
+                // Smart selection between existing drawn lines
+                smartSelectBetweenDrawnLines(for: newCoordinate)
+                
+                // Keep original schedule detection for initial discovery
+                autoDetectSchedule(for: newCoordinate)
             }
         }
         #if DEBUG
@@ -245,7 +303,7 @@ struct VehicleParkingView: View {
     private var userLocationAnnotation: some MapContent {
         if let userLocation = locationManager.userLocation {
             Annotation("", coordinate: userLocation.coordinate) {
-                UserDirectionCone(heading: locationManager.userHeading)
+                UserDirectionCone(heading: locationManager.userHeading, mapHeading: currentMapHeading)
             }
         }
     }
@@ -261,9 +319,9 @@ struct VehicleParkingView: View {
                         vehicle: vehicle,
                         isSelected: vehicleManager.selectedVehicle?.id == vehicle.id,
                         onTap: {
-                            // Just center map on vehicle without zoom changes
+                            // Center map on vehicle with tighter zoom than target button
                             impactFeedbackLight.impactOccurred()
-                            centerMapOnLocationWithoutZoom(parkingLocation.coordinate)
+                            centerMapOnVehicleWithTightZoom(parkingLocation.coordinate)
                         }
                     )
                 }
@@ -324,16 +382,18 @@ struct VehicleParkingView: View {
                                 )
                             )
                         
-                        // Add invisible annotations for tapping along the line
-                        let midPoint = calculateMidpoint(streetEdgeCoords)
-                        Annotation("", coordinate: midPoint) {
-                            Button(action: {
-                                impactFeedbackLight.impactOccurred()
-                                selectScheduleOption(index)
-                            }) {
-                                Rectangle()
-                                    .fill(Color.clear)
-                                    .frame(width: 60, height: 20)
+                        // Add multiple invisible tap areas along the line for easier tapping
+                        ForEach(0..<min(streetEdgeCoords.count, 5), id: \.self) { tapIndex in
+                            let coordIndex = (streetEdgeCoords.count - 1) * tapIndex / max(1, 4) // Distribute evenly
+                            Annotation("", coordinate: streetEdgeCoords[coordIndex]) {
+                                Button(action: {
+                                    impactFeedbackLight.impactOccurred()
+                                    selectScheduleOption(index)
+                                }) {
+                                    Rectangle()
+                                        .fill(Color.clear)
+                                        .frame(width: 100, height: 40) // Much larger tap area
+                                }
                             }
                         }
                         
@@ -513,11 +573,41 @@ struct VehicleParkingView: View {
         let coordinate = parkingLocation.coordinate
         let placemark = MKPlacemark(coordinate: coordinate)
         let mapItem = MKMapItem(placemark: placemark)
-        mapItem.name = "\(vehicle.displayName) - Parked Location"
+        mapItem.name = "Parking Location"
         
-        mapItem.openInMaps(launchOptions: [
-            MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving
-        ])
+        // Open in Maps without starting navigation - just show the pin
+        mapItem.openInMaps(launchOptions: [:])
+    }
+    
+    private func shareParkingLocation(_ parkingLocation: ParkingLocation) {
+        // Create a shareable link for Apple Maps
+        let coordinate = parkingLocation.coordinate
+        let mapLink = "https://maps.apple.com/?ll=\(coordinate.latitude),\(coordinate.longitude)&q=Parking%20Location"
+        
+        // Create share items - just the link, no text
+        let shareItems: [Any] = [
+            URL(string: mapLink)!
+        ]
+        
+        // Present share sheet
+        let activityViewController = UIActivityViewController(
+            activityItems: shareItems,
+            applicationActivities: nil
+        )
+        
+        // Get the current window scene
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let rootViewController = windowScene.windows.first?.rootViewController {
+            
+            // For iPad, set the popover presentation
+            if let popover = activityViewController.popoverPresentationController {
+                popover.sourceView = rootViewController.view
+                popover.sourceRect = CGRect(x: rootViewController.view.bounds.midX, y: rootViewController.view.bounds.midY, width: 0, height: 0)
+                popover.permittedArrowDirections = []
+            }
+            
+            rootViewController.present(activityViewController, animated: true)
+        }
     }
     
     
@@ -702,33 +792,38 @@ struct VehicleParkingView: View {
     // MARK: - Unified Content Container
     private func unifiedContentContainer() -> some View {
         VStack(spacing: 0) {
-            // Header section
+            // Header section with conditional top padding
             HStack {
                 Text(isSettingLocation ? "Move Vehicle" : "My Vehicle")
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(.primary)
+                    .padding(.top, 6) // Consistent padding for both modes
                 
                 Spacer()
                 
                 if isSettingLocation {
                     HStack(spacing: 12) {
-                        // Move To Me button
+                        // Move To Me / Enable Location button
                         Button(action: {
                             impactFeedbackLight.impactOccurred()
-                            centerMapOnUserLocation()
+                            if locationManager.authorizationStatus == .authorizedWhenInUse || locationManager.authorizationStatus == .authorizedAlways {
+                                centerMapOnUserLocation()
+                            } else {
+                                handleLocationPermission()
+                            }
                         }) {
                             HStack(spacing: 6) {
-                                Image(systemName: "location.fill")
+                                Image(systemName: (locationManager.authorizationStatus == .authorizedWhenInUse || locationManager.authorizationStatus == .authorizedAlways) ? "location.fill" : "location")
                                     .font(.system(size: 14, weight: .medium))
-                                Text("Move To Me")
+                                Text((locationManager.authorizationStatus == .authorizedWhenInUse || locationManager.authorizationStatus == .authorizedAlways) ? "Move To Me" : "Enable Location")
                                     .font(.system(size: 14, weight: .semibold))
                             }
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.white)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 8)
                             .background(
                                 RoundedRectangle(cornerRadius: 10)
-                                    .fill(Color(.systemGray6))
+                                    .fill(Color.blue)
                             )
                         }
                         
@@ -739,8 +834,8 @@ struct VehicleParkingView: View {
                         }
                     }
                 } else {
-                    // Reminders button
-                    if let currentVehicle = vehicleManager.currentVehicle, currentVehicle.parkingLocation != nil {
+                    // Reminders button - show when vehicle exists regardless of parking location
+                    if let currentVehicle = vehicleManager.currentVehicle {
                         Button(action: {
                             impactFeedbackLight.impactOccurred()
                             showingReminderSheet = true
@@ -854,7 +949,7 @@ struct VehicleParkingView: View {
                             ))
                         }
                     }
-                    .frame(height: 100) // FIXED HEIGHT for ALL middle views - more compact
+                    .frame(minHeight: 100) // Flexible height for Move Vehicle mode
                 } else {
                     // Vehicle card section - ALSO fixed height
                     ZStack {
@@ -874,14 +969,15 @@ struct VehicleParkingView: View {
                                     isSettingLocationForNewVehicle = false
                                     startSettingLocationForVehicle(vehicle)
                                 }
-                            }
+                            },
+                            onShareLocation: shareParkingLocation
                         )
                         .transition(.asymmetric(
                             insertion: .opacity.combined(with: .move(edge: .leading)),
                             removal: .opacity.combined(with: .move(edge: .leading))
                         ))
                     }
-                    .frame(height: 100) // SAME fixed height as Move Vehicle cards - more compact
+                    .frame(minHeight: 100) // Flexible height to accommodate extra spacing
                 }
             }
             .padding(.vertical, 4) // Further reduced spacing above and below cards
@@ -943,7 +1039,7 @@ struct VehicleParkingView: View {
                         .opacity(settingAddress == nil ? 0.6 : 1.0)
                     }
                 } else {
-                    // Move Vehicle button
+                    // Move Vehicle button - full width with consistent height
                     if let currentVehicle = vehicleManager.currentVehicle {
                         Button(action: {
                             impactFeedbackLight.impactOccurred()
@@ -964,7 +1060,9 @@ struct VehicleParkingView: View {
                                 )
                                 .cornerRadius(16)
                                 .shadow(color: Color.blue.opacity(0.3), radius: 8, x: 0, y: 4)
+                                .contentShape(Rectangle())
                         }
+                        .buttonStyle(PlainButtonStyle())
                     }
                 }
             }
@@ -1136,7 +1234,7 @@ struct VehicleParkingView: View {
             mapPosition = .region(
                 MKCoordinateRegion(
                     center: coordinate,
-                    span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                    span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
                 )
             )
         }
@@ -1148,7 +1246,31 @@ struct VehicleParkingView: View {
             mapPosition = .region(
                 MKCoordinateRegion(
                     center: coordinate,
-                    span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005) // Tighter zoom
+                    span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005) // Standard zoom
+                )
+            )
+        }
+    }
+    
+    private func centerMapOnLocationWithoutAnyZoomChange(_ coordinate: CLLocationCoordinate2D) {
+        // Only center, don't change zoom level at all
+        withAnimation(.easeInOut(duration: 0.6)) {
+            mapPosition = .region(
+                MKCoordinateRegion(
+                    center: coordinate,
+                    span: mapPosition.region?.span ?? MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
+                )
+            )
+        }
+    }
+    
+    private func centerMapOnLocationForVehicleMove(_ coordinate: CLLocationCoordinate2D) {
+        // Focused zoom specifically for moving vehicles - street-level view
+        withAnimation(.easeInOut(duration: 0.8)) {
+            mapPosition = .region(
+                MKCoordinateRegion(
+                    center: coordinate,
+                    span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005) // Standard zoom
                 )
             )
         }
@@ -1187,6 +1309,38 @@ struct VehicleParkingView: View {
         }
     }
     
+    private func centerMapOnVehiclesWithConsistentZoom() {
+        let parkedVehicles = vehicleManager.activeVehicles.compactMap { vehicle in
+            vehicle.parkingLocation?.coordinate
+        }
+        
+        guard !parkedVehicles.isEmpty else { return }
+        
+        // Always use consistent tight zoom for parking locations
+        let targetCoordinate = parkedVehicles.first!
+        
+        withAnimation(.easeInOut(duration: 0.8)) {
+            mapPosition = .region(
+                MKCoordinateRegion(
+                    center: targetCoordinate,
+                    span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005) // Standard zoom
+                )
+            )
+        }
+    }
+    
+    private func centerMapOnVehicleWithTightZoom(_ coordinate: CLLocationCoordinate2D) {
+        // Tighter zoom than target button for individual vehicle focus
+        withAnimation(.easeInOut(duration: 0.6)) {
+            mapPosition = .region(
+                MKCoordinateRegion(
+                    center: coordinate,
+                    span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005) // Standard zoom
+                )
+            )
+        }
+    }
+    
     private func startSettingLocationForVehicle(_ vehicle: Vehicle) {
         vehicleManager.selectVehicle(vehicle)
         startSettingLocation()
@@ -1198,20 +1352,24 @@ struct VehicleParkingView: View {
             isSettingLocation = true
         }
         
-        // Start from user location or last known location
+        // Prioritize current vehicle parking location when moving a vehicle
         let startCoordinate: CLLocationCoordinate2D
-        if let userLocation = locationManager.userLocation {
-            startCoordinate = userLocation.coordinate
-        } else if let selectedVehicle = vehicleManager.selectedVehicle,
-                  let parkingLocation = selectedVehicle.parkingLocation {
+        if let selectedVehicle = vehicleManager.selectedVehicle,
+           let parkingLocation = selectedVehicle.parkingLocation {
+            // Moving existing vehicle - start from current parking location
             startCoordinate = parkingLocation.coordinate
+            centerMapOnLocationForVehicleMove(startCoordinate)
+        } else if let userLocation = locationManager.userLocation {
+            // New vehicle or no current location - start from user
+            startCoordinate = userLocation.coordinate
+            centerMapOnLocation(startCoordinate)
         } else {
-            // Use Market Street near Larkin (from CSV data - known to have street cleaning)
-            startCoordinate = CLLocationCoordinate2D(latitude: 37.7775, longitude: -122.4163)
+            // Fallback to San Francisco city center
+            startCoordinate = CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194)
+            centerMapOnLocation(startCoordinate)
         }
         
         settingCoordinate = startCoordinate
-        centerMapOnLocation(startCoordinate)
         geocodeLocation(startCoordinate)
         
         // Trigger initial schedule detection
@@ -1272,10 +1430,9 @@ struct VehicleParkingView: View {
                     if !schedulesWithSides.isEmpty {
                         print("🎯 Found \(schedulesWithSides.count) nearby schedules")
                         self.nearbySchedules = schedulesWithSides
-                        self.selectedScheduleIndex = 0 // Default to closest
-                        self.hasSelectedSchedule = true // Auto-select first schedule
-                        self.detectedSchedule = schedulesWithSides[0].schedule
-                        self.scheduleConfidence = 0.8
+                        
+                        // Use smart selection to pick the closest schedule and provide haptic feedback
+                        self.initialSmartSelection(for: coordinate, schedulesWithSides: schedulesWithSides)
                     } else {
                         print("⚠️ No schedules found at coordinate: \(coordinate)")
                         self.nearbySchedules = []
@@ -1561,19 +1718,14 @@ struct VehicleParkingView: View {
     // MARK: - Setup and Lifecycle
     
     private func setupView() {
-        // Only request location permission if onboarding has been completed
-        if OnboardingManager.hasCompletedOnboarding {
-            locationManager.requestLocationPermission()
-        }
+        // Note: Removed automatic location permission request - users can use the button
         
-        // Auto-start in location setting mode if no vehicle has a parking location
-        if vehicleManager.currentVehicle?.parkingLocation == nil {
-            isSettingLocation = true
-        }
+        // Note: Removed auto-start in location setting mode to avoid forcing users
         
-        // Center map on selected vehicle or user location
+        // Center map in priority order: 1) parking location 2) user location 3) Sutro Tower
         if let selectedVehicle = vehicleManager.selectedVehicle,
            let parkingLocation = selectedVehicle.parkingLocation {
+            // Priority 1: Center on parking location
             centerMapOnLocation(parkingLocation.coordinate)
             // Load persisted schedule if available, otherwise fetch new data
             if let persistedSchedule = parkingLocation.selectedSchedule {
@@ -1584,28 +1736,318 @@ struct VehicleParkingView: View {
             } else if streetDataManager.schedule == nil {
                 fetchStreetDataAndScheduleNotifications(for: parkingLocation)
             }
-        } else {
+        } else if let userLocation = locationManager.userLocation {
+            // Priority 2: Center on user location if no parking location
             centerMapOnUserLocation()
+        } else {
+            // Priority 3: Center on Sutro Tower with beautiful city view
+            centerMapOnSutroTower()
         }
     }
     
     private func setupPermissionsAfterOnboarding() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            let locationStatus = CLLocationManager().authorizationStatus
-            if locationStatus == .notDetermined {
-                locationManager.requestLocationPermission()
+        // Note: Removed automatic location permission request after onboarding
+        // Users can manually request location via the map button if needed
+    }
+    
+    private func handleLocationPermission() {
+        switch locationManager.authorizationStatus {
+        case .notDetermined:
+            // Request location permission
+            locationManager.requestLocationPermission()
+        case .denied, .restricted:
+            // Open Settings app for user to manually enable location
+            if let settingsUrl = URL(string: UIApplication.openSettingsURLString) {
+                UIApplication.shared.open(settingsUrl)
             }
-            
-            // Auto-start in location setting mode after onboarding
-            if vehicleManager.currentVehicle?.parkingLocation == nil {
-                isSettingLocation = true
-            }
+        default:
+            break
+        }
+    }
+    
+    private func centerMapOnSutroTower() {
+        // Beautiful framed view of San Francisco from Sutro Tower
+        withAnimation(.easeInOut(duration: 1.0)) {
+            mapPosition = .region(
+                MKCoordinateRegion(
+                    center: CLLocationCoordinate2D(latitude: 37.7551, longitude: -122.4528), // Sutro Tower
+                    span: MKCoordinateSpan(latitudeDelta: 0.18, longitudeDelta: 0.18) // More zoomed out city view
+                )
+            )
         }
     }
     
     private func centerMapOnUserLocation() {
-        if let userLocation = locationManager.userLocation {
-            centerMapOnLocation(userLocation.coordinate)
+        guard let userLocation = locationManager.userLocation else { 
+            // Fall back to Sutro Tower if user location not available
+            centerMapOnSutroTower()
+            return 
+        }
+        
+        let userHeading = locationManager.userHeading
+        
+        // Simple: Just center on user location with rotation
+        settingCoordinate = userLocation.coordinate
+        geocodeLocation(userLocation.coordinate)
+        
+        withAnimation(.easeInOut(duration: 0.8)) {
+            mapPosition = .camera(
+                MapCamera(
+                    centerCoordinate: userLocation.coordinate,
+                    distance: 500, // Moderately closer for Move To Me but not jarring
+                    heading: userHeading,
+                    pitch: 0
+                )
+            )
+        }
+    }
+    
+    private func findNearestStreetInBackground(userLocation: CLLocationCoordinate2D, userHeading: CLLocationDirection) {
+        // Background search - don't block UI, automatically move when found
+        StreetDataService.shared.getNearbySchedulesForSelection(for: userLocation) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let schedulesWithSides):
+                    if !schedulesWithSides.isEmpty {
+                        // Found nearby streets - smoothly transition to the closest one
+                        print("🎯 Found \(schedulesWithSides.count) nearby streets, auto-moving to closest")
+                        self.autoMoveToNearestStreet(schedulesWithSides: schedulesWithSides, userHeading: userHeading)
+                        return
+                    }
+                    
+                    // No streets in normal range, try expanded search
+                    print("🔍 No streets found in normal range, expanding search...")
+                    self.findClosestStreetInExpandedArea(userLocation: userLocation, userHeading: userHeading)
+                    
+                case .failure:
+                    // Error - try expanded search as fallback
+                    self.findClosestStreetInExpandedArea(userLocation: userLocation, userHeading: userHeading)
+                }
+            }
+        }
+    }
+    
+    private func findClosestStreetInExpandedArea(userLocation: CLLocationCoordinate2D, userHeading: CLLocationDirection) {
+        // Use the area schedules method which has a larger radius (5 grid cells ~= 200ft)
+        StreetDataService.shared.getSchedulesInArea(for: userLocation) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let areaSchedules):
+                    if !areaSchedules.isEmpty {
+                        // Convert to schedules with sides format for consistency
+                        let schedulesWithSides = self.convertToSchedulesWithSides(schedules: areaSchedules, fromLocation: userLocation)
+                        
+                        if !schedulesWithSides.isEmpty {
+                            print("🎯 Found \(schedulesWithSides.count) streets in expanded area")
+                            self.autoMoveToNearestStreet(schedulesWithSides: schedulesWithSides, userHeading: userHeading)
+                            return
+                        }
+                    }
+                    
+                    // Still no streets found - fallback to user location
+                    print("⚠️ No streets found even in expanded area")
+                    self.centerMapOnLocationForVehicleMove(userLocation)
+                    self.settingCoordinate = userLocation
+                    self.geocodeLocation(userLocation)
+                    
+                case .failure:
+                    // Error - fallback to user location
+                    self.centerMapOnLocationForVehicleMove(userLocation)
+                    self.settingCoordinate = userLocation
+                    self.geocodeLocation(userLocation)
+                }
+            }
+        }
+    }
+    
+    private func convertToSchedulesWithSides(schedules: [SweepSchedule], fromLocation: CLLocationCoordinate2D) -> [SweepScheduleWithSide] {
+        var schedulesWithSides: [SweepScheduleWithSide] = []
+        
+        for schedule in schedules {
+            guard let line = schedule.line, !line.coordinates.isEmpty else { continue }
+            
+            // Find closest point on this schedule's line
+            var closestPoint = CLLocationCoordinate2D(latitude: line.coordinates[0][1], longitude: line.coordinates[0][0])
+            var minDistance = Double.infinity
+            
+            for i in 0..<(line.coordinates.count - 1) {
+                let start = CLLocationCoordinate2D(latitude: line.coordinates[i][1], longitude: line.coordinates[i][0])
+                let end = CLLocationCoordinate2D(latitude: line.coordinates[i+1][1], longitude: line.coordinates[i+1][0])
+                
+                let segment = LineSegment(start: start, end: end)
+                let (point, distance) = segment.closestPoint(to: fromLocation)
+                
+                if distance < minDistance {
+                    minDistance = distance
+                    closestPoint = point
+                }
+            }
+            
+            // Create a schedule with side (using the street line coordinate)
+            let scheduleWithSide = SweepScheduleWithSide(
+                schedule: schedule,
+                offsetCoordinate: closestPoint, side: "Center", // We'll place on center line
+                distance: minDistance
+            )
+            
+            schedulesWithSides.append(scheduleWithSide)
+        }
+        
+        // Sort by distance
+        return schedulesWithSides.sorted { $0.distance < $1.distance }
+    }
+    
+    private func autoMoveToNearestStreet(schedulesWithSides: [SweepScheduleWithSide], userHeading: CLLocationDirection) {
+        // Find the closest schedule
+        let closestSchedule = schedulesWithSides.min { $0.distance < $1.distance }!
+        
+        // Place marker directly on the street sweeping line (not offset to parking side)
+        let streetLineCoordinate = getStreetLineCoordinate(from: closestSchedule)
+        
+        // Update state
+        nearbySchedules = schedulesWithSides
+        selectedScheduleIndex = 0
+        hasSelectedSchedule = true
+        detectedSchedule = closestSchedule.schedule
+        scheduleConfidence = 0.8
+        
+        // Interrupt current animation and redirect to street location
+        withAnimation(.easeInOut(duration: 0.8)) { // Shorter redirect animation
+            settingCoordinate = streetLineCoordinate
+            mapPosition = .camera(
+                MapCamera(
+                    centerCoordinate: streetLineCoordinate,
+                    distance: 150,
+                    heading: userHeading,
+                    pitch: 0
+                )
+            )
+        }
+        
+        geocodeLocation(streetLineCoordinate)
+        print("🎯 Redirected mid-flight to \(closestSchedule.side) side of \(closestSchedule.schedule.streetName)")
+    }
+    
+    private func getStreetLineCoordinate(from scheduleWithSide: SweepScheduleWithSide) -> CLLocationCoordinate2D {
+        // Return the point on the actual street line (not the parking offset)
+        guard let line = scheduleWithSide.schedule.line,
+              !line.coordinates.isEmpty else {
+            return scheduleWithSide.offsetCoordinate // Fallback to offset if no line data
+        }
+        
+        // Find the closest point on the street line
+        let userLocation = locationManager.userLocation?.coordinate ?? scheduleWithSide.offsetCoordinate
+        var closestPoint = CLLocationCoordinate2D(latitude: line.coordinates[0][1], longitude: line.coordinates[0][0])
+        var minDistance = Double.infinity
+        
+        for i in 0..<(line.coordinates.count - 1) {
+            let start = CLLocationCoordinate2D(latitude: line.coordinates[i][1], longitude: line.coordinates[i][0])
+            let end = CLLocationCoordinate2D(latitude: line.coordinates[i+1][1], longitude: line.coordinates[i+1][0])
+            
+            let segment = LineSegment(start: start, end: end)
+            let (point, distance) = segment.closestPoint(to: userLocation)
+            
+            if distance < minDistance {
+                minDistance = distance
+                closestPoint = point
+            }
+        }
+        
+        return closestPoint
+    }
+    
+    private func centerMapOnStreetWithRotation(coordinate: CLLocationCoordinate2D, heading: CLLocationDirection) {
+        // Center and rotate map to the street location
+        withAnimation(.easeInOut(duration: 1.0)) {
+            mapPosition = .camera(
+                MapCamera(
+                    centerCoordinate: coordinate,
+                    distance: 150, // Close street-level view
+                    heading: heading,
+                    pitch: 0
+                )
+            )
+        }
+    }
+    
+    
+    // MARK: - Smart Selection Between Drawn Lines
+    
+    private func initialSmartSelection(for coordinate: CLLocationCoordinate2D, schedulesWithSides: [SweepScheduleWithSide]) {
+        // Find the closest schedule when first landing on schedules
+        var closestIndex = 0
+        var closestDistance = Double.infinity
+        
+        for (index, scheduleWithSide) in schedulesWithSides.enumerated() {
+            let distance = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+                .distance(from: CLLocation(latitude: scheduleWithSide.offsetCoordinate.latitude, 
+                                         longitude: scheduleWithSide.offsetCoordinate.longitude))
+            
+            if distance < closestDistance {
+                closestDistance = distance
+                closestIndex = index
+            }
+        }
+        
+        // Apply the same flip logic as the dynamic selection
+        let flippedIndex = schedulesWithSides.count - 1 - closestIndex
+        let finalIndex = flippedIndex < schedulesWithSides.count ? flippedIndex : closestIndex
+        
+        // Set initial selection
+        selectedScheduleIndex = finalIndex
+        hasSelectedSchedule = true
+        detectedSchedule = schedulesWithSides[finalIndex].schedule
+        scheduleConfidence = Float(max(0.3, min(0.9, 1.0 - (closestDistance / 50.0))))
+        
+        // Haptic feedback for initial schedule detection
+        impactFeedbackLight.impactOccurred()
+        
+        print("🎯 Initial selection: \(schedulesWithSides[finalIndex].side) side (index \(finalIndex)) - \(Int(closestDistance))m away")
+    }
+    
+    private func smartSelectBetweenDrawnLines(for coordinate: CLLocationCoordinate2D) {
+        // Only work with existing nearby schedules (the drawn lines)
+        guard !nearbySchedules.isEmpty else { return }
+        
+        // Debug: Print what sides we have
+        print("📍 Available sides: \(nearbySchedules.enumerated().map { "[\($0.offset)] \($0.element.side)" }.joined(separator: ", "))")
+        
+        // Find which of the existing drawn lines is closest to current marker position
+        var closestIndex = 0
+        var closestDistance = Double.infinity
+        
+        for (index, scheduleWithSide) in nearbySchedules.enumerated() {
+            // Calculate distance from marker to this schedule's offset coordinate
+            let distance = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+                .distance(from: CLLocation(latitude: scheduleWithSide.offsetCoordinate.latitude, 
+                                         longitude: scheduleWithSide.offsetCoordinate.longitude))
+            
+            print("📏 Distance to \(scheduleWithSide.side) side (index \(index)): \(Int(distance))m")
+            
+            if distance < closestDistance {
+                closestDistance = distance
+                closestIndex = index
+            }
+        }
+        
+        // Try flipping the selection - if north/south are mixed up, use the opposite index
+        let flippedIndex = nearbySchedules.count - 1 - closestIndex
+        let finalIndex = flippedIndex < nearbySchedules.count ? flippedIndex : closestIndex
+        
+        // Only update if we're switching to a different line
+        if selectedScheduleIndex != finalIndex {
+            selectedScheduleIndex = finalIndex
+            hasSelectedSchedule = true
+            detectedSchedule = nearbySchedules[finalIndex].schedule
+            
+            // Update confidence based on how close we are
+            scheduleConfidence = Float(max(0.3, min(0.9, 1.0 - (closestDistance / 50.0))))
+            
+            // Subtle haptic feedback for switching between lines
+            let selectionFeedback = UISelectionFeedbackGenerator()
+            selectionFeedback.selectionChanged()
+            
+            print("🎯 Selected \(nearbySchedules[finalIndex].side) side (flipped from closest to index \(finalIndex))")
         }
     }
     

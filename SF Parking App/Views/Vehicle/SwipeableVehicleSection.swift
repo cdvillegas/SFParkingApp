@@ -6,6 +6,7 @@ struct SwipeableVehicleSection: View {
     let selectedVehicle: Vehicle?
     let onVehicleSelected: (Vehicle) -> Void
     let onVehicleTap: (Vehicle) -> Void
+    let onShareLocation: ((ParkingLocation) -> Void)?
     
     var body: some View {
         VStack(spacing: 0) {
@@ -18,7 +19,8 @@ struct SwipeableVehicleSection: View {
                         onTap: {
                             impactFeedback()
                             onVehicleTap(vehicle)
-                        }
+                        },
+                        onShare: onShareLocation
                     )
                     .padding(.horizontal, 16)
                     .padding(.bottom, 12)
@@ -58,6 +60,7 @@ struct VehicleSwipeCard: View {
     let vehicle: Vehicle
     let isSelected: Bool
     let onTap: () -> Void
+    let onShare: ((ParkingLocation) -> Void)?
     
     @State private var isPressed = false
     
@@ -151,63 +154,54 @@ struct VehicleSwipeCard: View {
                     onTap()
                 }
         )
+        .overlay(
+            // Share button overlay - completely outside the card layout
+            Group {
+                if let parkingLocation = vehicle.parkingLocation, let onShare = onShare {
+                    HStack {
+                        Spacer()
+                        VStack {
+                            Spacer()
+                            ZStack {
+                                // Visual button
+                                Image(systemName: "square.and.arrow.up")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(.secondary)
+                                    .offset(y: -1) // Slight upward offset to visually center the icon
+                                    .frame(width: 36, height: 36)
+                                    .background(
+                                        Circle()
+                                            .fill(Color(.systemGray6))
+                                    )
+                                
+                                // Invisible larger tap area overlay
+                                Button(action: {
+                                    let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                                    impactFeedback.impactOccurred()
+                                    onShare(parkingLocation)
+                                }) {
+                                    Color.clear
+                                        .frame(width: 60, height: 60) // Larger tap area
+                                        .contentShape(Rectangle())
+                                }
+                            }
+                            Spacer()
+                        }
+                        .padding(.trailing, 20) // Match card padding
+                    }
+                }
+            },
+            alignment: .topTrailing
+        )
     }
 }
 
 #Preview("Light Mode") {
-    VStack {
-        SwipeableVehicleSection(
-            vehicles: [
-                Vehicle(
-                    name: "My Truck",
-                    type: .truck,
-                    color: .red,
-                    parkingLocation: ParkingLocation.sample
-                ),
-                Vehicle(
-                    name: "My Bike",
-                    type: .motorcycle,
-                    color: .green,
-                    parkingLocation: ParkingLocation.sample
-                ),
-                Vehicle.sample
-            ],
-            selectedVehicle: Vehicle.sample,
-            onVehicleSelected: { _ in },
-            onVehicleTap: { _ in }
-        )
-        
-        Spacer()
-    }
-    .background(Color(.systemGroupedBackground))
-    .preferredColorScheme(.light)
+    VehicleParkingView()
+        .preferredColorScheme(.light)
 }
 
 #Preview("Dark Mode") {
-    VStack {
-        SwipeableVehicleSection(
-            vehicles: [
-                Vehicle(
-                    name: "My Truck",
-                    type: .truck,
-                    color: .red,
-                    parkingLocation: ParkingLocation.sample
-                ),
-                Vehicle(
-                    name: "My Bike",
-                    type: .motorcycle,
-                    color: .green,
-                    parkingLocation: ParkingLocation.sample
-                ),
-                Vehicle.sample
-            ],
-            selectedVehicle: Vehicle.sample,
-            onVehicleSelected: { _ in },
-            onVehicleTap: { _ in }
-        )
-        
-        Spacer()
-    }
-    .background(Color(.systemGroupedBackground))
-    .preferredColorScheme(.dark)
+    VehicleParkingView()
+        .preferredColorScheme(.dark)
 }

@@ -22,7 +22,7 @@ struct OnboardingStepView: View {
             VStack(spacing: 24) {
                 ZStack {
                     if step.title == "Welcome to SF Parking" {
-                        // Use app icon for welcome step
+                        // Use app icon for welcome step with animations
                         Image("AppIconImage")
                             .resizable()
                             .aspectRatio(contentMode: .fill)
@@ -31,18 +31,14 @@ struct OnboardingStepView: View {
                             .scaleEffect(isAnimating ? 1.0 : 0.8)
                             .animation(.easeInOut(duration: 0.8).delay(0.2), value: isAnimating)
                     } else {
-                        // Use system icons for other steps
+                        // Use system icons for other steps - no animations
                         Circle()
                             .fill(step.color)
                             .frame(width: 120, height: 120)
-                            .scaleEffect(isAnimating ? 1.0 : 0.8)
-                            .animation(.easeInOut(duration: 0.8).delay(0.2), value: isAnimating)
                         
                         Image(systemName: step.systemImage)
                             .font(.system(size: 50, weight: .medium))
                             .foregroundColor(.white)
-                            .scaleEffect(isAnimating ? 1.0 : 0.6)
-                            .animation(.easeInOut(duration: 0.8).delay(0.4), value: isAnimating)
                             .id(step.systemImage) // Ensure stable identity
                     }
                 }
@@ -52,18 +48,18 @@ struct OnboardingStepView: View {
                         .font(.title)
                         .fontWeight(.bold)
                         .multilineTextAlignment(.center)
-                        .opacity(isAnimating ? 1.0 : 0.0)
-                        .offset(y: isAnimating ? 0 : 20)
-                        .animation(.easeInOut(duration: 0.6).delay(0.6), value: isAnimating)
+                        .opacity(step.title == "Welcome to SF Parking" ? (isAnimating ? 1.0 : 0.0) : 1.0)
+                        .offset(y: step.title == "Welcome to SF Parking" ? (isAnimating ? 0 : 20) : 0)
+                        .animation(step.title == "Welcome to SF Parking" ? .easeInOut(duration: 0.6).delay(0.6) : .none, value: isAnimating)
                     
                     Text(step.description)
                         .font(.body)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
                         .lineLimit(nil)
-                        .opacity(isAnimating ? 1.0 : 0.0)
-                        .offset(y: isAnimating ? 0 : 20)
-                        .animation(.easeInOut(duration: 0.6).delay(0.8), value: isAnimating)
+                        .opacity(step.title == "Welcome to SF Parking" ? (isAnimating ? 1.0 : 0.0) : 1.0)
+                        .offset(y: step.title == "Welcome to SF Parking" ? (isAnimating ? 0 : 20) : 0)
+                        .animation(step.title == "Welcome to SF Parking" ? .easeInOut(duration: 0.6).delay(0.8) : .none, value: isAnimating)
                 }
             }
             .padding(.horizontal, 32)
@@ -90,9 +86,9 @@ struct OnboardingStepView: View {
                     .cornerRadius(16)
                     .shadow(color: step.color.opacity(0.3), radius: 12, x: 0, y: 6)
                 }
-                .scaleEffect(isAnimating ? 1.0 : 0.9)
-                .opacity(isAnimating ? 1.0 : 0.0)
-                .animation(.easeInOut(duration: 0.6).delay(1.0), value: isAnimating)
+                .scaleEffect(step.title == "Welcome to SF Parking" ? (isAnimating ? 1.0 : 0.9) : 1.0)
+                .opacity(step.title == "Welcome to SF Parking" ? (isAnimating ? 1.0 : 0.0) : 1.0)
+                .animation(step.title == "Welcome to SF Parking" ? .easeInOut(duration: 0.6).delay(1.0) : .none, value: isAnimating)
                 
                 if step.permissionType != nil {
                     Button("Skip for now") {
@@ -102,8 +98,8 @@ struct OnboardingStepView: View {
                     }
                     .font(.body)
                     .foregroundColor(.secondary)
-                    .opacity(isAnimating ? 1.0 : 0.0)
-                    .animation(.easeInOut(duration: 0.6).delay(1.2), value: isAnimating)
+                    .opacity(step.title == "Welcome to SF Parking" ? (isAnimating ? 1.0 : 0.0) : 1.0)
+                    .animation(step.title == "Welcome to SF Parking" ? .easeInOut(duration: 0.6).delay(1.2) : .none, value: isAnimating)
                 }
             }
             .padding(.horizontal, 32)

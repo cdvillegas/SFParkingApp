@@ -25,11 +25,11 @@ struct VehicleParkingMapMarker: View {
                             endPoint: .bottomTrailing
                         )
                     )
-                    .frame(width: 24, height: 24) // Slightly bigger
+                    .frame(width: 28, height: 28) // A tiny bit bigger
 
                 // Vehicle icon
                 Image(systemName: vehicle.type.iconName)
-                    .font(.system(size: 12, weight: .semibold)) // Slightly bigger icon
+                    .font(.system(size: 13, weight: .semibold)) // A tiny bit bigger icon
                     .foregroundColor(.white)
             }
             .shadow(

@@ -17,23 +17,23 @@ struct OnboardingStep {
     static let allSteps: [OnboardingStep] = [
         OnboardingStep(
             title: "Welcome to SF Parking",
-            description: "Leave parking tickets in the past. We've built the smartest way to park in San Francisco.",
+            description: "Never get another parking ticket. We've built the smartest way to navigate San Francisco's complex parking rules.",
             systemImage: "car.fill",
             color: .blue,
             permissionType: nil,
             buttonText: "Get Started"
         ),
         OnboardingStep(
-            title: "Know Your Spot",
-            description: "See street cleaning schedules right where you are. Location data stays on your device and is never tracked or stored.",
+            title: "Find Your Spot Instantly",
+            description: "We use your location to show nearby parking rules and help you find safe spots faster. Your location stays private and on your device.",
             systemImage: "location.fill",
             color: .green,
             permissionType: .location,
             buttonText: "Enable Location"
         ),
         OnboardingStep(
-            title: "Get Timely Reminders",
-            description: "Get perfectly timed reminders before street cleaning starts. Choose when and how you want to be notified—we'll handle the rest.",
+            title: "Never Miss Street Cleaning",
+            description: "Get perfectly timed street cleaning alerts. You control when and how you're notified. No ads, no spam, just helpful reminders that save you money.",
             systemImage: "bell.badge.fill",
             color: .orange,
             permissionType: .notifications,
