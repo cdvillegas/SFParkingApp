@@ -1,0 +1,80 @@
+{
+  "source": "/Users/chrisvillegas/Code/SF Parking App/SF Parking App/Views/Shared/RemindersSheetView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Parking Reminders",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 16
+        }
+      },
+      {
+        "comment": "",
+        "key": "Stay updated on street cleaning schedules",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 20
+        }
+      },
+      {
+        "comment": "",
+        "key": "Parked at %@",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 54
+        }
+      },
+      {
+        "comment": "",
+        "key": "Settings",
+        "location": {
+          "startingColumn": 44,
+          "startingLine": 94
+        }
+      },
+      {
+        "comment": "",
+        "key": "Notification Settings",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 83
+        }
+      },
+      {
+        "comment": "",
+        "key": "Get alerts before street cleaning starts",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 87
+        }
+      },
+      {
+        "comment": "",
+        "key": "No Vehicle Parked",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 122
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add a vehicle and set its parking location to view reminders",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 126
+        }
+      },
+      {
+        "comment": "",
+        "key": "Done",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 139
+        }
+      }
+    ]
+  },
+  "version": 1
+}

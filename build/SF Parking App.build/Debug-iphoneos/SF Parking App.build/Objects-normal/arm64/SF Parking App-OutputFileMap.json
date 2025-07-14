@@ -175,6 +175,16 @@
     "swift-dependencies" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/SF_Parking_AppApp.swiftdeps",
     "swiftmodule" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/SF_Parking_AppApp~partial.swiftmodule"
   },
+  "/Users/chrisvillegas/Code/SF Parking App/SF Parking App/Views/Map/UserDirectionCone.swift" : {
+    "const-values" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/UserDirectionCone.swiftconstvalues",
+    "dependencies" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/UserDirectionCone.d",
+    "diagnostics" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/UserDirectionCone.dia",
+    "index-unit-output-path" : "/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/UserDirectionCone.o",
+    "llvm-bc" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/UserDirectionCone.bc",
+    "object" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/UserDirectionCone.o",
+    "swift-dependencies" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/UserDirectionCone.swiftdeps",
+    "swiftmodule" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/UserDirectionCone~partial.swiftmodule"
+  },
   "/Users/chrisvillegas/Code/SF Parking App/SF Parking App/Views/Map/VehicleParkingMapMarker.swift" : {
     "const-values" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/VehicleParkingMapMarker.swiftconstvalues",
     "dependencies" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/VehicleParkingMapMarker.d",
@@ -184,6 +194,16 @@
     "object" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/VehicleParkingMapMarker.o",
     "swift-dependencies" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/VehicleParkingMapMarker.swiftdeps",
     "swiftmodule" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/VehicleParkingMapMarker~partial.swiftmodule"
+  },
+  "/Users/chrisvillegas/Code/SF Parking App/SF Parking App/Views/OldVehicleParkingView.swift" : {
+    "const-values" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/OldVehicleParkingView.swiftconstvalues",
+    "dependencies" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/OldVehicleParkingView.d",
+    "diagnostics" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/OldVehicleParkingView.dia",
+    "index-unit-output-path" : "/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/OldVehicleParkingView.o",
+    "llvm-bc" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/OldVehicleParkingView.bc",
+    "object" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/OldVehicleParkingView.o",
+    "swift-dependencies" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/OldVehicleParkingView.swiftdeps",
+    "swiftmodule" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/OldVehicleParkingView~partial.swiftmodule"
   },
   "/Users/chrisvillegas/Code/SF Parking App/SF Parking App/Views/Onboarding/OnboardingCompletionView.swift" : {
     "const-values" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/OnboardingCompletionView.swiftconstvalues",
@@ -235,6 +255,16 @@
     "swift-dependencies" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/OnboardingView.swiftdeps",
     "swiftmodule" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/OnboardingView~partial.swiftmodule"
   },
+  "/Users/chrisvillegas/Code/SF Parking App/SF Parking App/Views/Shared/RemindersSheetView.swift" : {
+    "const-values" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/RemindersSheetView.swiftconstvalues",
+    "dependencies" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/RemindersSheetView.d",
+    "diagnostics" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/RemindersSheetView.dia",
+    "index-unit-output-path" : "/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/RemindersSheetView.o",
+    "llvm-bc" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/RemindersSheetView.bc",
+    "object" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/RemindersSheetView.o",
+    "swift-dependencies" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/RemindersSheetView.swiftdeps",
+    "swiftmodule" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/RemindersSheetView~partial.swiftmodule"
+  },
   "/Users/chrisvillegas/Code/SF Parking App/SF Parking App/Views/Shared/UpcomingRemindersSection.swift" : {
     "const-values" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/UpcomingRemindersSection.swiftconstvalues",
     "dependencies" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/UpcomingRemindersSection.d",
@@ -264,6 +294,46 @@
     "object" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/SwipeableVehicleSection.o",
     "swift-dependencies" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/SwipeableVehicleSection.swiftdeps",
     "swiftmodule" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/SwipeableVehicleSection~partial.swiftmodule"
+  },
+  "/Users/chrisvillegas/Code/SF Parking App/SF Parking App/Views/VehicleParking/Components/ScheduleSelectionCard.swift" : {
+    "const-values" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/ScheduleSelectionCard.swiftconstvalues",
+    "dependencies" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/ScheduleSelectionCard.d",
+    "diagnostics" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/ScheduleSelectionCard.dia",
+    "index-unit-output-path" : "/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/ScheduleSelectionCard.o",
+    "llvm-bc" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/ScheduleSelectionCard.bc",
+    "object" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/ScheduleSelectionCard.o",
+    "swift-dependencies" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/ScheduleSelectionCard.swiftdeps",
+    "swiftmodule" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/ScheduleSelectionCard~partial.swiftmodule"
+  },
+  "/Users/chrisvillegas/Code/SF Parking App/SF Parking App/Views/VehicleParking/VehicleLocationSetting.swift" : {
+    "const-values" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/VehicleLocationSetting.swiftconstvalues",
+    "dependencies" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/VehicleLocationSetting.d",
+    "diagnostics" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/VehicleLocationSetting.dia",
+    "index-unit-output-path" : "/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/VehicleLocationSetting.o",
+    "llvm-bc" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/VehicleLocationSetting.bc",
+    "object" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/VehicleLocationSetting.o",
+    "swift-dependencies" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/VehicleLocationSetting.swiftdeps",
+    "swiftmodule" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/VehicleLocationSetting~partial.swiftmodule"
+  },
+  "/Users/chrisvillegas/Code/SF Parking App/SF Parking App/Views/VehicleParking/VehicleParkingMapView.swift" : {
+    "const-values" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/VehicleParkingMapView.swiftconstvalues",
+    "dependencies" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/VehicleParkingMapView.d",
+    "diagnostics" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/VehicleParkingMapView.dia",
+    "index-unit-output-path" : "/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/VehicleParkingMapView.o",
+    "llvm-bc" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/VehicleParkingMapView.bc",
+    "object" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/VehicleParkingMapView.o",
+    "swift-dependencies" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/VehicleParkingMapView.swiftdeps",
+    "swiftmodule" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/VehicleParkingMapView~partial.swiftmodule"
+  },
+  "/Users/chrisvillegas/Code/SF Parking App/SF Parking App/Views/VehicleParking/VehicleParkingViewModel.swift" : {
+    "const-values" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/VehicleParkingViewModel.swiftconstvalues",
+    "dependencies" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/VehicleParkingViewModel.d",
+    "diagnostics" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/VehicleParkingViewModel.dia",
+    "index-unit-output-path" : "/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/VehicleParkingViewModel.o",
+    "llvm-bc" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/VehicleParkingViewModel.bc",
+    "object" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/VehicleParkingViewModel.o",
+    "swift-dependencies" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/VehicleParkingViewModel.swiftdeps",
+    "swiftmodule" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/VehicleParkingViewModel~partial.swiftmodule"
   },
   "/Users/chrisvillegas/Code/SF Parking App/SF Parking App/Views/VehicleParkingView.swift" : {
     "const-values" : "/Users/chrisvillegas/Code/SF Parking App/build/SF Parking App.build/Debug-iphoneos/SF Parking App.build/Objects-normal/arm64/VehicleParkingView.swiftconstvalues",

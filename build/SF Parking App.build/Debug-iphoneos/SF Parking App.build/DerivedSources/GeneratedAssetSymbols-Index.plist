@@ -5,7 +5,18 @@
 	<key>colors</key>
 	<array/>
 	<key>images</key>
-	<array/>
+	<array>
+		<dict>
+			<key>catalogPath</key>
+			<string>/Users/chrisvillegas/Code/SF Parking App/SF Parking App/Assets.xcassets</string>
+			<key>objcSymbol</key>
+			<string>ACImageNameAppIconImage</string>
+			<key>relativePath</key>
+			<string>./AppIconImage.imageset</string>
+			<key>swiftSymbol</key>
+			<string>appIcon</string>
+		</dict>
+	</array>
 	<key>symbols</key>
 	<array/>
 </dict>

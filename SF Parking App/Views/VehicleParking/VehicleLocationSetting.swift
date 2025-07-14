@@ -1,0 +1,440 @@
+import SwiftUI
+
+struct VehicleLocationSetting: View {
+    @ObservedObject var viewModel: VehicleParkingViewModel
+    @State private var impactFeedbackLight = UIImpactFeedbackGenerator(style: .light)
+    @Environment(\.colorScheme) private var colorScheme
+    
+    let onShowReminders: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            // Header
+            headerSection
+            
+            // Content cards
+            contentSection
+            
+            // Bottom buttons
+            buttonSection
+        }
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(colorScheme == .dark ? Color(.systemBackground) : Color.white)
+                .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: -4)
+        )
+    }
+    
+    // MARK: - Header Section
+    
+    private var headerSection: some View {
+        HStack {
+            // Left side: Title and subtitle
+            VStack(alignment: .leading, spacing: 4) {
+                Text(viewModel.headerTitle)
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(.primary)
+                    .padding(.top, 6)
+                
+                // Always show subtitle space to maintain consistent height
+                Text(viewModel.headerSubtitle ?? " ")
+                    .font(.system(size: 14))
+                    .foregroundColor(.secondary)
+                    .opacity(viewModel.headerSubtitle != nil ? 1.0 : 0.0)
+            }
+            
+            Spacer()
+            
+            // Right side: Buttons
+            if viewModel.isSettingLocation && !viewModel.isConfirmingSchedule {
+                if viewModel.isAutoDetectingSchedule {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                        .tint(.blue)
+                }
+            } else if viewModel.isConfirmingSchedule {
+                // No buttons during schedule confirmation
+            } else {
+                // Show different buttons based on whether we have vehicles
+                if viewModel.vehicleManager.activeVehicles.isEmpty {
+                    // Add vehicle button when no vehicles
+                    Button(action: {
+                        impactFeedbackLight.impactOccurred()
+                        if let currentVehicle = viewModel.vehicleManager.currentVehicle {
+                            viewModel.showingEditVehicle = currentVehicle
+                        } else {
+                            viewModel.showingAddVehicle = true
+                        }
+                    }) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "plus")
+                                .font(.system(size: 14, weight: .medium))
+                            Text("Add Vehicle")
+                                .font(.system(size: 14, weight: .semibold))
+                        }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(Color.blue.opacity(0.9))
+                                .shadow(color: .blue, radius: 6, x: 0, y: 3)
+                        )
+                    }
+                } else {
+                    // Reminders button when vehicle exists
+                    Button(action: {
+                        impactFeedbackLight.impactOccurred()
+                        showRemindersSheet()
+                    }) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "bell.fill")
+                                .font(.system(size: 14, weight: .medium))
+                            Text("Reminders")
+                                .font(.system(size: 14, weight: .semibold))
+                        }
+                        .foregroundColor(.secondary)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(Color(.systemGray6))
+                        )
+                    }
+                }
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 12)
+        .animation(.spring(response: 0.6, dampingFraction: 0.75, blendDuration: 0.2), value: viewModel.isSettingLocation)
+        .animation(.spring(response: 0.6, dampingFraction: 0.75, blendDuration: 0.2), value: viewModel.isConfirmingSchedule)
+    }
+    
+    
+    private func showRemindersSheet() {
+        onShowReminders()
+    }
+    
+    // MARK: - Content Section
+    
+    private var contentSection: some View {
+        VStack(spacing: 0) {
+            if viewModel.isSettingLocation && !viewModel.isConfirmingSchedule {
+                // Step 1: Location selection - no schedules shown
+                locationSelectionCard
+                    .padding(.horizontal, 16)
+            } else if viewModel.isConfirmingSchedule {
+                // Step 2: Schedule confirmation
+                scheduleConfirmationSection
+                    .padding(.horizontal, 16)
+            } else {
+                // Normal vehicle view
+                normalVehicleSection
+            }
+        }
+        .animation(.spring(response: 0.6, dampingFraction: 0.75, blendDuration: 0.2), value: viewModel.isSettingLocation)
+        .animation(.spring(response: 0.6, dampingFraction: 0.75, blendDuration: 0.2), value: viewModel.isConfirmingSchedule)
+    }
+    
+    private var locationSelectionCard: some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 12) {
+                // Status icon - always green now
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.blue, Color.blue.opacity(0.8)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 40, height: 40)
+                    
+                    Image(systemName: "car.fill")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white)
+                }
+                .shadow(color: Color.blue.opacity(0.3), radius: 4, x: 0, y: 2)
+                
+                // Status text
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(viewModel.locationStatusTitle)
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.primary)
+                        .lineLimit(2)
+                    
+                    Text(viewModel.locationStatusSubtitle)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+            }
+        }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(colorScheme == .dark ? Color(.systemBackground) : Color.white)
+                .shadow(
+                    color: Color.blue.opacity(0.2),
+                    radius: 6,
+                    x: 0,
+                    y: 3
+                )
+        )
+        .padding(.horizontal, 4)
+        .padding(.vertical, 2)
+        .padding(.bottom, 12)
+        .frame(minHeight: 100)
+    }
+    
+    private var scheduleConfirmationSection: some View {
+        ZStack {
+            if viewModel.nearbySchedules.isEmpty {
+                noSchedulesCard
+            } else {
+                scheduleSelectionCards
+            }
+        }
+        .frame(minHeight: 100)
+    }
+    
+    private var noSchedulesCard: some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.blue, Color.blue.opacity(0.8)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 40, height: 40)
+                    
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white)
+                }
+                .shadow(color: Color.blue.opacity(0.3), radius: 4, x: 0, y: 2)
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("No parking restrictions")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.primary)
+                        .lineLimit(2)
+                    
+                    Text("Safe to park here")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+            }
+        }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(colorScheme == .dark ? Color(.systemBackground) : Color.white)
+                .shadow(color: Color.blue.opacity(0.2), radius: 6, x: 0, y: 3)
+        )
+        .padding(.horizontal, 4)
+        .padding(.vertical, 2)
+        .padding(.bottom, 12)
+        .frame(minHeight: 100)
+    }
+    
+    private var scheduleSelectionCards: some View {
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(Array(viewModel.nearbySchedules.enumerated()), id: \.0) { index, scheduleWithSide in
+                        ScheduleSelectionCard(
+                            scheduleWithSide: scheduleWithSide,
+                            index: index,
+                            isSelected: index == viewModel.selectedScheduleIndex && viewModel.hasSelectedSchedule,
+                            onTap: {
+                                impactFeedbackLight.impactOccurred()
+                                viewModel.selectScheduleOption(index)
+                            }
+                        )
+                        .id(index)
+                    }
+                }
+                .padding(.leading, 20)
+                .padding(.trailing, 100) // Extra trailing padding to allow scrolling cards off screen
+            }
+            .onChange(of: viewModel.selectedScheduleIndex) { newIndex in
+                if viewModel.hasSelectedSchedule {
+                    withAnimation(.spring(response: 0.6, dampingFraction: 0.75, blendDuration: 0.2)) {
+                        proxy.scrollTo(newIndex, anchor: .leading)
+                    }
+                }
+            }
+            .onChange(of: viewModel.hoveredScheduleIndex) { newIndex in
+                if let index = newIndex {
+                    withAnimation(.spring(response: 0.6, dampingFraction: 0.75, blendDuration: 0.2)) {
+                        proxy.scrollTo(index, anchor: .leading)
+                    }
+                }
+            }
+            .padding(.bottom, 12)
+        }
+    }
+    
+    private var normalVehicleSection: some View {
+        SwipeableVehicleSection(
+            vehicles: viewModel.vehicleManager.activeVehicles,
+            selectedVehicle: viewModel.vehicleManager.currentVehicle,
+            onVehicleSelected: { _ in },
+            onVehicleTap: { vehicle in
+                if vehicle.parkingLocation != nil {
+                    // Open in Maps or center on location
+                } else {
+                    impactFeedbackLight.impactOccurred()
+                    viewModel.isSettingLocationForNewVehicle = false
+                    viewModel.startSettingLocationForVehicle(vehicle)
+                }
+            },
+            onShareLocation: { _ in }
+        )
+        .frame(minHeight: 100)
+    }
+    
+    // MARK: - Button Section
+    
+    private var buttonSection: some View {
+        VStack(spacing: 0) {
+            if viewModel.isSettingLocation && !viewModel.isConfirmingSchedule {
+                step1Buttons
+            } else if viewModel.isConfirmingSchedule {
+                step2Buttons
+            } else {
+                normalModeButtons
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 8)
+        .padding(.bottom, 12)
+        .animation(.spring(response: 0.6, dampingFraction: 0.75, blendDuration: 0.2), value: viewModel.isSettingLocation)
+        .animation(.spring(response: 0.6, dampingFraction: 0.75, blendDuration: 0.2), value: viewModel.isConfirmingSchedule)
+    }
+    
+    private var step1Buttons: some View {
+        HStack(spacing: 12) {
+            // Cancel button
+            Button(action: {
+                impactFeedbackLight.impactOccurred()
+                withAnimation(.spring(response: 0.6, dampingFraction: 0.75, blendDuration: 0.2)) {
+                    viewModel.cancelSettingLocation()
+                }
+            }) {
+                Text(viewModel.isSettingLocationForNewVehicle || viewModel.vehicleManager.currentVehicle?.parkingLocation == nil ? "Set Later" : "Cancel")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 52)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color(.systemGray6))
+                    )
+            }
+            .buttonStyle(PlainButtonStyle())
+            
+            // Set button
+            Button(action: {
+                impactFeedbackLight.impactOccurred()
+                withAnimation(.spring(response: 0.6, dampingFraction: 0.75, blendDuration: 0.2)) {
+                    viewModel.proceedToScheduleConfirmation()
+                }
+            }) {
+                Text("Set Location")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 52)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color.blue)
+                    )
+            }
+            .buttonStyle(PlainButtonStyle())
+        }
+    }
+    
+    private var step2Buttons: some View {
+        HStack(spacing: 12) {
+            // Back button
+            Button(action: {
+                impactFeedbackLight.impactOccurred()
+                withAnimation(.spring(response: 0.6, dampingFraction: 0.75, blendDuration: 0.2)) {
+                    viewModel.goBackToLocationSetting()
+                }
+            }) {
+                Text("Back")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 52)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color(.systemGray6))
+                    )
+            }
+            .buttonStyle(PlainButtonStyle())
+            
+            // Confirm button
+            Button(action: {
+                impactFeedbackLight.impactOccurred()
+                withAnimation(.spring(response: 0.6, dampingFraction: 0.75, blendDuration: 0.2)) {
+                    viewModel.confirmUnifiedLocation()
+                }
+            }) {
+                Text("Confirm")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 52)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color.blue)
+                    )
+            }
+            .buttonStyle(PlainButtonStyle())
+        }
+    }
+    
+    private var normalModeButtons: some View {
+        Group {
+            if let currentVehicle = viewModel.vehicleManager.currentVehicle {
+                Button(action: {
+                    impactFeedbackLight.impactOccurred()
+                    viewModel.isSettingLocationForNewVehicle = false
+                    viewModel.startSettingLocationForVehicle(currentVehicle)
+                }) {
+                    Text("Move Vehicle")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 52)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [.blue, .blue.opacity(0.8)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .shadow(color: Color.blue.opacity(0.3), radius: 6, x: 0, y: 3)
+                        )
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+        }
+    }
+}

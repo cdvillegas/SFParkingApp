@@ -79,83 +79,6 @@ struct NotificationOption: Identifiable, Codable {
         }
     }
     
-    // Smart notification options that adapt to the actual schedule
-    static func smartOptions(for schedule: UpcomingSchedule) -> [NotificationOption] {
-        let startHour = extractHour(from: schedule.startTime) ?? 8
-        let endHour = extractHour(from: schedule.endTime) ?? 10
-        let cleaningDate = schedule.date
-        let calendar = Calendar.current
-        
-        var options: [NotificationOption] = []
-        
-        // 1. Week Of - Sunday notification for planning
-        options.append(NotificationOption(
-            title: "Week of",
-            subtitle: "Sunday at 9 AM",
-            icon: "calendar.badge.exclamationmark",
-            timeOffset: 3 * 24 * 3600 // Will be calculated dynamically
-        ))
-        
-        // 2. Night Before - Smart timing based on cleaning time
-        let nightBeforeHour = startHour < 10 ? 20 : 22 // 8 PM for early cleaning, 10 PM for late
-        let nightBeforeOffset = calculateTimeOffset(targetHour: nightBeforeHour, cleaningDate: cleaningDate, daysBefore: 1)
-        options.append(NotificationOption(
-            title: "Night Before",
-            subtitle: startHour < 10 ? "Move by morning" : "Move tonight",
-            icon: "moon.stars.fill",
-            timeOffset: nightBeforeOffset
-        ))
-        
-        // 3. Smart Morning/Early Reminder
-        if startHour <= 8 {
-            // Very early cleaning (6-8 AM) - remind the night before at bedtime
-            options.append(NotificationOption(
-                title: "Before Bed",
-                subtitle: "Move tonight",
-                icon: "bed.double.fill",
-                timeOffset: calculateTimeOffset(targetHour: 23, cleaningDate: cleaningDate, daysBefore: 1)
-            ))
-        } else if startHour <= 12 {
-            // Morning cleaning (8 AM - 12 PM) - morning reminder
-            let morningHour = max(7, startHour - 2)
-            options.append(NotificationOption(
-                title: "Morning",
-                subtitle: "2 hours until cleaning",
-                icon: "sunrise.fill",
-                timeOffset: 2 * 3600
-            ))
-        } else {
-            // Afternoon cleaning - lunch time reminder
-            options.append(NotificationOption(
-                title: "Midday",
-                subtitle: "Move after lunch",
-                icon: "sun.max.fill",
-                timeOffset: 3 * 3600
-            ))
-        }
-        
-        // 4. Final Warning - Always 30 minutes before
-        options.append(NotificationOption(
-            title: "Final Warning",
-            subtitle: "Move now",
-            icon: "exclamationmark.triangle.fill",
-            timeOffset: 1800
-        ))
-        
-        
-        // 6. All Clear - Smart timing based on cleaning end time
-        let cleaningDuration = endHour - startHour
-        let allClearOffset = TimeInterval(-(cleaningDuration * 3600)) // Negative offset = after start
-        options.append(NotificationOption(
-            title: "All Clear",
-            subtitle: "Safe to park back",
-            icon: "checkmark.circle",
-            timeOffset: allClearOffset
-        ))
-        
-        return options
-    }
-    
     // Helper to extract hour from time string like "8:00 AM"
     static func extractHour(from timeString: String) -> Int? {
         let components = timeString.components(separatedBy: ":")
@@ -337,19 +260,7 @@ struct UpcomingRemindersSection: View {
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.orange)
             }
-            .padding(20)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(.systemBackground))
-                    .shadow(
-                        color: Color.orange.opacity(0.2),
-                        radius: 6,
-                        x: 0,
-                        y: 3
-                    )
-            )
-            .padding(.horizontal, 4)
-            .padding(.vertical, 2)
+            .padding(.vertical, 16)
         }
         .buttonStyle(PlainButtonStyle())
         .contentShape(Rectangle())
@@ -357,26 +268,38 @@ struct UpcomingRemindersSection: View {
     
     // MARK: - No Restrictions State
     private var noRestrictionsState: some View {
-        HStack(spacing: 16) {
-            ZStack {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.green)
-            }
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text("You're all clear!")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(.primary)
+        Button(action: {
+            let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+            impactFeedback.impactOccurred()
+            showingReminderSheet = true
+        }) {
+            HStack(spacing: 16) {
+                ZStack {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.green)
+                }
                 
-                Text("No upcoming street sweeping")
-                    .font(.system(size: 14))
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("You're all clear!")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.primary)
+                    
+                    Text("No upcoming street sweeping")
+                        .font(.system(size: 14))
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.secondary)
             }
-            
-            Spacer()
+            .padding(.vertical, 16)
+            .contentShape(Rectangle())
         }
-        .padding(.vertical, 16)
+        .buttonStyle(PlainButtonStyle())
     }
     
 }
@@ -433,7 +356,7 @@ extension UpcomingRemindersSection {
         }
         
         let minutes = totalSeconds / 60
-        let hours = minutes / 60  
+        let hours = minutes / 60
         let days = hours / 24
         let remainingHours = hours % 24
         let remainingMinutes = minutes % 60
@@ -943,9 +866,9 @@ struct NotificationSettingsSheet: View {
             formatter.timeZone = TimeZone(identifier: "America/Los_Angeles") ?? TimeZone.current
             print("📅 \(option.title): Scheduled for \(formatter.string(from: notificationDate)) PST (offset: \(calculatedOffset / 3600) hours)")
             
-            guard notificationDate > Date() else { 
+            guard notificationDate > Date() else {
                 print("⚠️ Skipping \(option.title) - date is in the past")
-                continue 
+                continue
             }
             
             let content = UNMutableNotificationContent()
@@ -1052,47 +975,4 @@ struct NotificationSettingsSheet: View {
             return formatter.string(from: date)
         }
     }
-}
-
-// MARK: - Preview Helper
-func createMockStreetDataManager(urgencyLevel: UpcomingRemindersSection.UrgencyLevel) -> StreetDataManager {
-    let manager = StreetDataManager()
-    let timeInterval = timeIntervalForUrgencyLevel(urgencyLevel)
-    
-    manager.nextUpcomingSchedule = UpcomingSchedule(
-        streetName: "Mission St",
-        date: Date().addingTimeInterval(timeInterval),
-        endDate: Date().addingTimeInterval(timeInterval + 7200),
-        dayOfWeek: dayOfWeekForUrgency(urgencyLevel),
-        startTime: "8:00 AM",
-        endTime: "10:00 AM"
-    )
-    
-    return manager
-}
-
-private func timeIntervalForUrgencyLevel(_ level: UpcomingRemindersSection.UrgencyLevel) -> TimeInterval {
-    switch level {
-    case .info: return 3 * 24 * 3600 // 3 days
-    case .warning: return 12 * 3600 // 12 hours
-    case .critical: return 1800 // 30 minutes
-    }
-}
-
-private func dayOfWeekForUrgency(_ level: UpcomingRemindersSection.UrgencyLevel) -> String {
-    switch level {
-    case .info: return "Tuesday"
-    case .warning: return "Tomorrow"
-    case .critical: return "Today"
-    }
-}
-
-#Preview("Light Mode") {
-    VehicleParkingView()
-        .preferredColorScheme(.light)
-}
-
-#Preview("Dark Mode") {
-    VehicleParkingView()
-        .preferredColorScheme(.dark)
 }

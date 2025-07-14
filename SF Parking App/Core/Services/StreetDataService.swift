@@ -453,7 +453,7 @@ final class StreetDataService {
             return
         }
         
-        let candidates = spatialGrid.getSchedulesNear(coordinate, radius: 5) // Larger radius for area view
+        let candidates = spatialGrid.getSchedulesNear(coordinate, radius: 10) // Even larger radius for better coverage
         let apiSchedules = candidates.map { convertToAPIFormat($0) }
         
         completion(.success(apiSchedules))
