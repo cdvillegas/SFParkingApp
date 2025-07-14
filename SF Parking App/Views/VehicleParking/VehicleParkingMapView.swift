@@ -46,11 +46,11 @@ struct VehicleParkingMapView: View {
                                     .font(.system(size: 12, weight: .semibold))
                                     .foregroundColor(.white)
                             }
-                            .shadow(color: Color.gray.opacity(0.4), radius: 6, x: 0, y: 3)
+                            .shadow(color: Color.green.opacity(0.4), radius: 6, x: 0, y: 3)
                             
                             // Pin tail
                             RoundedRectangle(cornerRadius: 1)
-                                .fill(Color.gray)
+                                .fill(Color.green)
                                 .frame(width: 3, height: 12)
                         }
                         .offset(y: -18) // Move pin up so the tip of the line aligns with center
