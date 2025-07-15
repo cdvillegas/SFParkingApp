@@ -20,6 +20,7 @@ struct VehicleParkingView: View {
                 // Bottom interface
                 bottomInterface
             }
+            
         }
         .sheet(isPresented: $viewModel.showingAddVehicle) {
             AddEditVehicleView(

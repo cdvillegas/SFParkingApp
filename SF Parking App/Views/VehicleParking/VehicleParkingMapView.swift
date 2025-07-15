@@ -6,6 +6,7 @@ struct VehicleParkingMapView: View {
     @ObservedObject var viewModel: VehicleParkingViewModel
     @State private var currentMapHeading: CLLocationDirection = 0
     @State private var impactFeedbackLight = UIImpactFeedbackGenerator(style: .light)
+    @State private var userLocation: CLLocation?
     
     var body: some View {
         Map(position: $viewModel.mapPosition, interactionModes: .all) {
@@ -22,90 +23,172 @@ struct VehicleParkingMapView: View {
                 streetEdgeScheduleLines
             }
         }
-        .overlay(
-            Group {
-                if viewModel.isSettingLocation, let vehicle = viewModel.vehicleManager.selectedVehicle {
-                    // Setting location pin - positioned so tip aligns with cursor
-                    VStack {
-                        Spacer()
-                        
-                        // Pin with adaptive color
-                        VStack(spacing: 0) {
-                            ZStack {
-                                Circle()
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [Color.green, Color.green.opacity(0.8)],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
-                                    )
-                                    .frame(width: 24, height: 24)
-                                
-                                Image(systemName: vehicle.type.iconName)
-                                    .font(.system(size: 12, weight: .semibold))
-                                    .foregroundColor(.white)
-                            }
-                            .shadow(color: Color.green.opacity(0.4), radius: 6, x: 0, y: 3)
-                            
-                            // Pin tail
-                            RoundedRectangle(cornerRadius: 1)
-                                .fill(Color.green)
-                                .frame(width: 3, height: 12)
-                        }
-                        .offset(y: -18) // Move pin up so the tip of the line aligns with center
-                        
-                        Spacer()
-                    }
-                    .allowsHitTesting(false)
-                }
-            }
-        )
-        .overlay(
-            // Floating map control buttons - only show when NOT in confirm schedule mode
-            Group {
-                if !viewModel.isConfirmingSchedule {
-                    HStack(spacing: 12) {
-                        // Center on vehicle button
-                        Button(action: {
-                            impactFeedbackLight.impactOccurred()
-                            centerOnVehicle()
-                        }) {
-                            Image(systemName: "car.fill")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.blue)
-                                .frame(width: 44, height: 44)
-                                .background(
-                                    Circle()
-                                        .fill(Color(.systemGray6))
-                                )
-                        }
-                        
-                        // Center on user location button
-                        Button(action: {
-                            impactFeedbackLight.impactOccurred()
-                            centerOnUser()
-                        }) {
-                            Image(systemName: "location.fill")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.blue)
-                                .frame(width: 44, height: 44)
-                                .background(
-                                    Circle()
-                                        .fill(Color(.systemGray6))
-                                )
-                        }
-                    }
-                    .padding(.trailing, 16)
-                    .padding(.bottom, 16) // Closer to bottom
-                }
-            },
-            alignment: .bottomTrailing
-        )
+        .overlay(settingLocationPin)
+        .overlay(mapControlButtons, alignment: .bottomTrailing)
+        .overlay(enableLocationButton, alignment: .bottom)
         .mapStyle(.standard)
         .onMapCameraChange(frequency: .continuous) { context in
             currentMapHeading = context.camera.heading
             handleMapCameraChange(context)
+        }
+        .onAppear {
+            // Initialize user location on view appear
+            userLocation = viewModel.locationManager.userLocation
+        }
+        .onReceive(viewModel.locationManager.$userLocation) { newLocation in
+            // Keep local state in sync with location manager
+            userLocation = newLocation
+            
+            // Center map on user location if no parking location is set
+            if let location = newLocation {
+                let hasParkedVehicle = viewModel.vehicleManager.currentVehicle?.parkingLocation != nil
+                if !hasParkedVehicle {
+                    viewModel.centerMapOnLocation(location.coordinate)
+                }
+            }
+        }
+        .onReceive(viewModel.locationManager.$authorizationStatus) { newStatus in
+            // Update user location when authorization changes
+            userLocation = viewModel.locationManager.userLocation
+            
+            // If permission was just granted, request location immediately
+            if newStatus == .authorizedWhenInUse || newStatus == .authorizedAlways {
+                viewModel.locationManager.requestLocation()
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+            // Refresh when returning from Settings
+            viewModel.locationManager.refreshAuthorizationStatus()
+            userLocation = viewModel.locationManager.userLocation
+        }
+    }
+    
+    // MARK: - Overlay Views
+    
+    @ViewBuilder
+    private var settingLocationPin: some View {
+        Group {
+            if viewModel.isSettingLocation, let vehicle = viewModel.vehicleManager.selectedVehicle {
+                // Setting location pin - positioned so tip aligns with cursor
+                VStack {
+                    Spacer()
+                    
+                    // Pin with adaptive color
+                    VStack(spacing: 0) {
+                        ZStack {
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color.green, Color.green.opacity(0.8)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 24, height: 24)
+                            
+                            Image(systemName: vehicle.type.iconName)
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(.white)
+                        }
+                        .shadow(color: Color.green.opacity(0.4), radius: 6, x: 0, y: 3)
+                        
+                        // Pin tail
+                        RoundedRectangle(cornerRadius: 1)
+                            .fill(Color.green)
+                            .frame(width: 3, height: 12)
+                    }
+                    .offset(y: -18) // Move pin up so the tip of the line aligns with center
+                    
+                    Spacer()
+                }
+                .allowsHitTesting(false)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var mapControlButtons: some View {
+        Group {
+            if !viewModel.isConfirmingSchedule {
+                HStack(spacing: 12) {
+                    vehicleButton
+                    userLocationButton
+                }
+                .padding(.trailing, 16)
+                .padding(.bottom, 16)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var vehicleButton: some View {
+        if let currentVehicle = viewModel.vehicleManager.currentVehicle,
+           currentVehicle.parkingLocation != nil {
+            Button(action: {
+                impactFeedbackLight.impactOccurred()
+                centerOnVehicle()
+            }) {
+                Image(systemName: "car.fill")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.secondary)
+                    .frame(width: 44, height: 44)
+                    .background(
+                        Circle()
+                            .fill(Color(.systemGray6))
+                    )
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var userLocationButton: some View {
+        if viewModel.locationManager.userLocation != nil &&
+           (viewModel.locationManager.authorizationStatus == .authorizedWhenInUse || 
+            viewModel.locationManager.authorizationStatus == .authorizedAlways) {
+            Button(action: {
+                impactFeedbackLight.impactOccurred()
+                centerOnUser()
+            }) {
+                Image(systemName: "location.fill")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.secondary)
+                    .frame(width: 44, height: 44)
+                    .background(
+                        Circle()
+                            .fill(Color(.systemGray6))
+                    )
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var enableLocationButton: some View {
+        Group {
+            if !viewModel.isConfirmingSchedule &&
+               viewModel.locationManager.authorizationStatus != .authorizedWhenInUse && 
+               viewModel.locationManager.authorizationStatus != .authorizedAlways &&
+               viewModel.locationManager.userLocation == nil {
+                VStack {
+                    Spacer()
+                    Button(action: enableLocationAction) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "location.fill")
+                                .font(.system(size: 15, weight: .semibold))
+                            Text("Enable Location")
+                                .font(.system(size: 15, weight: .semibold))
+                        }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 10)
+                        .background(
+                            Capsule()
+                                .fill(Color.blue.opacity(0.9))
+                                .shadow(color: Color.blue.opacity(0.3), radius: 6, x: 0, y: 3)
+                        )
+                    }
+                    .padding(.bottom, 20)
+                }
+            }
         }
     }
     
@@ -113,8 +196,8 @@ struct VehicleParkingMapView: View {
     
     @MapContentBuilder
     private var userLocationAnnotation: some MapContent {
-        if let userLocation = viewModel.locationManager.userLocation {
-            Annotation("", coordinate: userLocation.coordinate) {
+        ForEach([userLocation].compactMap { $0 }, id: \.timestamp) { location in
+            Annotation("", coordinate: location.coordinate) {
                 UserDirectionCone(heading: viewModel.locationManager.userHeading, mapHeading: currentMapHeading)
             }
         }
@@ -201,6 +284,20 @@ struct VehicleParkingMapView: View {
     }
     
     // MARK: - Private Methods
+    
+    private func enableLocationAction() {
+        impactFeedbackLight.impactOccurred()
+        if viewModel.locationManager.authorizationStatus == .denied || 
+           viewModel.locationManager.authorizationStatus == .restricted {
+            // Open settings if permission was denied
+            if let settingsUrl = URL(string: UIApplication.openSettingsURLString) {
+                UIApplication.shared.open(settingsUrl)
+            }
+        } else {
+            // Request permission if not determined
+            viewModel.locationManager.requestLocationPermission()
+        }
+    }
     
     private func centerOnVehicle() {
         if let currentVehicle = viewModel.vehicleManager.currentVehicle,

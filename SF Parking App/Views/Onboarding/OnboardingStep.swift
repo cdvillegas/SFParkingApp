@@ -21,7 +21,7 @@ struct OnboardingStep {
             systemImage: "car.fill",
             color: .blue,
             permissionType: nil,
-            buttonText: "Get Started"
+            buttonText: "Next"
         ),
         OnboardingStep(
             title: "Find Your Spot Instantly",

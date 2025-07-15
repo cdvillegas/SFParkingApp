@@ -34,29 +34,29 @@ struct OnboardingView: View {
                     }
                     
                     // Main content
-                    TabView(selection: $currentStep) {
-                        ForEach(Array(onboardingSteps.enumerated()), id: \.offset) { index, step in
-                            OnboardingStepView(
-                                step: step,
-                                isLastStep: index == onboardingSteps.count - 1,
-                                onNext: {
-                                    if index < onboardingSteps.count - 1 {
-                                        withAnimation(.easeInOut(duration: 0.5)) {
-                                            currentStep = index + 1
-                                        }
-                                    } else {
-                                        showCompletionView()
+                    if currentStep < onboardingSteps.count {
+                        OnboardingStepView(
+                            step: onboardingSteps[currentStep],
+                            isLastStep: currentStep == onboardingSteps.count - 1,
+                            onNext: {
+                                if currentStep < onboardingSteps.count - 1 {
+                                    withAnimation(.easeInOut(duration: 0.5)) {
+                                        currentStep += 1
                                     }
-                                },
-                                onSkip: {
+                                } else {
                                     showCompletionView()
                                 }
-                            )
-                            .tag(index)
-                        }
+                            },
+                            onSkip: {
+                                showCompletionView()
+                            }
+                        )
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .trailing).combined(with: .opacity),
+                            removal: .move(edge: .leading).combined(with: .opacity)
+                        ))
+                        .id(currentStep)
                     }
-                    .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-                    .animation(.easeInOut(duration: 0.5), value: currentStep)
                 }
                 .transition(.asymmetric(
                     insertion: .opacity,

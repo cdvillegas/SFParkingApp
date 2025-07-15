@@ -24,11 +24,6 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         
         authorizationStatus = locationManager.authorizationStatus
         print("LocationManager initialized with status: \(authorizationStatus.rawValue)")
-        
-        // Set default location for preview (2455 Post Street, SF)
-        #if DEBUG
-        setDefaultLocation()
-        #endif
     }
     
     func requestLocationPermission() {
@@ -59,6 +54,22 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         
         print("Getting one-time location")
         locationManager.requestLocation()
+    }
+    
+    func refreshAuthorizationStatus() {
+        print("Refreshing authorization status")
+        let newStatus = locationManager.authorizationStatus
+        if newStatus != authorizationStatus {
+            print("Authorization status changed from \(authorizationStatus.rawValue) to \(newStatus.rawValue)")
+            DispatchQueue.main.async {
+                self.authorizationStatus = newStatus
+                
+                // Start location updates if permission was granted
+                if newStatus == .authorizedWhenInUse || newStatus == .authorizedAlways {
+                    self.startLocationUpdates()
+                }
+            }
+        }
     }
     
     private func startLocationUpdates() {
@@ -134,20 +145,4 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         }
     }
     
-    #if DEBUG
-    private func setDefaultLocation() {
-        // 2455 Post Street, San Francisco, CA coordinates
-        let defaultLocation = CLLocation(
-            latitude: 37.785834,
-            longitude: -122.442947
-        )
-        
-        DispatchQueue.main.async {
-            self.userLocation = defaultLocation
-            self.userHeading = 45 // Default northeast direction
-        }
-        
-        print("Set default location: 2455 Post Street, SF")
-    }
-    #endif
 }
