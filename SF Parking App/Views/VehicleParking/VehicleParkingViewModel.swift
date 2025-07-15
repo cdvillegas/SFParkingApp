@@ -179,27 +179,11 @@ class VehicleParkingViewModel: ObservableObject {
     }
     
     func initialSmartSelection(for coordinate: CLLocationCoordinate2D, schedulesWithSides: [SweepScheduleWithSide]) {
-        var closestIndex = 0
-        var closestDistance = Double.infinity
-        
-        for (index, scheduleWithSide) in schedulesWithSides.enumerated() {
-            let distance = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
-                .distance(from: CLLocation(latitude: scheduleWithSide.offsetCoordinate.latitude,
-                                         longitude: scheduleWithSide.offsetCoordinate.longitude))
-            
-            if distance < closestDistance {
-                closestDistance = distance
-                closestIndex = index
-            }
-        }
-        
-        let flippedIndex = schedulesWithSides.count - 1 - closestIndex
-        let finalIndex = flippedIndex < schedulesWithSides.count ? flippedIndex : closestIndex
-        
-        selectedScheduleIndex = finalIndex
+        // Always select the first schedule when new schedules load
+        selectedScheduleIndex = 0
         hasSelectedSchedule = true
-        detectedSchedule = schedulesWithSides[finalIndex].schedule
-        scheduleConfidence = Float(max(0.3, min(0.9, 1.0 - (closestDistance / 50.0))))
+        detectedSchedule = schedulesWithSides[0].schedule
+        scheduleConfidence = 0.8 // High confidence for auto-selection
     }
     
     func cancelSettingLocation() {
@@ -457,7 +441,7 @@ class VehicleParkingViewModel: ObservableObject {
     
     var headerSubtitle: String? {
         if isConfirmingSchedule {
-            return "Select which side of the street you're on"
+            return generateSmartHeaderSubtitle()
         } else if isSettingLocation {
             return "Position the pin where you parked"
         } else {
@@ -469,6 +453,24 @@ class VehicleParkingViewModel: ObservableObject {
             } else {
                 return "Location not set"
             }
+        }
+    }
+    
+    private func generateSmartHeaderSubtitle() -> String {
+        guard !nearbySchedules.isEmpty else {
+            return "No schedules found"
+        }
+        
+        // Get unique street names
+        let streetNames = Set(nearbySchedules.map { $0.schedule.streetName })
+        
+        if streetNames.count == 1 {
+            // Single street
+            let streetName = streetNames.first!
+            return "Select which side of \(streetName) you're on"
+        } else {
+            // Multiple streets
+            return "Select which side of which street you're on"
         }
     }
     

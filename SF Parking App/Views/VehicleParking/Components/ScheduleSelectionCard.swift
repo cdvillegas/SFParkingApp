@@ -14,39 +14,38 @@ struct ScheduleSelectionCard: View {
     
     var body: some View {
         Button(action: onTap) {
-            VStack(spacing: 12) {
-                HStack(spacing: 12) {
-                    // Schedule info - two line layout
-                    VStack(alignment: .leading, spacing: 4) {
-                        // Line 1: Street name with direction pill
-                        HStack(spacing: 8) {
-                            Text(schedule.streetName)
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.primary)
-                                .lineLimit(2)
-                            
-                            // Direction pill - bigger than before
-                            Text(formatSideDescription(scheduleWithSide.side))
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundColor(isSelected ? .white : .secondary)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 4)
-                                .background(
-                                    Capsule()
-                                        .fill(isSelected ? Color.blue : Color(.systemGray5))
-                                )
-                        }
-                        
-                        // Line 2: Full schedule details (no abbreviations)
-                        Text(formatFullSchedule(schedule))
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(isSelected ? .blue : .secondary)
-                    }
+            HStack(spacing: 12) {
+                // Left: Direction pill
+                Text(formatSideDescription(scheduleWithSide.side))
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(isSelected ? .white : .primary)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 3)
+                    .background(
+                        Capsule()
+                            .fill(isSelected ? Color.blue : Color(.systemGray5))
+                    )
+                
+                // Right: Schedule details
+                VStack(alignment: .leading, spacing: 2) {
+                    // Line 1: Week pattern and day
+                    Text(formatWeekAndDay(schedule))
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     
-                    Spacer()
+                    // Line 2: Time range
+                    Text(formatTimeRange(schedule))
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .padding(20)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 16)
             .background(
                 RoundedRectangle(cornerRadius: 16)
                     .fill(isSelected ? Color.blue.opacity(0.12) : (colorScheme == .dark ? Color(.systemBackground) : Color.white))
@@ -65,7 +64,7 @@ struct ScheduleSelectionCard: View {
             .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isSelected)
             .padding(.horizontal, 4)
             .padding(.vertical, 2)
-            .frame(width: 280)
+            .frame(width: 200)
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -87,6 +86,26 @@ struct ScheduleSelectionCard: View {
         let startTime = formatTime(schedule.startTime)
         let endTime = formatTime(schedule.endTime)
         return "\(pattern) \(dayFull), \(startTime) to \(endTime)"
+    }
+    
+    private func formatCompactSchedule(_ schedule: SweepSchedule) -> String {
+        let pattern = getCompactWeekPattern(schedule)
+        let dayShort = getDayAbbreviation(schedule.sweepDay)
+        let startTime = formatTime(schedule.startTime)
+        let endTime = formatTime(schedule.endTime)
+        return "\(pattern) \(dayShort), \(startTime)-\(endTime)"
+    }
+    
+    private func formatWeekAndDay(_ schedule: SweepSchedule) -> String {
+        let pattern = getCompactWeekPattern(schedule)
+        let dayShort = getDayAbbreviation(schedule.sweepDay)
+        return "\(pattern) \(dayShort)"
+    }
+    
+    private func formatTimeRange(_ schedule: SweepSchedule) -> String {
+        let startTime = formatTime(schedule.startTime)
+        let endTime = formatTime(schedule.endTime)
+        return "\(startTime) - \(endTime)"
     }
     
     private func formatTime(_ time: String) -> String {
@@ -115,4 +134,134 @@ struct ScheduleSelectionCard: View {
             return "Select weeks"
         }
     }
+    
+    private func getCompactWeekPattern(_ schedule: SweepSchedule) -> String {
+        let weeks = [
+            schedule.week1 == "1",
+            schedule.week2 == "1",
+            schedule.week3 == "1",
+            schedule.week4 == "1",
+            schedule.week5 == "1"
+        ]
+        
+        if weeks == [true, false, true, false, true] {
+            return "1st, 3rd, 5th"
+        } else if weeks == [false, true, false, true, false] {
+            return "2nd, 4th"
+        } else if weeks == [true, false, true, false, false] {
+            return "1st, 3rd"
+        } else if weeks.allSatisfy({ $0 }) {
+            return "Every"
+        } else {
+            return "Select"
+        }
+    }
+    
+    private func getDayAbbreviation(_ day: String) -> String {
+        switch day.lowercased() {
+        case "monday": return "Mon"
+        case "tuesday": return "Tues"
+        case "wednesday": return "Wed"
+        case "thursday": return "Thurs"
+        case "friday": return "Fri"
+        case "saturday": return "Sat"
+        case "sunday": return "Sun"
+        default: return day
+        }
+    }
+}
+
+// MARK: - Auto-Scrolling Text Component
+
+struct AutoScrollingText: View {
+    let text: String
+    let isSelected: Bool
+    let font: Font
+    let color: Color
+    
+    @State private var scrollOffset: CGFloat = 0
+    @State private var textWidth: CGFloat = 0
+    @State private var containerWidth: CGFloat = 0
+    
+    var body: some View {
+        GeometryReader { geometry in
+            Text(text)
+                .font(font)
+                .foregroundColor(color)
+                .fixedSize(horizontal: true, vertical: false)
+                .background(
+                    GeometryReader { textGeometry in
+                        Color.clear
+                            .onAppear {
+                                textWidth = textGeometry.size.width
+                                containerWidth = geometry.size.width
+                            }
+                            .onChange(of: geometry.size.width) { newWidth in
+                                containerWidth = newWidth
+                            }
+                    }
+                )
+                .offset(x: scrollOffset)
+                .clipped()
+                .onAppear {
+                    if isSelected {
+                        startAutoScroll()
+                    }
+                }
+                .onChange(of: isSelected) { newValue in
+                    if newValue {
+                        startAutoScroll()
+                    } else {
+                        stopAutoScroll()
+                    }
+                }
+        }
+    }
+    
+    private func startAutoScroll() {
+        // Only scroll if text is wider than container
+        guard textWidth > containerWidth else {
+            scrollOffset = 0
+            return
+        }
+        
+        let maxOffset = textWidth - containerWidth
+        
+        // Reset to start
+        scrollOffset = 0
+        
+        // Animate to end, then back to start, then repeat
+        withAnimation(.linear(duration: 2.0).delay(0.5)) {
+            scrollOffset = -maxOffset
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+            guard isSelected else { return }
+            
+            withAnimation(.linear(duration: 2.0).delay(0.5)) {
+                scrollOffset = 0
+            }
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                guard isSelected else { return }
+                startAutoScroll() // Repeat
+            }
+        }
+    }
+    
+    private func stopAutoScroll() {
+        withAnimation(.easeOut(duration: 0.3)) {
+            scrollOffset = 0
+        }
+    }
+}
+
+#Preview("Light Mode") {
+    VehicleParkingView()
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark Mode") {
+    VehicleParkingView()
+        .preferredColorScheme(.dark)
 }

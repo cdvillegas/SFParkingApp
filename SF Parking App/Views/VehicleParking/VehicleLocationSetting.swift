@@ -21,8 +21,7 @@ struct VehicleLocationSetting: View {
         }
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(colorScheme == .dark ? Color(.systemBackground) : Color.white)
-                .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: -4)
+                .fill(Color(.systemBackground))
         )
     }
     
@@ -127,7 +126,6 @@ struct VehicleLocationSetting: View {
             } else if viewModel.isConfirmingSchedule {
                 // Step 2: Schedule confirmation
                 scheduleConfirmationSection
-                    .padding(.horizontal, 16)
             } else {
                 // Normal vehicle view
                 normalVehicleSection
@@ -192,15 +190,18 @@ struct VehicleLocationSetting: View {
     }
     
     private var scheduleConfirmationSection: some View {
-        ZStack {
+        VStack(spacing: 16) {
             if viewModel.nearbySchedules.isEmpty {
                 noSchedulesCard
+                    .padding(.horizontal, 16) // Only the no schedules card needs padding
             } else {
+                // Schedule cards extend to screen edges
                 scheduleSelectionCards
             }
         }
         .frame(minHeight: 100)
     }
+    
     
     private var noSchedulesCard: some View {
         VStack(spacing: 12) {
@@ -252,7 +253,7 @@ struct VehicleLocationSetting: View {
     private var scheduleSelectionCards: some View {
         ScrollViewReader { proxy in
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
+                HStack(spacing: 4) {
                     ForEach(Array(viewModel.nearbySchedules.enumerated()), id: \.0) { index, scheduleWithSide in
                         ScheduleSelectionCard(
                             scheduleWithSide: scheduleWithSide,
@@ -266,20 +267,44 @@ struct VehicleLocationSetting: View {
                         .id(index)
                     }
                 }
-                .padding(.leading, 20)
-                .padding(.trailing, 100) // Extra trailing padding to allow scrolling cards off screen
+                .padding(.leading, 16)
+                .padding(.trailing, 80) // Extra trailing padding to allow scrolling cards off screen
             }
             .onChange(of: viewModel.selectedScheduleIndex) { newIndex in
                 if viewModel.hasSelectedSchedule {
                     withAnimation(.spring(response: 0.6, dampingFraction: 0.75, blendDuration: 0.2)) {
-                        proxy.scrollTo(newIndex, anchor: .leading)
+                        let totalSchedules = viewModel.nearbySchedules.count
+                        let isLastItem = newIndex == totalSchedules - 1
+                        
+                        if newIndex == 0 {
+                            // First card: scroll back to initial position (~16px from screen edge)
+                            proxy.scrollTo(0, anchor: UnitPoint(x: 0.5, y: 0.5))
+                        } else if isLastItem {
+                            // Last card: position 16px from right edge (less aggressive)
+                            proxy.scrollTo(newIndex, anchor: UnitPoint(x: 0.88, y: 0.5))
+                        } else {
+                            // Middle cards: position 16px from left edge
+                            proxy.scrollTo(newIndex, anchor: UnitPoint(x: 0.08, y: 0.5))
+                        }
                     }
                 }
             }
             .onChange(of: viewModel.hoveredScheduleIndex) { newIndex in
                 if let index = newIndex {
                     withAnimation(.spring(response: 0.6, dampingFraction: 0.75, blendDuration: 0.2)) {
-                        proxy.scrollTo(index, anchor: .leading)
+                        let totalSchedules = viewModel.nearbySchedules.count
+                        let isLastItem = index == totalSchedules - 1
+                        
+                        if index == 0 {
+                            // First card: scroll back to initial position (16px from screen edge)
+                            proxy.scrollTo(0, anchor: UnitPoint(x: 0.0, y: 0.5))
+                        } else if isLastItem {
+                            // Last card: position 16px from right edge (less aggressive)
+                            proxy.scrollTo(index, anchor: UnitPoint(x: 0.88, y: 0.5))
+                        } else {
+                            // Middle cards: position 16px from left edge
+                            proxy.scrollTo(index, anchor: UnitPoint(x: 0.08, y: 0.5))
+                        }
                     }
                 }
             }
@@ -490,4 +515,14 @@ struct VehicleLocationSetting: View {
             }
         }
     }
+}
+
+#Preview("Light Mode") {
+    VehicleParkingView()
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark Mode") {
+    VehicleParkingView()
+        .preferredColorScheme(.dark)
 }

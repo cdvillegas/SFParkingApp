@@ -348,30 +348,15 @@ struct VehicleParkingMapView: View {
             viewModel.autoDetectSchedule(for: newCoordinate)
             
         } else if viewModel.isConfirmingSchedule {
-            // Step 2: Schedule confirmation with movement restriction
+            // Step 2: Schedule confirmation with free movement and dynamic schedule loading
             let newCoordinate = context.camera.centerCoordinate
+            viewModel.settingCoordinate = newCoordinate
             
-            // Restrict movement to ~100 feet (30 meters) from confirmed location
-            if let confirmedLocation = viewModel.confirmedLocation {
-                let distance = CLLocation(latitude: newCoordinate.latitude, longitude: newCoordinate.longitude)
-                    .distance(from: CLLocation(latitude: confirmedLocation.latitude, longitude: confirmedLocation.longitude))
-                
-                // Only allow movement within 30 meters (~100 feet)
-                if distance <= 30.0 {
-                    viewModel.settingCoordinate = newCoordinate
-                    // Smart selection between existing drawn lines
-                    smartSelectBetweenDrawnLines(for: newCoordinate)
-                } else {
-                    // User tried to move outside allowed radius - provide haptic feedback
-                    let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                    impactFeedback.impactOccurred()
-                }
-                // If outside radius, keep the current coordinate (don't update settingCoordinate)
-            } else {
-                // Fallback if no confirmed location
-                viewModel.settingCoordinate = newCoordinate
-                smartSelectBetweenDrawnLines(for: newCoordinate)
-            }
+            // Dynamically load new schedules when marker moves
+            viewModel.autoDetectSchedule(for: newCoordinate)
+            
+            // Smart selection between existing drawn lines
+            smartSelectBetweenDrawnLines(for: newCoordinate)
         }
     }
     
