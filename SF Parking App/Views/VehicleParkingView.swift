@@ -43,6 +43,13 @@ struct VehicleParkingView: View {
         .onAppear {
             setupView()
         }
+        .onReceive(viewModel.locationManager.$userLocation) { newUserLocation in
+            // If user location becomes available and no parking location is set, center on user
+            if let userLocation = newUserLocation,
+               viewModel.vehicleManager.currentVehicle?.parkingLocation == nil {
+                viewModel.centerMapOnLocation(userLocation.coordinate)
+            }
+        }
         .alert("Enable Notifications", isPresented: $viewModel.showingNotificationPermissionAlert) {
             Button("Settings") {
                 if let settingsUrl = URL(string: UIApplication.openSettingsURLString) {
@@ -128,6 +135,12 @@ struct VehicleParkingView: View {
     // MARK: - Setup
     
     private func setupView() {
+        // Start location services to get user location
+        if viewModel.locationManager.authorizationStatus == .authorizedWhenInUse || 
+           viewModel.locationManager.authorizationStatus == .authorizedAlways {
+            viewModel.locationManager.requestLocation()
+        }
+        
         // Center map on vehicle or user location
         if let selectedVehicle = viewModel.vehicleManager.selectedVehicle,
            let parkingLocation = selectedVehicle.parkingLocation {
@@ -142,7 +155,7 @@ struct VehicleParkingView: View {
         } else if let userLocation = viewModel.locationManager.userLocation {
             viewModel.centerMapOnLocation(userLocation.coordinate)
         } else {
-            // Default to Sutro Tower view
+            // Default to Sutro Tower view but also try to get user location
             viewModel.mapPosition = .region(
                 MKCoordinateRegion(
                     center: CLLocationCoordinate2D(latitude: 37.7551, longitude: -122.4528),

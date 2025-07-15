@@ -355,16 +355,24 @@ struct VehicleLocationSetting: View {
                     viewModel.proceedToScheduleConfirmation()
                 }
             }) {
-                Text("Set Location")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 52)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(Color.blue)
-                    )
+                HStack(spacing: 8) {
+                    if viewModel.isAutoDetectingSchedule {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                            .tint(.white)
+                    }
+                    Text("Set Location")
+                        .font(.system(size: 17, weight: .semibold))
+                }
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 52)
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(viewModel.canProceedToScheduleConfirmation ? Color.blue : Color.blue.opacity(0.6))
+                )
             }
+            .disabled(!viewModel.canProceedToScheduleConfirmation)
             .buttonStyle(PlainButtonStyle())
         }
     }
@@ -419,7 +427,7 @@ struct VehicleLocationSetting: View {
                     viewModel.isSettingLocationForNewVehicle = false
                     viewModel.startSettingLocationForVehicle(currentVehicle)
                 }) {
-                    Text("Move Vehicle")
+                    Text(currentVehicle.parkingLocation != nil ? "Move Vehicle" : "Set Vehicle Location")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)

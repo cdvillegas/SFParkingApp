@@ -35,6 +35,7 @@ class VehicleParkingViewModel: ObservableObject {
     @Published var selectedScheduleIndex: Int = 0
     @Published var hasSelectedSchedule: Bool = true
     @Published var showingScheduleSelection = false
+    @Published var schedulesLoadedForCurrentLocation = false
     
     // Two-step flow states
     @Published var isConfirmingSchedule = false
@@ -115,8 +116,8 @@ class VehicleParkingViewModel: ObservableObject {
             let distance = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
                 .distance(from: CLLocation(latitude: lastCoordinate.latitude, longitude: lastCoordinate.longitude))
             
-            // Only detect if we've moved more than 10 meters
-            if distance < 10 {
+            // Only detect if we've moved more than 5 meters (reduced for faster response)
+            if distance < 5 {
                 return
             }
         }
@@ -124,8 +125,8 @@ class VehicleParkingViewModel: ObservableObject {
         // Cancel any existing timer
         detectionDebounceTimer?.invalidate()
         
-        // Start new detection timer
-        detectionDebounceTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { _ in
+        // Reduced debounce time for faster response
+        detectionDebounceTimer = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: false) { _ in
             self.performScheduleDetection(for: coordinate)
         }
     }
@@ -135,10 +136,12 @@ class VehicleParkingViewModel: ObservableObject {
         
         isAutoDetectingSchedule = true
         lastDetectionCoordinate = coordinate
+        schedulesLoadedForCurrentLocation = false
         
         StreetDataService.shared.getNearbySchedulesForSelection(for: coordinate) { result in
             DispatchQueue.main.async {
                 self.isAutoDetectingSchedule = false
+                self.schedulesLoadedForCurrentLocation = true
                 
                 switch result {
                 case .success(let schedulesWithSides):
@@ -199,7 +202,15 @@ class VehicleParkingViewModel: ObservableObject {
         isConfirmingSchedule = true
         
         centerMapOnLocationWithZoomIn(coordinate)
-        detectSchedulesForConfirmation(at: coordinate)
+        
+        // Schedules should already be loaded from background detection
+        // Set initial selection if schedules exist
+        if !nearbySchedules.isEmpty {
+            selectedScheduleIndex = 0
+            hasSelectedSchedule = true
+            hoveredScheduleIndex = 0
+        }
+        // Note: If schedules are empty, it means no restrictions found (which is valid)
     }
     
     func goBackToLocationSetting() {
@@ -323,6 +334,7 @@ class VehicleParkingViewModel: ObservableObject {
         isAutoDetectingSchedule = false
         lastDetectionCoordinate = nil
         detectionDebounceTimer?.invalidate()
+        schedulesLoadedForCurrentLocation = false
         
         // Reset two-step flow state
         confirmedLocation = nil
@@ -367,6 +379,13 @@ class VehicleParkingViewModel: ObservableObject {
     }
     
     // MARK: - Computed Properties
+    
+    var canProceedToScheduleConfirmation: Bool {
+        // Can proceed if we're not currently detecting schedules AND either:
+        // 1. Schedules have been loaded for the current location, OR
+        // 2. We've never started detection (e.g., for areas with no API coverage)
+        return !isAutoDetectingSchedule && (schedulesLoadedForCurrentLocation || lastDetectionCoordinate == nil)
+    }
     
     var locationStatusTitle: String {
         // Show the address if available, otherwise show current parking location address
@@ -428,13 +447,13 @@ class VehicleParkingViewModel: ObservableObject {
         } else if isSettingLocation {
             return "Position the pin where you parked"
         } else {
-            // Show last parked timing for My Vehicle
+            // Show last parked timing for My Vehicle or initial instruction
             if let currentVehicle = vehicleManager.currentVehicle,
                let parkingLocation = currentVehicle.parkingLocation {
                 let timeAgo = formatTimeAgo(from: parkingLocation.timestamp)
                 return "Last parked \(timeAgo)"
             } else {
-                return nil
+                return "Location not set"
             }
         }
     }

@@ -102,7 +102,7 @@ struct VehicleSwipeCard: View {
                             .font(.caption)
                             .foregroundColor(.blue)
                     } else {
-                        Text("No parking location set")
+                        Text("No vehicle location set")
                             .font(.headline)
                             .fontWeight(.semibold)
                             .foregroundColor(.secondary)

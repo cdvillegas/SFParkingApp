@@ -24,6 +24,11 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         
         authorizationStatus = locationManager.authorizationStatus
         print("LocationManager initialized with status: \(authorizationStatus.rawValue)")
+        
+        // Start location updates if already authorized
+        if authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways {
+            startLocationUpdates()
+        }
     }
     
     func requestLocationPermission() {

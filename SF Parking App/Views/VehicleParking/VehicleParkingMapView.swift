@@ -327,22 +327,45 @@ struct VehicleParkingMapView: View {
         currentMapHeading = context.camera.heading
         
         if viewModel.isSettingLocation && !viewModel.isConfirmingSchedule {
-            // Step 1: Location setting - no schedule detection
+            // Step 1: Location setting with background schedule detection
             let newCoordinate = context.camera.centerCoordinate
             viewModel.settingCoordinate = newCoordinate
+            
+            // Geocode the address
             viewModel.debouncedGeocoder.reverseGeocode(coordinate: newCoordinate) { address, _ in
                 DispatchQueue.main.async {
                     viewModel.settingAddress = address
                 }
             }
             
-        } else if viewModel.isConfirmingSchedule {
-            // Step 2: Schedule confirmation
-            let newCoordinate = context.camera.centerCoordinate
-            viewModel.settingCoordinate = newCoordinate
+            // Detect schedules in background for faster Step 2 transition
+            viewModel.autoDetectSchedule(for: newCoordinate)
             
-            // Smart selection between existing drawn lines
-            smartSelectBetweenDrawnLines(for: newCoordinate)
+        } else if viewModel.isConfirmingSchedule {
+            // Step 2: Schedule confirmation with movement restriction
+            let newCoordinate = context.camera.centerCoordinate
+            
+            // Restrict movement to ~100 feet (30 meters) from confirmed location
+            if let confirmedLocation = viewModel.confirmedLocation {
+                let distance = CLLocation(latitude: newCoordinate.latitude, longitude: newCoordinate.longitude)
+                    .distance(from: CLLocation(latitude: confirmedLocation.latitude, longitude: confirmedLocation.longitude))
+                
+                // Only allow movement within 30 meters (~100 feet)
+                if distance <= 30.0 {
+                    viewModel.settingCoordinate = newCoordinate
+                    // Smart selection between existing drawn lines
+                    smartSelectBetweenDrawnLines(for: newCoordinate)
+                } else {
+                    // User tried to move outside allowed radius - provide haptic feedback
+                    let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                    impactFeedback.impactOccurred()
+                }
+                // If outside radius, keep the current coordinate (don't update settingCoordinate)
+            } else {
+                // Fallback if no confirmed location
+                viewModel.settingCoordinate = newCoordinate
+                smartSelectBetweenDrawnLines(for: newCoordinate)
+            }
         }
     }
     
