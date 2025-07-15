@@ -46,6 +46,9 @@ class VehicleParkingViewModel: ObservableObject {
     // Notification state
     @Published var showingNotificationPermissionAlert = false
     
+    // Location state (forwarded from LocationManager)
+    @Published var userHeading: CLLocationDirection = 0
+    
     // MARK: - Private Properties
     
     private var detectionDebounceTimer: Timer?
@@ -74,6 +77,17 @@ class VehicleParkingViewModel: ObservableObject {
         self.vehicleManager = vehicleManager
         self.debouncedGeocoder = debouncedGeocoder
         self.notificationManager = notificationManager
+        
+        // Subscribe to LocationManager changes to forward them as published properties
+        setupLocationSubscriptions()
+    }
+    
+    private func setupLocationSubscriptions() {
+        // Forward heading changes from LocationManager
+        locationManager.$userHeading
+            .receive(on: DispatchQueue.main)
+            .assign(to: \.userHeading, on: self)
+            .store(in: &cancellables)
     }
     
     // MARK: - Location Setting Methods

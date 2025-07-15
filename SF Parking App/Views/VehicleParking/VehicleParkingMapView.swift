@@ -8,6 +8,11 @@ struct VehicleParkingMapView: View {
     @State private var impactFeedbackLight = UIImpactFeedbackGenerator(style: .light)
     @State private var userLocation: CLLocation?
     
+    // Use ViewModel's published heading property
+    private var currentHeading: CLLocationDirection {
+        viewModel.userHeading
+    }
+    
     var body: some View {
         Map(position: $viewModel.mapPosition, interactionModes: .all) {
             // User location annotation
@@ -196,9 +201,10 @@ struct VehicleParkingMapView: View {
     
     @MapContentBuilder
     private var userLocationAnnotation: some MapContent {
-        ForEach([userLocation].compactMap { $0 }, id: \.timestamp) { location in
-            Annotation("", coordinate: location.coordinate) {
-                UserDirectionCone(heading: viewModel.locationManager.userHeading, mapHeading: currentMapHeading)
+        if let userLocation = userLocation {
+            Annotation("", coordinate: userLocation.coordinate) {
+                UserDirectionCone(heading: currentHeading, mapHeading: currentMapHeading)
+                    .id("userLocation-\(currentHeading)-\(currentMapHeading)")
             }
         }
     }

@@ -8,6 +8,7 @@
 import Foundation
 import CoreLocation
 import Combine
+import UIKit
 
 class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     private let locationManager = CLLocationManager()
@@ -20,7 +21,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
         locationManager.distanceFilter = 10
-        locationManager.headingFilter = 5 // Update heading every 5 degrees
+        locationManager.headingFilter = 2 // Update heading every 2 degrees for smoother updates
         
         authorizationStatus = locationManager.authorizationStatus
         print("LocationManager initialized with status: \(authorizationStatus.rawValue)")
@@ -28,6 +29,31 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         // Start location updates if already authorized
         if authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways {
             startLocationUpdates()
+        }
+        
+        // Listen for app lifecycle changes to maintain heading updates
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appDidBecomeActive),
+            name: UIApplication.didBecomeActiveNotification,
+            object: nil
+        )
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    @objc private func appDidBecomeActive() {
+        print("App became active - ensuring heading updates are running")
+        // Restart heading updates when app becomes active
+        if authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways {
+            if CLLocationManager.headingAvailable() {
+                print("Restarting heading updates after app became active - filter: \(locationManager.headingFilter)°")
+                locationManager.startUpdatingHeading()
+            } else {
+                print("⚠️ Heading not available for restart")
+            }
         }
     }
     
@@ -88,8 +114,10 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         
         // Start heading updates if available
         if CLLocationManager.headingAvailable() {
-            print("Starting heading updates")
+            print("Starting heading updates - heading filter: \(locationManager.headingFilter)°")
             locationManager.startUpdatingHeading()
+        } else {
+            print("⚠️ Heading not available on this device")
         }
     }
     
@@ -144,9 +172,11 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
         // Use magnetic heading for better accuracy
         let heading = newHeading.magneticHeading >= 0 ? newHeading.magneticHeading : newHeading.trueHeading
+        print("📍 Heading updated: \(heading)° (magnetic: \(newHeading.magneticHeading), true: \(newHeading.trueHeading))")
         
         DispatchQueue.main.async {
             self.userHeading = heading
+            print("📍 Published heading: \(self.userHeading)°")
         }
     }
     

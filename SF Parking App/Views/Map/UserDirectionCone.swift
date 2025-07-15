@@ -25,6 +25,7 @@ struct UserDirectionCone: View {
                 .frame(width: 40, height: 28) // Bigger cone
                 .offset(y: -18) // Position beam pointing outward from center
                 .rotationEffect(.degrees(heading - mapHeading)) // Relative to map rotation
+                .animation(.easeInOut(duration: 0.3), value: heading - mapHeading)
             
             // User location dot - bigger and more visible
             Circle()
