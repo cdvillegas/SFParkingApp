@@ -1,4 +1,5 @@
 import SwiftUI
+import MapKit
 
 struct VehicleLocationSetting: View {
     @ObservedObject var viewModel: VehicleParkingViewModel
@@ -293,14 +294,16 @@ struct VehicleLocationSetting: View {
             onVehicleSelected: { _ in },
             onVehicleTap: { vehicle in
                 if vehicle.parkingLocation != nil {
-                    // Open in Maps or center on location
+                    openVehicleInMaps(vehicle)
                 } else {
                     impactFeedbackLight.impactOccurred()
                     viewModel.isSettingLocationForNewVehicle = false
                     viewModel.startSettingLocationForVehicle(vehicle)
                 }
             },
-            onShareLocation: { _ in }
+            onShareLocation: { parkingLocation in
+                shareParkingLocation(parkingLocation)
+            }
         )
         .frame(minHeight: 100)
     }
@@ -434,6 +437,48 @@ struct VehicleLocationSetting: View {
                         )
                 }
                 .buttonStyle(PlainButtonStyle())
+            }
+        }
+    }
+    
+    // MARK: - Map and Share Functions
+    
+    private func openVehicleInMaps(_ vehicle: Vehicle) {
+        guard let parkingLocation = vehicle.parkingLocation else {
+            impactFeedbackLight.impactOccurred()
+            return
+        }
+        
+        impactFeedbackLight.prepare()
+        impactFeedbackLight.impactOccurred()
+        
+        let coordinate = parkingLocation.coordinate
+        let placemark = MKPlacemark(coordinate: coordinate)
+        let mapItem = MKMapItem(placemark: placemark)
+        mapItem.name = "Parking Location"
+        
+        mapItem.openInMaps(launchOptions: [:])
+    }
+    
+    private func shareParkingLocation(_ parkingLocation: ParkingLocation) {
+        let coordinate = parkingLocation.coordinate
+        let mapLink = "https://maps.apple.com/?ll=\(coordinate.latitude),\(coordinate.longitude)&q=Parking%20Location"
+        
+        let shareItems: [Any] = [
+            URL(string: mapLink)!
+        ]
+        
+        let activityViewController = UIActivityViewController(
+            activityItems: shareItems,
+            applicationActivities: nil
+        )
+        
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let rootViewController = windowScene.windows.first?.rootViewController {
+            if let presentedViewController = rootViewController.presentedViewController {
+                presentedViewController.present(activityViewController, animated: true)
+            } else {
+                rootViewController.present(activityViewController, animated: true)
             }
         }
     }
