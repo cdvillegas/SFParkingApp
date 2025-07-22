@@ -1,0 +1,23 @@
+2025-07-21 11:49:32,425 - INFO - 🚀 Starting Full SF Parking Citation Analysis Pipeline
+2025-07-21 11:49:32,425 - INFO - ================================================================================
+2025-07-21 11:49:32,425 - INFO -    Processing 90 days of data with 2 workers
+2025-07-21 11:49:32,425 - INFO -    Output directory: ../output/pipeline_test
+2025-07-21 11:49:32,425 - INFO - ================================================================================
+2025-07-21 11:49:32,425 - INFO - 📅 Step 1: Fetching street sweeping schedule data from SF Open Data API
+2025-07-21 11:49:32,425 - INFO -    Fetching schedule batch at offset 0...
+2025-07-21 11:49:34,363 - INFO -    Fetched 37878 schedules (total: 37878)
+2025-07-21 11:49:34,363 - INFO - ✅ Fetched 37878 schedule records from API
+2025-07-21 11:49:34,546 - INFO - 💾 Saved raw schedule data to ../output/pipeline_test/schedule_raw_20250721_114932.csv
+2025-07-21 11:49:34,550 - INFO - 🧹 Step 2: Cleaning and consolidating schedule data
+2025-07-21 11:49:37,209 - INFO - ✅ Schedule cleaning completed successfully
+2025-07-21 11:49:37,222 - INFO - 📊 Cleaned schedule: 37,878 → 13,773 records
+2025-07-21 11:49:37,222 - INFO - 🚗 Step 3: Fetching 90 days of street sweeping citations
+2025-07-21 11:49:37,222 - INFO -    Date range: 2025-04-22 to 2025-07-21
+2025-07-21 11:49:37,222 - INFO -    Fetching citation batch at offset 0...
+2025-07-21 11:49:40,671 - INFO -    Fetched 50000 citations (total: 50000)
+2025-07-21 11:49:42,177 - INFO -    Fetching citation batch at offset 50000...
+2025-07-21 11:49:43,720 - INFO -    Fetched 46401 citations (total: 96401)
+2025-07-21 11:49:43,720 - INFO - ✅ Fetched 96401 street sweeping citations from API
+2025-07-21 11:49:43,900 - INFO - 💾 Saved raw citation data to ../output/pipeline_test/citations_raw_20250721_114932.csv
+2025-07-21 11:49:43,904 - INFO - 📍 Step 4: Geocoding all citations with parallel processing
+2025-07-21 11:49:43,968 - INFO -    Running: /Applications/Xcode.app/Contents/Developer/usr/bin/python3 production_citation_processor.py --input-file temp_citations_for_geocoding.csv --workers 2 --batch-size 50 --rate-limit 0.3 --min-confidence MEDIUM --output ../output/pipeline_test/citations_geocoded_20250721_114932.csv --no-resume

@@ -1,0 +1,23 @@
+citation_id,address,datetime,latitude,longitude,returned_address,confidence,confidence_score,geocoding_status
+989188270,608 48TH AVE,2025-06-27T13:15:00.000,37.7768197,-122.5090086,"608, 48th Avenue, San Francisco, California, 94121, United States",HIGH,90,SUCCESS
+989426885,595 HEARST AVE,2025-06-27T13:14:00.000,37.7305993,-122.4509046,"595, Hearst Avenue, Westwood Park, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989345453,2438 47TH AVE,2025-06-27T13:15:00.000,37.7409902,-122.5054075,"2438, 47th Avenue, Outer Sunset, Sunset District, San Francisco, California, 94166, United States",HIGH,90,SUCCESS
+989425216,111 BUCHANAN ST,2025-06-27T12:39:00.000,37.7708393,-122.4269223,"111, Buchanan Street, Western Addition, San Francisco, California, 94102, United States",HIGH,90,SUCCESS
+989333332,668 ELLSWORTH ST,2025-06-27T12:33:00.000,37.7351278,-122.4150551,"668, Ellsworth Street, Bernal Heights, San Francisco, California, 94134, United States",HIGH,90,SUCCESS
+989425135,739 BUCHANAN ST,2025-06-27T12:31:00.000,37.7768886,-122.4279369,"739, Buchanan Street, Fillmore District, Western Addition, San Francisco, California, 94102, United States",HIGH,90,SUCCESS
+989428926,46 OCTAVIA ST,2025-06-27T12:28:00.000,37.772462,-122.4236655,"46, Octavia Street, Western Addition, San Francisco, California, 94102, United States",HIGH,90,SUCCESS
+989026452,400 22ND ST,2025-06-27T12:31:00.000,37.757845,-122.383599,"400, 22nd Street, Pier 70, San Francisco, California, 94107, United States",HIGH,90,SUCCESS
+989269212,333 BAKER ST,2025-06-27T12:22:00.000,37.7739849,-122.4412864,"333, Baker Street, North of Panhandle, San Francisco, California, 94177, United States",HIGH,90,SUCCESS
+989131990,126 PRENTISS ST,2025-06-27T12:18:00.000,37.7410091,-122.4122127,"126, Prentiss Street, Bernal Heights, San Francisco, California, 94134, United States",HIGH,90,SUCCESS
+989341920,3801 22ND ST,2025-06-27T12:19:00.000,37.754537,-122.432324,"3801, 22nd Street, Noe Valley, Mission District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989341905,3879 22ND ST,2025-06-27T12:18:00.000,37.7543493,-122.4338429,"3879, 22nd Street, Noe Valley, Mission District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989026371,4128 23RD ST,2025-06-27T12:18:00.000,37.7530608,-122.4349975,"4128, 23rd Street, Noe Valley, Mission District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989297083,645 41ST AVE,2025-06-27T12:17:00.000,37.7765306,-122.5017755,"645, 41st Avenue, Outer Richmond, San Francisco, California, 94121, United States",HIGH,90,SUCCESS
+989269190,627 BAKER ST,2025-06-27T12:17:00.000,37.7769056,-122.4419813,"627, Baker Street, North of Panhandle, Western Addition, San Francisco, California, 94177, United States",HIGH,90,SUCCESS
+989258012,2555 MARKET ST,2025-06-27T12:17:00.000,37.7618027,-122.436945,"2555, Market Street, Castro District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989341894,3885 22ND ST,2025-06-27T12:17:00.000,37.7544376,-122.4339586,"3885, 22nd Street, Noe Valley, Mission District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989054555,902 WEBSTER ST,2025-06-27T12:16:00.000,37.778956,-122.4302455,"902, Webster Street, Fillmore District, Western Addition, San Francisco, California, 94115, United States",HIGH,90,SUCCESS
+989343633,3854 23RD ST,2025-06-27T12:14:00.000,37.7533993,-122.4288749,"3850;3852;3854, 23rd Street, Noe Valley, Mission District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989333295,211 BRADFORD ST,2025-06-27T12:14:00.000,37.7394155,-122.409392,"211, Bradford Street, Bernal Heights, San Francisco, California, 94134, United States",HIGH,90,SUCCESS
+988013563,601 SCOTT ST,2025-06-27T12:13:00.000,37.7753446,-122.4364077,"601, Scott Street, North of Panhandle, Western Addition, San Francisco, California, 95115, United States",HIGH,90,SUCCESS
+989410962,703 39TH AVE,2025-06-27T12:11:00.000,37.7754569,-122.4995476,"703, 39th Avenue, Outer Richmond, San Francisco, California, 94121, United States",HIGH,90,SUCCESS

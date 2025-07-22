@@ -1,0 +1,4 @@
+schedule_id,corridor,limits,schedule_from_hour,schedule_to_hour,total_citations,relevant_citations,avg_citation_hour,median_citation_hour,earliest_citation_hour,latest_citation_hour,citation_hour_std,estimated_sweeper_arrival_hour,confidence_level,citation_dates,avg_distance_meters
+2002208,22nd St,Noe St  -  Castro St,12,14,3,3,12.0,12.0,12,12,0.0,11.5,MEDIUM,"[datetime.date(2025, 6, 27)]",35.474034904886786
+2004109,Alvarado St,Castro St  -  Diamond St,12,14,3,3,12.0,12.0,12,12,0.0,11.5,MEDIUM,"[datetime.date(2025, 6, 27)]",85.42391957529419
+2004115,Alvarado St,Noe St  -  Castro St,12,14,4,4,12.0,12.0,12,12,0.0,11.5,MEDIUM,"[datetime.date(2025, 6, 27)]",86.69123312244672
