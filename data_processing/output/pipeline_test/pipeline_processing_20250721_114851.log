@@ -1,0 +1,20 @@
+2025-07-21 11:48:51,181 - INFO - 🚀 Starting Full SF Parking Citation Analysis Pipeline
+2025-07-21 11:48:51,181 - INFO - ================================================================================
+2025-07-21 11:48:51,181 - INFO -    Processing 7 days of data with 2 workers
+2025-07-21 11:48:51,181 - INFO -    Output directory: ../output/pipeline_test
+2025-07-21 11:48:51,181 - INFO - ================================================================================
+2025-07-21 11:48:51,181 - INFO - 📅 Step 1: Fetching street sweeping schedule data from SF Open Data API
+2025-07-21 11:48:51,181 - INFO -    Fetching schedule batch at offset 0...
+2025-07-21 11:48:54,368 - INFO -    Fetched 37878 schedules (total: 37878)
+2025-07-21 11:48:54,368 - INFO - ✅ Fetched 37878 schedule records from API
+2025-07-21 11:48:54,560 - INFO - 💾 Saved raw schedule data to ../output/pipeline_test/schedule_raw_20250721_114851.csv
+2025-07-21 11:48:54,565 - INFO - 🧹 Step 2: Cleaning and consolidating schedule data
+2025-07-21 11:48:57,244 - INFO - ✅ Schedule cleaning completed successfully
+2025-07-21 11:48:57,257 - INFO - 📊 Cleaned schedule: 37,878 → 13,773 records
+2025-07-21 11:48:57,257 - INFO - 🚗 Step 3: Fetching 7 days of street sweeping citations
+2025-07-21 11:48:57,257 - INFO -    Date range: 2025-07-14 to 2025-07-21
+2025-07-21 11:48:57,257 - INFO -    Fetching citation batch at offset 0...
+2025-07-21 11:48:57,864 - INFO - ✅ Fetched 0 street sweeping citations from API
+2025-07-21 11:48:57,868 - INFO - 💾 Saved raw citation data to ../output/pipeline_test/citations_raw_20250721_114851.csv
+2025-07-21 11:48:57,870 - INFO - 📍 Step 4: Geocoding all citations with parallel processing
+2025-07-21 11:48:57,895 - ERROR - ❌ Pipeline failed: "None of [Index(['citation_location', 'citation_issued_datetime'], dtype='object')] are in the [columns]"

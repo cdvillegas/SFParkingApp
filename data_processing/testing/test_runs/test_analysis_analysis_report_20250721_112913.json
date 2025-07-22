@@ -1,0 +1,42 @@
+{
+  "analysis_timestamp": "2025-07-21T11:29:13.504381",
+  "dataset_summary": {
+    "total_matches": 84,
+    "unique_schedules_matched": 77,
+    "schedules_with_estimates": 3,
+    "unique_citations": 21
+  },
+  "matching_quality": {
+    "time_relevance_distribution": {
+      "DURING_SCHEDULE": 65,
+      "OUTSIDE_SCHEDULE": 11,
+      "AFTER_SCHEDULE": 8
+    },
+    "distance_analysis": {
+      "avg_match_distance_meters": 60.68248424411238,
+      "median_match_distance_meters": 68.79454094625845,
+      "max_match_distance_meters": 99.38721411940433,
+      "within_25m_percent": 19.047619047619047,
+      "within_50m_percent": 35.714285714285715
+    }
+  },
+  "estimation_quality": {
+    "confidence_distribution": {
+      "MEDIUM": 3
+    },
+    "temporal_analysis": {
+      "avg_estimated_sweeper_hour": 11.5,
+      "earliest_sweeper_estimate": 11.5,
+      "latest_sweeper_estimate": 11.5,
+      "citation_hour_range": {
+        "earliest": "12",
+        "latest": "13",
+        "most_common": "12"
+      }
+    }
+  },
+  "coverage_analysis": {
+    "schedules_with_sufficient_data_pct": 3.896103896103896,
+    "avg_citations_per_schedule": 1.0909090909090908
+  }
+}

@@ -1,0 +1,34 @@
+2025-07-21 11:28:52,501 - INFO - 🔍 Starting Citation-Schedule Matching Analysis
+2025-07-21 11:28:52,501 - INFO - ============================================================
+2025-07-21 11:28:52,501 - INFO - Loading citation data from test_citations.csv
+2025-07-21 11:28:52,507 - INFO - Loaded 22 high/medium confidence citations
+2025-07-21 11:28:52,507 - INFO - Loading schedule data from Street_Sweeping_Schedule_Cleaned_Simple.csv
+2025-07-21 11:28:52,575 - INFO - Loaded 22892 schedules with GPS coordinates
+2025-07-21 11:28:52,575 - INFO - Processing citation-schedule matches...
+2025-07-21 11:28:52,575 - INFO - Processing citation 0/22
+2025-07-21 11:29:13,493 - INFO - Found 84 citation-schedule matches
+2025-07-21 11:29:13,494 - INFO - Calculating estimated citation times per schedule...
+2025-07-21 11:29:13,501 - INFO - Generated estimates for 3 schedules
+2025-07-21 11:29:13,502 - INFO - Exported 84 matches to test_analysis_matches_20250721_112913.csv
+2025-07-21 11:29:13,503 - INFO - Exported 3 estimates to test_analysis_estimates_20250721_112913.csv
+2025-07-21 11:29:13,504 - INFO - Exported analysis report to test_analysis_analysis_report_20250721_112913.json
+2025-07-21 11:29:13,504 - INFO - 🎉 Analysis completed in 0:00:21.002664
+2025-07-21 11:29:13,504 - INFO - 📊 Found 84 matches for 77 schedules
+2025-07-21 11:29:13,504 - INFO - 🎯 Generated estimates for 3 schedules
+2025-07-21 11:32:53,701 - INFO - 🔍 Starting Citation-Schedule Matching Analysis (STRICT TIMING)
+2025-07-21 11:32:53,701 - INFO - ============================================================
+2025-07-21 11:32:53,701 - INFO - Loading citation data from test_citations.csv
+2025-07-21 11:32:53,709 - INFO - Loaded 22 high/medium confidence citations
+2025-07-21 11:32:53,709 - INFO - Loading schedule data from Street_Sweeping_Schedule_Cleaned_Simple.csv
+2025-07-21 11:32:53,776 - INFO - Loaded 22892 schedules with GPS coordinates
+2025-07-21 11:32:53,776 - INFO - Processing citation-schedule matches with strict timing...
+2025-07-21 11:32:53,776 - INFO - Processing citation 0/22
+2025-07-21 11:32:57,498 - INFO - Found 65 citation-schedule matches
+2025-07-21 11:32:57,498 - INFO - Calculating estimated citation times per schedule...
+2025-07-21 11:32:57,508 - INFO - Generated estimates for 3 schedules
+2025-07-21 11:32:57,509 - INFO - Exported 65 matches to strict_timing_test_matches_20250721_113257.csv
+2025-07-21 11:32:57,510 - INFO - Exported 3 estimates to strict_timing_test_estimates_20250721_113257.csv
+2025-07-21 11:32:57,511 - INFO - Exported analysis report to strict_timing_test_analysis_report_20250721_113257.json
+2025-07-21 11:32:57,511 - INFO - 🎉 Analysis completed in 0:00:03.809589
+2025-07-21 11:32:57,511 - INFO - 📊 Found 65 matches for 58 schedules
+2025-07-21 11:32:57,511 - INFO - 🎯 Generated estimates for 3 schedules

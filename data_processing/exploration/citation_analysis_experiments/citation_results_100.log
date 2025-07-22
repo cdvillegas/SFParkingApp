@@ -1,0 +1,1410 @@
+/Users/zshor/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+🚗 Street Cleaning Citations with GPS Coordinates & Validation
+======================================================================
+Found 200 citations from last 90 days
+Testing random sample of 100 citations:
+
+ 1. Address: 502 WEBSTER ST
+    Time: 2025-06-27T12:14:00.000
+    GPS: (37.779642, -122.430148)
+    🔍 Validation:
+       Original: 502 WEBSTER ST
+       Returned: Webster Street, Fillmore District, Western Addition, San Francisco, California, 95115, United States
+       Street core: 'WEBSTER'
+       Core match: ✅ ('WEBSTER' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ❌ (502 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ❌ LOW (40/100)
+
+ 2. Address: 3020 SAN BRUNO AVE
+    Time: 2025-06-27T07:23:00.000
+    GPS: (37.723603, -122.402039)
+    🔍 Validation:
+       Original: 3020 SAN BRUNO AVE
+       Returned: 3020, San Bruno Avenue, Portola, Bayview District, San Francisco, California, 94134, United States
+       Street core: 'SAN BRUNO'
+       Core match: ✅ ('SAN BRUNO' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (3020 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+ 3. Address: 2324 CHESTNUT ST
+    Time: 2025-06-27T06:14:00.000
+    GPS: (37.800338, -122.441749)
+    🔍 Validation:
+       Original: 2324 CHESTNUT ST
+       Returned: Crunch Fitness, 2324, Chestnut Street, Marina District, San Francisco, California, 94123, United States
+       Street core: 'CHESTNUT'
+       Core match: ✅ ('CHESTNUT' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (2324 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+ 4. Address: 410 CABRILLO ST
+    Time: 2025-06-27T09:40:00.000
+    GPS: (37.775545, -122.463088)
+    🔍 Validation:
+       Original: 410 CABRILLO ST
+       Returned: 410;426, Cabrillo Street, Inner Richmond, Richmond District, San Francisco, California, 94118, United States
+       Street core: 'CABRILLO'
+       Core match: ✅ ('CABRILLO' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (410 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+ 5. Address: 623 HAIGHT ST
+    Time: 2025-06-27T08:34:00.000
+    GPS: (37.771641, -122.432509)
+    🔍 Validation:
+       Original: 623 HAIGHT ST
+       Returned: 619;621;623, Haight Street, Lower Haight, Western Addition, San Francisco, California, 94143, United States
+       Street core: 'HAIGHT'
+       Core match: ✅ ('HAIGHT' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (623 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+ 6. Address: 2315 LAKE ST
+    Time: 2025-06-27T08:38:00.000
+    GPS: (37.785565, -122.484408)
+    🔍 Validation:
+       Original: 2315 LAKE ST
+       Returned: 2315;2317, Lake Street, Seacliff, Richmond District, San Francisco, California, 94121, United States
+       Street core: 'LAKE'
+       Core match: ✅ ('LAKE' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (2315 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+ 7. Address: 37 29TH ST
+    Time: 2025-06-27T07:21:00.000
+    GPS: (37.743835, -122.421640)
+    🔍 Validation:
+       Original: 37 29TH ST
+       Returned: 33;37, 29th Street, Bernal Heights, San Francisco, California, 90110, United States
+       Street core: '29TH'
+       Core match: ✅ ('29TH' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (37 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+ 8. Address: 4 WEBSTER ST
+    Time: 2025-06-27T12:04:00.000
+    GPS: (37.770593, -122.428349)
+    🔍 Validation:
+       Original: 4 WEBSTER ST
+       Returned: 4, Webster Street, Western Addition, San Francisco, California, 94117, United States
+       Street core: 'WEBSTER'
+       Core match: ✅ ('WEBSTER' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (4 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+ 9. Address: 635 35TH AVE
+    Time: 2025-06-27T10:19:00.000
+    GPS: (37.776965, -122.495471)
+    🔍 Validation:
+       Original: 635 35TH AVE
+       Returned: 635;637, 35th Avenue, Outer Richmond, San Francisco, California, 94121, United States
+       Street core: '35TH'
+       Core match: ✅ ('35TH' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (635 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+10. Address: 3189 16TH ST
+    Time: 2025-06-27T02:33:00.000
+    GPS: (37.764722, -122.423758)
+    🔍 Validation:
+       Original: 3189 16TH ST
+       Returned: 3189, 16th Street, Mission District, San Francisco, California, 94103, United States
+       Street core: '16TH'
+       Core match: ✅ ('16TH' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (3189 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+11. Address: 801 SUTTER ST
+    Time: 2025-06-27T07:31:00.000
+    GPS: (37.786892, -122.426999)
+    🔍 Validation:
+       Original: 801 SUTTER ST
+       Returned: Sutter Street, Japantown, Western Addition, San Francisco, California, 95115, United States
+       Street core: 'SUTTER'
+       Core match: ✅ ('SUTTER' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ❌ (801 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ❌ LOW (40/100)
+
+12. Address: 739 BUCHANAN ST
+    Time: 2025-06-27T12:31:00.000
+    GPS: (37.776889, -122.427937)
+    🔍 Validation:
+       Original: 739 BUCHANAN ST
+       Returned: 739, Buchanan Street, Fillmore District, Western Addition, San Francisco, California, 94102, United States
+       Street core: 'BUCHANAN'
+       Core match: ✅ ('BUCHANAN' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (739 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+13. Address: 608 48TH AVE
+    Time: 2025-06-27T13:15:00.000
+    GPS: (37.776820, -122.509009)
+    🔍 Validation:
+       Original: 608 48TH AVE
+       Returned: 608, 48th Avenue, San Francisco, California, 94121, United States
+       Street core: '48TH'
+       Core match: ✅ ('48TH' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (608 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+14. Address: 3839 26TH ST
+    Time: 2025-06-27T09:34:00.000
+    GPS: (37.748366, -122.425831)
+    🔍 Validation:
+       Original: 3839 26TH ST
+       Returned: 3839;3841, 26th Street, Noe Valley, Mission District, San Francisco, California, 94114, United States
+       Street core: '26TH'
+       Core match: ✅ ('26TH' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (3839 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+15. Address: 660 27TH ST
+    Time: 2025-06-27T09:09:00.000
+    GPS: (37.746492, -122.435326)
+    🔍 Validation:
+       Original: 660 27TH ST
+       Returned: 660, 27th Street, Noe Valley, San Francisco, California, 94131, United States
+       Street core: '27TH'
+       Core match: ✅ ('27TH' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (660 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+16. Address: 443 ANDOVER ST
+    Time: 2025-06-27T08:57:00.000
+    GPS: (37.737884, -122.416397)
+    🔍 Validation:
+       Original: 443 ANDOVER ST
+       Returned: 443;459, Andover Street, Bernal Heights, San Francisco, California, 94134, United States
+       Street core: 'ANDOVER'
+       Core match: ✅ ('ANDOVER' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (443 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+17. Address: 1845 CLAY ST
+    Time: 2025-06-27T07:41:00.000
+    GPS: (37.791989, -122.423492)
+    🔍 Validation:
+       Original: 1845 CLAY ST
+       Returned: 1845, Clay Street, Polk Gulch, San Francisco, California, 94109, United States
+       Street core: 'CLAY'
+       Core match: ✅ ('CLAY' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (1845 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+18. Address: 1125 LARKIN ST
+    Time: 2025-06-27T06:23:00.000
+    GPS: (37.788129, -122.418603)
+    🔍 Validation:
+       Original: 1125 LARKIN ST
+       Returned: 1125, Larkin Street, Polk Gulch, San Francisco, California, 94109, United States
+       Street core: 'LARKIN'
+       Core match: ✅ ('LARKIN' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (1125 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+19. Address: 3854 23RD ST
+    Time: 2025-06-27T12:14:00.000
+    GPS: (37.753399, -122.428875)
+    🔍 Validation:
+       Original: 3854 23RD ST
+       Returned: 3850;3852;3854, 23rd Street, Noe Valley, Mission District, San Francisco, California, 94114, United States
+       Street core: '23RD'
+       Core match: ✅ ('23RD' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (3854 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+20. Address: 3775 MISSION ST
+    Time: 2025-06-27T06:21:00.000
+    GPS: (37.736281, -122.424143)
+    🔍 Validation:
+       Original: 3775 MISSION ST
+       Returned: 3773;3775;3777, Mission Street, St. Mary's Park, San Francisco, California, 94134, United States
+       Street core: 'MISSION'
+       Core match: ✅ ('MISSION' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (3775 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+21. Address: 501 HAIGHT ST
+    Time: 2025-06-27T08:37:00.000
+    GPS: (37.771992, -122.430564)
+    🔍 Validation:
+       Original: 501 HAIGHT ST
+       Returned: Haight Fillmore Whole Foods Co., 501, Haight Street, Lower Haight, Western Addition, San Francisco, California, 94117, United States
+       Street core: 'HAIGHT'
+       Core match: ✅ ('HAIGHT' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (501 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+22. Address: 701 GREAT HWY
+    Time: 2025-06-27T02:46:00.000
+    GPS: (37.774949, -122.511085)
+    🔍 Validation:
+       Original: 701 GREAT HWY
+       Returned: 701, Great Highway, San Francisco, California, 94121, United States
+       Street core: 'GREAT HWY'
+       Core match: ❌ ('GREAT HWY' not found)
+       Street match: ❌
+       Number match: ✅ (701 in result)
+       Specific addr: ✅ (not general street reference)
+       Confidence: ⚠️ MEDIUM (60/100)
+
+23. Address: 48 CENTRAL AVE
+    Time: 2025-06-27T08:23:00.000
+    GPS: (37.769357, -122.443539)
+    🔍 Validation:
+       Original: 48 CENTRAL AVE
+       Returned: 48, Central Avenue, Haight-Ashbury, San Francisco, California, 94117, United States
+       Street core: 'CENTRAL'
+       Core match: ✅ ('CENTRAL' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (48 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+24. Address: 1908 ANZA ST
+    Time: 2025-06-27T08:59:00.000
+    GPS: (37.779097, -122.468727)
+    🔍 Validation:
+       Original: 1908 ANZA ST
+       Returned: 1908;1910, Anza Street, Inner Richmond, Richmond District, San Francisco, California, 94118, United States
+       Street core: 'ANZA'
+       Core match: ✅ ('ANZA' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (1908 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+25. Address: 483 ELLIS ST
+    Time: 2025-06-27T06:57:00.000
+    GPS: (37.784616, -122.414042)
+    🔍 Validation:
+       Original: 483 ELLIS ST
+       Returned: 483, Ellis Street, Tenderloin, South of Market, San Francisco, California, 94102, United States
+       Street core: 'ELLIS'
+       Core match: ✅ ('ELLIS' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (483 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+26. Address: 747 SPRUCE ST
+    Time: 2025-06-27T09:37:00.000
+    GPS: (37.781030, -122.453224)
+    🔍 Validation:
+       Original: 747 SPRUCE ST
+       Returned: 747, Spruce Street, Laurel Heights, San Francisco, California, 94118, United States
+       Street core: 'SPRUCE'
+       Core match: ✅ ('SPRUCE' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (747 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+27. Address: 2514 SACRAMENTO ST
+    Time: 2025-06-27T06:12:00.000
+    GPS: (37.789875, -122.434388)
+    🔍 Validation:
+       Original: 2514 SACRAMENTO ST
+       Returned: 2514, Sacramento Street, Pacific Heights, San Francisco, California, 94115, United States
+       Street core: 'SACRAMENTO'
+       Core match: ✅ ('SACRAMENTO' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (2514 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+28. Address: 14 WALTER ST
+    Time: 2025-06-27T08:48:00.000
+    GPS: (37.768861, -122.432674)
+    🔍 Validation:
+       Original: 14 WALTER ST
+       Returned: 14,16,18, Walter Street, Western Addition, San Francisco, California, 94143, United States
+       Street core: 'WALTER'
+       Core match: ✅ ('WALTER' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (14 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+29. Address: 348 CHURCH ST
+    Time: 2025-06-27T09:03:00.000
+    GPS: (37.765370, -122.429072)
+    🔍 Validation:
+       Original: 348 CHURCH ST
+       Returned: 348, Church Street, Duboce Triangle, Mission District, San Francisco, California, 94143, United States
+       Street core: 'CHURCH'
+       Core match: ✅ ('CHURCH' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (348 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+30. Address: 2 HOFF ST
+    Time: 2025-06-27T04:04:00.000
+    GPS: (37.764438, -122.420633)
+    🔍 Validation:
+       Original: 2 HOFF ST
+       Returned: 2, Hoff Street, Mission District, San Francisco, California, 94110, United States
+       Street core: 'HOFF'
+       Core match: ✅ ('HOFF' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (2 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+31. Address: 318 06TH ST
+    Time: 2025-06-27T04:10:00.000
+    GPS: Could not geocode
+    🔍 Validation: ❌ No result found
+
+32. Address: 795 LAKE ST
+    Time: 2025-06-27T08:49:00.000
+    GPS: (37.786457, -122.467707)
+    🔍 Validation:
+       Original: 795 LAKE ST
+       Returned: 795, Lake Street, Presidio Terrace, Richmond District, San Francisco, California, 94118, United States
+       Street core: 'LAKE'
+       Core match: ✅ ('LAKE' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (795 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+33. Address: 1741 BALBOA ST
+    Time: 2025-06-27T09:30:00.000
+    GPS: (37.776474, -122.477761)
+    🔍 Validation:
+       Original: 1741 BALBOA ST
+       Returned: 1737;1741;1751, Balboa Street, Richmond District, San Francisco, California, 94121, United States
+       Street core: 'BALBOA'
+       Core match: ✅ ('BALBOA' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (1741 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+34. Address: 663 ELIZABETH ST
+    Time: 2025-06-27T09:47:00.000
+    GPS: (37.751929, -122.435515)
+    🔍 Validation:
+       Original: 663 ELIZABETH ST
+       Returned: 663, Elizabeth Street, Noe Valley, Mission District, San Francisco, California, 94114, United States
+       Street core: 'ELIZABETH'
+       Core match: ✅ ('ELIZABETH' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (663 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+35. Address: 1735 HYDE ST
+    Time: 2025-06-27T08:10:00.000
+    GPS: (37.796823, -122.418802)
+    🔍 Validation:
+       Original: 1735 HYDE ST
+       Returned: 1735, Hyde Street, Russian Hill, San Francisco, California, 90214, United States
+       Street core: 'HYDE'
+       Core match: ✅ ('HYDE' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (1735 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+36. Address: 61 ELK ST
+    Time: 2025-06-27T09:39:00.000
+    GPS: (37.736432, -122.439555)
+    🔍 Validation:
+       Original: 61 ELK ST
+       Returned: 61, Elk Street, Glen Park, San Francisco, California, 94131, United States
+       Street core: 'ELK'
+       Core match: ✅ ('ELK' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (61 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+37. Address: 222 WEBSTER ST
+    Time: 2025-06-27T12:07:00.000
+    GPS: (37.772686, -122.428686)
+    🔍 Validation:
+       Original: 222 WEBSTER ST
+       Returned: 222, Webster Street, Lower Haight, Western Addition, San Francisco, California, 94143, United States
+       Street core: 'WEBSTER'
+       Core match: ✅ ('WEBSTER' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (222 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+38. Address: 722 CLAYTON ST
+    Time: 2025-06-27T08:15:00.000
+    GPS: (37.768442, -122.448085)
+    🔍 Validation:
+       Original: 722 CLAYTON ST
+       Returned: 720;722, Clayton Street, Haight-Ashbury, San Francisco, California, 94114, United States
+       Street core: 'CLAYTON'
+       Core match: ✅ ('CLAYTON' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (722 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+39. Address: 147 LAKE ST
+    Time: 2025-06-27T08:53:00.000
+    GPS: (37.786713, -122.461187)
+    🔍 Validation:
+       Original: 147 LAKE ST
+       Returned: 143;147;149, Lake Street, Presidio Terrace, Richmond District, San Francisco, California, 94118, United States
+       Street core: 'LAKE'
+       Core match: ✅ ('LAKE' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (147 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+40. Address: 2285 KEITH ST
+    Time: 2025-06-27T02:58:00.000
+    GPS: (37.726965, -122.391441)
+    🔍 Validation:
+       Original: 2285 KEITH ST
+       Returned: 2285, Keith Street, Bayview District, San Francisco, California, 94124, United States
+       Street core: 'KEITH'
+       Core match: ✅ ('KEITH' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (2285 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+41. Address: 4 GENEVA AVE
+    Time: 2025-06-27T07:05:00.000
+    GPS: (37.722877, -122.452244)
+    🔍 Validation:
+       Original: 4 GENEVA AVE
+       Returned: 4, Geneva Avenue, Ingleside, San Francisco, California, 94112, United States
+       Street core: 'GENEVA'
+       Core match: ✅ ('GENEVA' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (4 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+42. Address: 2761 SAN JOSE AVE
+    Time: 2025-06-27T08:05:00.000
+    GPS: (37.713450, -122.452808)
+    🔍 Validation:
+       Original: 2761 SAN JOSE AVE
+       Returned: 2761, San Jose Avenue, Outer Mission, San Francisco, California, 94112, United States
+       Street core: 'SAN JOSE'
+       Core match: ✅ ('SAN JOSE' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (2761 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+43. Address: 222 BENTON AVE
+    Time: 2025-06-27T08:23:00.000
+    GPS: (37.732863, -122.423085)
+    🔍 Validation:
+       Original: 222 BENTON AVE
+       Returned: 222, Benton Avenue, St. Mary's Park, San Francisco, California, 94112, United States
+       Street core: 'BENTON'
+       Core match: ✅ ('BENTON' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (222 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+44. Address: 280 SHOTWELL ST
+    Time: 2025-06-27T08:14:00.000
+    GPS: (37.764003, -122.416368)
+    🔍 Validation:
+       Original: 280 SHOTWELL ST
+       Returned: 280, Shotwell Street, Mission District, San Francisco, California, 94110, United States
+       Street core: 'SHOTWELL'
+       Core match: ✅ ('SHOTWELL' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (280 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+45. Address: 3274 21ST ST
+    Time: 2025-06-27T06:43:00.000
+    GPS: (37.757144, -122.420532)
+    🔍 Validation:
+       Original: 3274 21ST ST
+       Returned: 3266;3270;3274, 21st Street, Mission District, San Francisco, California, 90110, United States
+       Street core: '21ST'
+       Core match: ✅ ('21ST' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (3274 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+46. Address: 404 28TH ST
+    Time: 2025-06-27T08:57:00.000
+    GPS: (37.745098, -122.431498)
+    🔍 Validation:
+       Original: 404 28TH ST
+       Returned: 404, 28th Street, Noe Valley, San Francisco, California, 94131, United States
+       Street core: '28TH'
+       Core match: ✅ ('28TH' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (404 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+47. Address: 248 46TH AVE
+    Time: 2025-06-27T13:08:00.000
+    GPS: (37.739916, -122.504508)
+    🔍 Validation:
+       Original: 248 46TH AVE
+       Returned: 46th Avenue, Sunset District, San Francisco, California, 94166, United States
+       Street core: '46TH'
+       Core match: ✅ ('46TH' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ❌ (248 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ❌ LOW (40/100)
+
+48. Address: 232 30TH ST
+    Time: 2025-06-27T08:13:00.000
+    GPS: (37.742366, -122.425115)
+    🔍 Validation:
+       Original: 232 30TH ST
+       Returned: 232;234, 30th Street, Noe Valley, San Francisco, California, 94114, United States
+       Street core: '30TH'
+       Core match: ✅ ('30TH' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (232 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+49. Address: 311 LEAVENWORTH ST
+    Time: 2025-06-27T06:10:00.000
+    GPS: (37.783903, -122.414383)
+    🔍 Validation:
+       Original: 311 LEAVENWORTH ST
+       Returned: 311, Leavenworth Street, Tenderloin, South of Market, San Francisco, California, 94102, United States
+       Street core: 'LEAVENWORTH'
+       Core match: ✅ ('LEAVENWORTH' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (311 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+50. Address: 645 41ST AVE
+    Time: 2025-06-27T12:17:00.000
+    GPS: (37.776531, -122.501775)
+    🔍 Validation:
+       Original: 645 41ST AVE
+       Returned: 645, 41st Avenue, Outer Richmond, San Francisco, California, 94121, United States
+       Street core: '41ST'
+       Core match: ✅ ('41ST' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (645 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+51. Address: 264 29TH ST
+    Time: 2025-06-27T08:41:00.000
+    GPS: (37.743907, -122.425949)
+    🔍 Validation:
+       Original: 264 29TH ST
+       Returned: 264, 29th Street, Noe Valley, San Francisco, California, 94114, United States
+       Street core: '29TH'
+       Core match: ✅ ('29TH' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (264 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+52. Address: 67 DASHIELL HAMMETT ST
+    Time: 2025-06-27T06:33:00.000
+    GPS: (37.790846, -122.408092)
+    🔍 Validation:
+       Original: 67 DASHIELL HAMMETT ST
+       Returned: 67, Dashiell Hammett Street, Chinatown, South of Market, San Francisco, California, 94108, United States
+       Street core: 'DASHIELL HAMMETT'
+       Core match: ✅ ('DASHIELL HAMMETT' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (67 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+53. Address: 50 JERROLD AVE
+    Time: 2025-06-27T09:34:00.000
+    GPS: (37.727750, -122.369504)
+    🔍 Validation:
+       Original: 50 JERROLD AVE
+       Returned: 50, Jerrold Avenue, The Shipyard, San Francisco, California, 94188, United States
+       Street core: 'JERROLD'
+       Core match: ✅ ('JERROLD' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (50 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+54. Address: 595 HEARST AVE
+    Time: 2025-06-27T13:14:00.000
+    GPS: (37.730599, -122.450905)
+    🔍 Validation:
+       Original: 595 HEARST AVE
+       Returned: 595, Hearst Avenue, Westwood Park, San Francisco, California, 94112, United States
+       Street core: 'HEARST'
+       Core match: ✅ ('HEARST' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (595 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+55. Address: 933 IRVING ST
+    Time: 2025-06-27T07:13:00.000
+    GPS: (37.763890, -122.467780)
+    🔍 Validation:
+       Original: 933 IRVING ST
+       Returned: 933, Irving Street, Inner Sunset, San Francisco, California, 94122, United States
+       Street core: 'IRVING'
+       Core match: ✅ ('IRVING' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (933 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+56. Address: 1330 BUSH ST
+    Time: 2025-06-27T07:55:00.000
+    GPS: (37.789101, -122.419232)
+    🔍 Validation:
+       Original: 1330 BUSH ST
+       Returned: The Terraces, 1330, Bush Street, Polk Gulch, San Francisco, California, 94109, United States
+       Street core: 'BUSH'
+       Core match: ✅ ('BUSH' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (1330 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+57. Address: 647 CAMPBELL AVE
+    Time: 2025-06-27T09:03:00.000
+    GPS: (37.716056, -122.409441)
+    🔍 Validation:
+       Original: 647 CAMPBELL AVE
+       Returned: 647, Campbell Avenue, Visitacion Valley, San Francisco, California, 94134, United States
+       Street core: 'CAMPBELL'
+       Core match: ✅ ('CAMPBELL' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (647 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+58. Address: 652 EDDY ST
+    Time: 2025-06-27T06:21:00.000
+    GPS: (37.783281, -122.418413)
+    🔍 Validation:
+       Original: 652 EDDY ST
+       Returned: 652, Eddy Street, Little Saigon, San Francisco, California, 94109, United States
+       Street core: 'EDDY'
+       Core match: ✅ ('EDDY' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (652 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+59. Address: 2584 37TH AVE
+    Time: 2025-06-27T12:07:00.000
+    GPS: (37.738831, -122.494642)
+    🔍 Validation:
+       Original: 2584 37TH AVE
+       Returned: 2584, 37th Avenue, Parkside, San Francisco, California, 94116, United States
+       Street core: '37TH'
+       Core match: ✅ ('37TH' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (2584 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+60. Address: 1621 STOCKTON ST
+    Time: 2025-06-27T03:16:00.000
+    GPS: (37.800694, -122.409343)
+    🔍 Validation:
+       Original: 1621 STOCKTON ST
+       Returned: 1621, Stockton Street, North Beach, San Francisco, California, 94133, United States
+       Street core: 'STOCKTON'
+       Core match: ✅ ('STOCKTON' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (1621 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+61. Address: 585 33RD AVE
+    Time: 2025-06-27T10:14:00.000
+    GPS: (37.778102, -122.493362)
+    🔍 Validation:
+       Original: 585 33RD AVE
+       Returned: 583;585, 33rd Avenue, Outer Richmond, San Francisco, California, 94121, United States
+       Street core: '33RD'
+       Core match: ✅ ('33RD' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (585 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+62. Address: 111 BUCHANAN ST
+    Time: 2025-06-27T12:39:00.000
+    GPS: (37.770839, -122.426922)
+    🔍 Validation:
+       Original: 111 BUCHANAN ST
+       Returned: 111, Buchanan Street, Western Addition, San Francisco, California, 94102, United States
+       Street core: 'BUCHANAN'
+       Core match: ✅ ('BUCHANAN' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (111 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+63. Address: 1025 PHELPS ST
+    Time: 2025-06-27T07:11:00.000
+    GPS: (37.738792, -122.392005)
+    🔍 Validation:
+       Original: 1025 PHELPS ST
+       Returned: 1025, Phelps Street, Silver Terrace, Bayview District, San Francisco, California, 94124, United States
+       Street core: 'PHELPS'
+       Core match: ✅ ('PHELPS' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (1025 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+64. Address: 3795 25TH ST
+    Time: 2025-06-27T12:07:00.000
+    GPS: (37.750168, -122.424705)
+    🔍 Validation:
+       Original: 3795 25TH ST
+       Returned: 3795, 25th Street, Noe Valley, Mission District, San Francisco, California, 94110, United States
+       Street core: '25TH'
+       Core match: ✅ ('25TH' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (3795 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+65. Address: 3207 PIERCE ST
+    Time: 2025-06-27T06:14:00.000
+    GPS: (37.799635, -122.439480)
+    🔍 Validation:
+       Original: 3207 PIERCE ST
+       Returned: 3207, Pierce Street, Marina District, San Francisco, California, 94123, United States
+       Street core: 'PIERCE'
+       Core match: ✅ ('PIERCE' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (3207 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+66. Address: 662 36TH AVE
+    Time: 2025-06-27T12:00:00.000
+    GPS: (37.776470, -122.496039)
+    🔍 Validation:
+       Original: 662 36TH AVE
+       Returned: 662, 36th Avenue, Outer Richmond, San Francisco, California, 94121, United States
+       Street core: '36TH'
+       Core match: ✅ ('36TH' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (662 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+67. Address: 320 FOOTE AVE
+    Time: 2025-06-27T08:15:00.000
+    GPS: (37.715483, -122.448162)
+    🔍 Validation:
+       Original: 320 FOOTE AVE
+       Returned: 320, Foote Avenue, Outer Mission, San Francisco, California, 94112, United States
+       Street core: 'FOOTE'
+       Core match: ✅ ('FOOTE' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (320 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+68. Address: 1325 LAKE ST
+    Time: 2025-06-27T08:46:00.000
+    GPS: (37.786190, -122.473605)
+    🔍 Validation:
+       Original: 1325 LAKE ST
+       Returned: 1325, Lake Street, Seacliff, Richmond District, San Francisco, California, 94118, United States
+       Street core: 'LAKE'
+       Core match: ✅ ('LAKE' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (1325 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+69. Address: 1901 LAKE ST
+    Time: 2025-06-27T08:42:00.000
+    GPS: (37.785894, -122.479935)
+    🔍 Validation:
+       Original: 1901 LAKE ST
+       Returned: 1901, Lake Street, Seacliff, Richmond District, San Francisco, California, 94121, United States
+       Street core: 'LAKE'
+       Core match: ✅ ('LAKE' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (1901 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+70. Address: 36 DOUGLASS ST
+    Time: 2025-06-27T12:07:00.000
+    GPS: (37.763313, -122.439795)
+    🔍 Validation:
+       Original: 36 DOUGLASS ST
+       Returned: 34;36, Douglass Street, Castro District, San Francisco, California, 94114, United States
+       Street core: 'DOUGLASS'
+       Core match: ✅ ('DOUGLASS' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (36 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+71. Address: 3096 FOLSOM ST
+    Time: 2025-06-27T09:31:00.000
+    GPS: (37.748414, -122.413788)
+    🔍 Validation:
+       Original: 3096 FOLSOM ST
+       Returned: 3096, Folsom Street, Mission District, San Francisco, California, 94110, United States
+       Street core: 'FOLSOM'
+       Core match: ✅ ('FOLSOM' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (3096 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+72. Address: 523 PIERCE ST
+    Time: 2025-06-27T09:30:00.000
+    GPS: (37.774811, -122.434649)
+    🔍 Validation:
+       Original: 523 PIERCE ST
+       Returned: 521;523;529, Pierce Street, North of Panhandle, Western Addition, San Francisco, California, 95115, United States
+       Street core: 'PIERCE'
+       Core match: ✅ ('PIERCE' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (523 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+73. Address: 190 JERSEY ST
+    Time: 2025-06-27T09:42:00.000
+    GPS: (37.750861, -122.429297)
+    🔍 Validation:
+       Original: 190 JERSEY ST
+       Returned: 190, Jersey Street, Noe Valley, Mission District, San Francisco, California, 94114, United States
+       Street core: 'JERSEY'
+       Core match: ✅ ('JERSEY' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (190 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+74. Address: 77 RANDALL ST
+    Time: 2025-06-27T08:38:00.000
+    GPS: (37.739661, -122.425132)
+    🔍 Validation:
+       Original: 77 RANDALL ST
+       Returned: 73,75,77, Randall Street, Glen Park, San Francisco, California, 94114, United States
+       Street core: 'RANDALL'
+       Core match: ✅ ('RANDALL' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (77 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+75. Address: 333 BAKER ST
+    Time: 2025-06-27T12:22:00.000
+    GPS: (37.773985, -122.441286)
+    🔍 Validation:
+       Original: 333 BAKER ST
+       Returned: 333, Baker Street, North of Panhandle, San Francisco, California, 94177, United States
+       Street core: 'BAKER'
+       Core match: ✅ ('BAKER' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (333 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+76. Address: 650 EDDY ST
+    Time: 2025-06-27T06:20:00.000
+    GPS: (37.783446, -122.418578)
+    🔍 Validation:
+       Original: 650 EDDY ST
+       Returned: 650;660, Eddy Street, Little Saigon, San Francisco, California, 94109, United States
+       Street core: 'EDDY'
+       Core match: ✅ ('EDDY' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (650 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+77. Address: 809 LAKE ST
+    Time: 2025-06-27T08:49:00.000
+    GPS: (37.786441, -122.468109)
+    🔍 Validation:
+       Original: 809 LAKE ST
+       Returned: 809, Lake Street, Presidio Terrace, Richmond District, San Francisco, California, 94118, United States
+       Street core: 'LAKE'
+       Core match: ✅ ('LAKE' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (809 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+78. Address: 545 LEAVENWORTH ST
+    Time: 2025-06-27T06:11:00.000
+    GPS: (37.786123, -122.414938)
+    🔍 Validation:
+       Original: 545 LEAVENWORTH ST
+       Returned: 545, Leavenworth Street, Tenderloin, South of Market, San Francisco, California, 94102, United States
+       Street core: 'LEAVENWORTH'
+       Core match: ✅ ('LEAVENWORTH' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (545 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+79. Address: 2311 KEITH ST
+    Time: 2025-06-27T02:59:00.000
+    GPS: (37.726659, -122.391715)
+    🔍 Validation:
+       Original: 2311 KEITH ST
+       Returned: 2311, Keith Street, Bayview District, San Francisco, California, 94124, United States
+       Street core: 'KEITH'
+       Core match: ✅ ('KEITH' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (2311 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+80. Address: 553 ELLIS ST
+    Time: 2025-06-27T06:55:00.000
+    GPS: (37.784446, -122.415439)
+    🔍 Validation:
+       Original: 553 ELLIS ST
+       Returned: 553, Ellis Street, Little Saigon, South of Market, San Francisco, California, 94109, United States
+       Street core: 'ELLIS'
+       Core match: ✅ ('ELLIS' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (553 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+81. Address: 1463 HUDSON AVE
+    Time: 2025-06-27T08:17:00.000
+    GPS: (37.738421, -122.385847)
+    🔍 Validation:
+       Original: 1463 HUDSON AVE
+       Returned: 1463, Hudson Avenue, Bayview District, San Francisco, California, 94188, United States
+       Street core: 'HUDSON'
+       Core match: ✅ ('HUDSON' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (1463 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+82. Address: 1895 ELLIS ST
+    Time: 2025-06-27T06:23:00.000
+    GPS: (37.781672, -122.437227)
+    🔍 Validation:
+       Original: 1895 ELLIS ST
+       Returned: 1895, Ellis Street, Fillmore District, Western Addition, San Francisco, California, 94115, United States
+       Street core: 'ELLIS'
+       Core match: ✅ ('ELLIS' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (1895 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+83. Address: 830 POST ST
+    Time: 2025-06-27T06:29:00.000
+    GPS: (37.787604, -122.415588)
+    🔍 Validation:
+       Original: 830 POST ST
+       Returned: 830, Post Street, Lower Nob Hill, South of Market, San Francisco, California, 94102, United States
+       Street core: 'POST'
+       Core match: ✅ ('POST' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (830 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+84. Address: 902 WEBSTER ST
+    Time: 2025-06-27T12:16:00.000
+    GPS: (37.778956, -122.430245)
+    🔍 Validation:
+       Original: 902 WEBSTER ST
+       Returned: 902, Webster Street, Fillmore District, Western Addition, San Francisco, California, 94115, United States
+       Street core: 'WEBSTER'
+       Core match: ✅ ('WEBSTER' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (902 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+85. Address: 1391 DONNER AVE
+    Time: 2025-06-27T03:00:00.000
+    GPS: (37.722012, -122.389987)
+    🔍 Validation:
+       Original: 1391 DONNER AVE
+       Returned: 1391, Donner Avenue, Bayview District, San Francisco, California, 94124, United States
+       Street core: 'DONNER'
+       Core match: ✅ ('DONNER' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (1391 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+86. Address: 601 SCOTT ST
+    Time: 2025-06-27T12:13:00.000
+    GPS: (37.775345, -122.436408)
+    🔍 Validation:
+       Original: 601 SCOTT ST
+       Returned: 601, Scott Street, North of Panhandle, Western Addition, San Francisco, California, 95115, United States
+       Street core: 'SCOTT'
+       Core match: ✅ ('SCOTT' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (601 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+87. Address: 2426 BRYANT ST
+    Time: 2025-06-27T09:41:00.000
+    GPS: (37.755500, -122.409693)
+    🔍 Validation:
+       Original: 2426 BRYANT ST
+       Returned: 2426, Bryant Street, Mission District, San Francisco, California, 90110, United States
+       Street core: 'BRYANT'
+       Core match: ✅ ('BRYANT' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (2426 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+88. Address: 2438 47TH AVE
+    Time: 2025-06-27T13:15:00.000
+    GPS: (37.740990, -122.505408)
+    🔍 Validation:
+       Original: 2438 47TH AVE
+       Returned: 2438, 47th Avenue, Outer Sunset, Sunset District, San Francisco, California, 94166, United States
+       Street core: '47TH'
+       Core match: ✅ ('47TH' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (2438 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+89. Address: 75 CEDAR ST
+    Time: 2025-06-27T02:37:00.000
+    GPS: (37.786338, -122.419333)
+    🔍 Validation:
+       Original: 75 CEDAR ST
+       Returned: 75, Cedar Street, Lower Nob Hill, San Francisco, California, 94109, United States
+       Street core: 'CEDAR'
+       Core match: ✅ ('CEDAR' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (75 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+90. Address: 3428 SAN BRUNO AVE
+    Time: 2025-06-27T07:45:00.000
+    GPS: (37.718736, -122.400437)
+    🔍 Validation:
+       Original: 3428 SAN BRUNO AVE
+       Returned: 3428, San Bruno Avenue, Little Hollywood, San Francisco, California, 94134, United States
+       Street core: 'SAN BRUNO'
+       Core match: ✅ ('SAN BRUNO' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (3428 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+91. Address: 98 JOOST AVE
+    Time: 2025-06-27T12:06:00.000
+    GPS: (37.732529, -122.437337)
+    🔍 Validation:
+       Original: 98 JOOST AVE
+       Returned: 98, Joost Avenue, Glen Park, San Francisco, California, 94112, United States
+       Street core: 'JOOST'
+       Core match: ✅ ('JOOST' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (98 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+92. Address: 1675 STOCKTON ST
+    Time: 2025-06-27T03:15:00.000
+    GPS: (37.801070, -122.409416)
+    🔍 Validation:
+       Original: 1675 STOCKTON ST
+       Returned: 1675, Stockton Street, North Beach, San Francisco, California, 94133, United States
+       Street core: 'STOCKTON'
+       Core match: ✅ ('STOCKTON' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (1675 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+93. Address: 3885 22ND ST
+    Time: 2025-06-27T12:17:00.000
+    GPS: (37.754438, -122.433959)
+    🔍 Validation:
+       Original: 3885 22ND ST
+       Returned: 3885, 22nd Street, Noe Valley, Mission District, San Francisco, California, 94114, United States
+       Street core: '22ND'
+       Core match: ✅ ('22ND' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (3885 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+94. Address: 300 30TH ST
+    Time: 2025-06-27T08:14:00.000
+    GPS: (37.742180, -122.426842)
+    🔍 Validation:
+       Original: 300 30TH ST
+       Returned: 300, 30th Street, Noe Valley, San Francisco, California, 94114, United States
+       Street core: '30TH'
+       Core match: ✅ ('30TH' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (300 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+95. Address: 1940 15TH ST
+    Time: 2025-06-27T06:32:00.000
+    GPS: (37.766291, -122.427507)
+    🔍 Validation:
+       Original: 1940 15TH ST
+       Returned: 1940, 15th Street, Duboce Triangle, Mission District, San Francisco, California, 94114, United States
+       Street core: '15TH'
+       Core match: ✅ ('15TH' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (1940 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+96. Address: 312 29TH ST
+    Time: 2025-06-27T08:42:00.000
+    GPS: (37.743897, -122.427474)
+    🔍 Validation:
+       Original: 312 29TH ST
+       Returned: 312;314;316, 29th Street, Noe Valley, San Francisco, California, 94114, United States
+       Street core: '29TH'
+       Core match: ✅ ('29TH' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (312 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+97. Address: 114 LYON ST
+    Time: 2025-06-27T08:25:00.000
+    GPS: (37.772145, -122.442085)
+    🔍 Validation:
+       Original: 114 LYON ST
+       Returned: 114, Lyon Street, North of Panhandle, San Francisco, California, 94177, United States
+       Street core: 'LYON'
+       Core match: ✅ ('LYON' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (114 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+98. Address: 900 BAKER ST
+    Time: 2025-06-27T09:50:00.000
+    GPS: (37.779352, -122.441924)
+    🔍 Validation:
+       Original: 900 BAKER ST
+       Returned: 900, Baker Street, Anza Vista, Western Addition, San Francisco, California, 94115, United States
+       Street core: 'BAKER'
+       Core match: ✅ ('BAKER' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (900 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+99. Address: 668 ELLSWORTH ST
+    Time: 2025-06-27T12:33:00.000
+    GPS: (37.735128, -122.415055)
+    🔍 Validation:
+       Original: 668 ELLSWORTH ST
+       Returned: 668, Ellsworth Street, Bernal Heights, San Francisco, California, 94134, United States
+       Street core: 'ELLSWORTH'
+       Core match: ✅ ('ELLSWORTH' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (668 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+100. Address: 627 BAKER ST
+    Time: 2025-06-27T12:17:00.000
+    GPS: (37.776906, -122.441981)
+    🔍 Validation:
+       Original: 627 BAKER ST
+       Returned: 627, Baker Street, North of Panhandle, Western Addition, San Francisco, California, 94177, United States
+       Street core: 'BAKER'
+       Core match: ✅ ('BAKER' found)
+       Suffix match: ✅ (found suffix variation)
+       Street match: ✅
+       Number match: ✅ (627 in result)
+       Specific addr: ❌ (not general street reference)
+       Confidence: ✅ HIGH (90/100)
+
+======================================================================
+📊 VALIDATION SUMMARY
+======================================================================
+High confidence: 95/100 ✅
+Medium confidence: 1/100 ⚠️
+Low confidence: 4/100 ❌
+
+Usable results: 96/100 (96.0%)
+✅ Good geocoding quality - proceed with implementation
+
+💾 Exporting results to citation_gps_results_100_samples.csv...
+✅ Exported 100 results to citation_gps_results_100_samples.csv
+📊 File contains: 95 HIGH, 1 MEDIUM, 4 LOW confidence results

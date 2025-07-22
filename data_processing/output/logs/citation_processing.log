@@ -1,0 +1,21 @@
+2025-07-21 11:27:51,646 - INFO - 🚗 Starting Production Citation GPS Processing
+2025-07-21 11:27:51,646 - INFO - ============================================================
+2025-07-21 11:27:51,646 - INFO - Fetching citations from last 30 days...
+2025-07-21 11:27:51,646 - INFO - Fetching batch starting at offset 0...
+2025-07-21 11:27:52,853 - INFO - Fetched 25 citations (total: 25)
+2025-07-21 11:27:52,854 - INFO - Total citations fetched: 25
+2025-07-21 11:27:52,854 - INFO - Processing 25 citations in batches of 10
+2025-07-21 11:27:52,854 - INFO - Processing batch 1: citations 1-10 of 25
+2025-07-21 11:28:04,606 - INFO - Processed 10 citations. Success rate: 80.0% (H:8, M:0, F:2)
+2025-07-21 11:28:04,607 - INFO - Batch completed: 8/10 success (80.0%)
+2025-07-21 11:28:04,607 - INFO - Processing batch 2: citations 11-20 of 25
+2025-07-21 11:28:18,063 - INFO - Processed 20 citations. Success rate: 90.0% (H:18, M:0, F:2)
+2025-07-21 11:28:18,064 - INFO - Batch completed: 10/10 success (100.0%)
+2025-07-21 11:28:18,064 - INFO - Processing batch 3: citations 21-25 of 25
+2025-07-21 11:28:26,893 - INFO - Batch completed: 4/5 success (80.0%)
+2025-07-21 11:28:26,893 - INFO - 🎉 Processing completed!
+2025-07-21 11:28:26,893 - INFO - ⏱️  Total time: 0:00:35.247466
+2025-07-21 11:28:26,893 - INFO - 📊 Success rate: 88.0%
+2025-07-21 11:28:26,893 - INFO - ✅ Usable results: 22
+2025-07-21 11:28:26,894 - INFO - Exporting results with minimum confidence: MEDIUM
+2025-07-21 11:28:26,904 - INFO - Exported 22 results to test_citations.csv
