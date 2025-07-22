@@ -7,6 +7,9 @@ struct VehicleParkingMapView: View {
     @State private var currentMapHeading: CLLocationDirection = 0
     @State private var impactFeedbackLight = UIImpactFeedbackGenerator(style: .light)
     @State private var userLocation: CLLocation?
+    @State private var smartSelectionTimer: Timer?
+    @State private var markerStillTimer: Timer?
+    @State private var lastMapCenterCoordinate: CLLocationCoordinate2D?
     
     // Use ViewModel's published heading property
     private var currentHeading: CLLocationDirection {
@@ -66,6 +69,11 @@ struct VehicleParkingMapView: View {
             viewModel.locationManager.refreshAuthorizationStatus()
             userLocation = viewModel.locationManager.userLocation
         }
+        .onDisappear {
+            // Clean up timers when view disappears
+            markerStillTimer?.invalidate()
+            smartSelectionTimer?.invalidate()
+        }
     }
     
     // MARK: - Overlay Views
@@ -114,7 +122,7 @@ struct VehicleParkingMapView: View {
     @ViewBuilder
     private var mapControlButtons: some View {
         Group {
-            if !viewModel.isConfirmingSchedule {
+            if !viewModel.isConfirmingSchedule || viewModel.isSettingLocation {
                 HStack(spacing: 12) {
                     vehicleButton
                     userLocationButton
@@ -331,10 +339,35 @@ struct VehicleParkingMapView: View {
     
     private func handleMapCameraChange(_ context: MapCameraUpdateContext) {
         currentMapHeading = context.camera.heading
+        let newCoordinate = context.camera.centerCoordinate
+        
+        // Cancel any existing stationary timer
+        markerStillTimer?.invalidate()
+        
+        // Check if the marker has moved significantly
+        let hasMovedSignificantly: Bool
+        if let lastCoordinate = lastMapCenterCoordinate {
+            let distance = CLLocation(latitude: newCoordinate.latitude, longitude: newCoordinate.longitude)
+                .distance(from: CLLocation(latitude: lastCoordinate.latitude, longitude: lastCoordinate.longitude))
+            hasMovedSignificantly = distance > 5 // 5 meters threshold
+        } else {
+            hasMovedSignificantly = true
+        }
+        
+        // Update the last coordinate
+        lastMapCenterCoordinate = newCoordinate
+        
+        // Start a timer to detect when marker stays still for 0.2 seconds
+        if hasMovedSignificantly {
+            markerStillTimer = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: false) { _ in
+                DispatchQueue.main.async {
+                    self.handleMarkerStillForDuration(newCoordinate)
+                }
+            }
+        }
         
         if viewModel.isSettingLocation && !viewModel.isConfirmingSchedule {
-            // Step 1: Location setting with background schedule detection
-            let newCoordinate = context.camera.centerCoordinate
+            // Step 1: Location setting with continuous schedule detection
             viewModel.settingCoordinate = newCoordinate
             
             // Geocode the address
@@ -344,53 +377,177 @@ struct VehicleParkingMapView: View {
                 }
             }
             
-            // Detect schedules in background for faster Step 2 transition
-            viewModel.autoDetectSchedule(for: newCoordinate)
+            // Continuous schedule detection for background loading
+            viewModel.autoDetectScheduleWithPreservation(for: newCoordinate)
             
         } else if viewModel.isConfirmingSchedule {
             // Step 2: Schedule confirmation with free movement and dynamic schedule loading
-            let newCoordinate = context.camera.centerCoordinate
             viewModel.settingCoordinate = newCoordinate
             
-            // Dynamically load new schedules when marker moves
-            viewModel.autoDetectSchedule(for: newCoordinate)
-            
-            // Smart selection between existing drawn lines
+            // Immediate smart selection between existing lines (no debounce needed)
             smartSelectBetweenDrawnLines(for: newCoordinate)
+            
+            // Continuous schedule detection with preservation
+            viewModel.autoDetectScheduleWithPreservation(for: newCoordinate)
         }
+    }
+    
+    private func handleMarkerStillForDuration(_ coordinate: CLLocationCoordinate2D) {
+        // This function is called when the marker has been still for 0.2 seconds
+        // Can be used for more intensive operations when the user stops moving
+        // Currently, main detection happens during movement for better responsiveness
+    }
+    
+    private func checkAndLoadNewSchedulesIfNeeded(for coordinate: CLLocationCoordinate2D) {
+        // Only load new schedules if we don't have good coverage for this area
+        let needsNewSchedules = shouldLoadNewSchedules(for: coordinate)
+        
+        if needsNewSchedules {
+            viewModel.autoDetectSchedule(for: coordinate)
+        }
+    }
+    
+    private func shouldLoadNewSchedules(for coordinate: CLLocationCoordinate2D) -> Bool {
+        // If we have no schedules, we definitely need them
+        guard !viewModel.nearbySchedules.isEmpty else { return true }
+        
+        let _ = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+        
+        // Check if any existing schedule line is within reasonable distance (50m)
+        for scheduleWithSide in viewModel.nearbySchedules {
+            guard let line = scheduleWithSide.schedule.line else { continue }
+            
+            for segmentIndex in 0..<(line.coordinates.count - 1) {
+                let startCoord = line.coordinates[segmentIndex]
+                let endCoord = line.coordinates[segmentIndex + 1]
+                
+                guard startCoord.count >= 2 && endCoord.count >= 2 else { continue }
+                
+                let startCL = CLLocationCoordinate2D(latitude: startCoord[1], longitude: startCoord[0])
+                let endCL = CLLocationCoordinate2D(latitude: endCoord[1], longitude: endCoord[0])
+                
+                let distance = distanceToLineSegment(point: coordinate, lineStart: startCL, lineEnd: endCL)
+                
+                // If we're within 50m of any existing schedule line, we don't need new schedules
+                if distance < 50 {
+                    return false
+                }
+            }
+        }
+        
+        // If we're more than 50m from all existing schedules, we need new ones
+        return true
     }
     
     private func smartSelectBetweenDrawnLines(for coordinate: CLLocationCoordinate2D) {
         guard !viewModel.nearbySchedules.isEmpty else { return }
         
-        var closestIndex = 0
-        var closestDistance = Double.infinity
+        let userLocation = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+        var bestIndex = 0
+        var bestDistance = Double.infinity
         
+        // Calculate distance to each schedule's street edge line
         for (index, scheduleWithSide) in viewModel.nearbySchedules.enumerated() {
-            let distance = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
-                .distance(from: CLLocation(latitude: scheduleWithSide.offsetCoordinate.latitude,
-                                         longitude: scheduleWithSide.offsetCoordinate.longitude))
+            guard let line = scheduleWithSide.schedule.line else {
+                // If no line data, fall back to offset coordinate
+                let distance = userLocation.distance(from: CLLocation(
+                    latitude: scheduleWithSide.offsetCoordinate.latitude,
+                    longitude: scheduleWithSide.offsetCoordinate.longitude
+                ))
+                if distance < bestDistance {
+                    bestDistance = distance
+                    bestIndex = index
+                }
+                continue
+            }
             
-            if distance < closestDistance {
-                closestDistance = distance
-                closestIndex = index
+            // Find the closest point on this schedule's street edge line
+            var minDistanceToLine = Double.infinity
+            
+            for segmentIndex in 0..<(line.coordinates.count - 1) {
+                let startCoord = line.coordinates[segmentIndex]
+                let endCoord = line.coordinates[segmentIndex + 1]
+                
+                guard startCoord.count >= 2 && endCoord.count >= 2 else { continue }
+                
+                let startCL = CLLocationCoordinate2D(latitude: startCoord[1], longitude: startCoord[0])
+                let endCL = CLLocationCoordinate2D(latitude: endCoord[1], longitude: endCoord[0])
+                
+                // Calculate street edge coordinates for this segment
+                let streetEdgeCoords = calculateStreetEdgeCoordinates(
+                    start: startCL,
+                    end: endCL,
+                    blockSide: scheduleWithSide.side
+                )
+                
+                // Find closest point on this street edge segment
+                if streetEdgeCoords.count >= 2 {
+                    let segmentDistance = distanceToLineSegment(
+                        point: coordinate,
+                        lineStart: streetEdgeCoords[0],
+                        lineEnd: streetEdgeCoords[1]
+                    )
+                    minDistanceToLine = min(minDistanceToLine, segmentDistance)
+                }
+            }
+            
+            if minDistanceToLine < bestDistance {
+                bestDistance = minDistanceToLine
+                bestIndex = index
             }
         }
         
-        let flippedIndex = viewModel.nearbySchedules.count - 1 - closestIndex
-        let finalIndex = flippedIndex < viewModel.nearbySchedules.count ? flippedIndex : closestIndex
-        
-        if viewModel.selectedScheduleIndex != finalIndex {
-            viewModel.selectedScheduleIndex = finalIndex
+        // Only update if the selection actually changed and the distance is reasonable (within 100m)
+        if viewModel.selectedScheduleIndex != bestIndex && bestDistance < 100 {
+            viewModel.selectedScheduleIndex = bestIndex
             viewModel.hasSelectedSchedule = true
-            viewModel.detectedSchedule = viewModel.nearbySchedules[finalIndex].schedule
+            viewModel.detectedSchedule = viewModel.nearbySchedules[bestIndex].schedule
             
-            let distance = viewModel.nearbySchedules[finalIndex].distance
-            viewModel.scheduleConfidence = Float(max(0.3, min(0.9, 1.0 - (distance / 50.0))))
+            // Calculate confidence based on distance to selected line
+            viewModel.scheduleConfidence = Float(max(0.3, min(0.95, 1.0 - (bestDistance / 100.0))))
             
+            // Subtle haptic feedback for selection changes
             let selectionFeedback = UISelectionFeedbackGenerator()
             selectionFeedback.selectionChanged()
         }
+    }
+    
+    // Helper function to calculate distance from a point to a line segment
+    private func distanceToLineSegment(point: CLLocationCoordinate2D, lineStart: CLLocationCoordinate2D, lineEnd: CLLocationCoordinate2D) -> Double {
+        let pointLocation = CLLocation(latitude: point.latitude, longitude: point.longitude)
+        let startLocation = CLLocation(latitude: lineStart.latitude, longitude: lineStart.longitude)
+        let endLocation = CLLocation(latitude: lineEnd.latitude, longitude: lineEnd.longitude)
+        
+        // Calculate the distance from point to the line segment
+        let lineLength = startLocation.distance(from: endLocation)
+        
+        if lineLength == 0 {
+            return pointLocation.distance(from: startLocation)
+        }
+        
+        // Project point onto the line
+        let startToPoint = (
+            lat: point.latitude - lineStart.latitude,
+            lon: point.longitude - lineStart.longitude
+        )
+        
+        let startToEnd = (
+            lat: lineEnd.latitude - lineStart.latitude,
+            lon: lineEnd.longitude - lineStart.longitude
+        )
+        
+        let dotProduct = startToPoint.lat * startToEnd.lat + startToPoint.lon * startToEnd.lon
+        let lineLengthSquared = startToEnd.lat * startToEnd.lat + startToEnd.lon * startToEnd.lon
+        
+        let t = max(0, min(1, dotProduct / lineLengthSquared))
+        
+        let projectedPoint = CLLocationCoordinate2D(
+            latitude: lineStart.latitude + t * startToEnd.lat,
+            longitude: lineStart.longitude + t * startToEnd.lon
+        )
+        
+        let projectedLocation = CLLocation(latitude: projectedPoint.latitude, longitude: projectedPoint.longitude)
+        return pointLocation.distance(from: projectedLocation)
     }
     
     private func calculateStreetEdgeCoordinates(

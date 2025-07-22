@@ -108,7 +108,7 @@ struct OnboardingStepView: View {
         .onAppear {
             triggerAnimation()
         }
-        .onChange(of: step.id) { _ in
+        .onChange(of: step.id) { _, _ in
             triggerAnimation()
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in

@@ -196,7 +196,7 @@ struct AutoScrollingText: View {
                                 textWidth = textGeometry.size.width
                                 containerWidth = geometry.size.width
                             }
-                            .onChange(of: geometry.size.width) { newWidth in
+                            .onChange(of: geometry.size.width) { _, newWidth in
                                 containerWidth = newWidth
                             }
                     }
@@ -208,7 +208,7 @@ struct AutoScrollingText: View {
                         startAutoScroll()
                     }
                 }
-                .onChange(of: isSelected) { newValue in
+                .onChange(of: isSelected) { _, newValue in
                     if newValue {
                         startAutoScroll()
                     } else {

@@ -200,7 +200,7 @@ class SpatialGrid {
     
     func getSchedulesNear(_ coordinate: CLLocationCoordinate2D, radius: Int = 2) -> [LocalSweepSchedule] {
         var schedules: [LocalSweepSchedule] = []
-        let centerKey = getCellKey(for: coordinate)
+        let _ = getCellKey(for: coordinate)
         let centerX = Int(coordinate.longitude / cellSize)
         let centerY = Int(coordinate.latitude / cellSize)
         
@@ -251,7 +251,7 @@ final class StreetDataService {
             return
         }
         
-        guard let csvContent = try? String(contentsOfFile: csvPath) else {
+        guard let csvContent = try? String(contentsOfFile: csvPath, encoding: .utf8) else {
             print("❌ Failed to read CSV file")
             return
         }

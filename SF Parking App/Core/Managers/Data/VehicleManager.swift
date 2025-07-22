@@ -63,7 +63,6 @@ class VehicleManager: ObservableObject {
         saveVehicles()
         saveSelectedVehicle()
         
-        print("✅ Added vehicle: \(vehicle.displayName)")
     }
     
     func updateVehicle(_ vehicle: Vehicle) {
@@ -78,7 +77,6 @@ class VehicleManager: ObservableObject {
             saveVehicles()
             saveSelectedVehicle()
             
-            print("✅ Updated vehicle: \(vehicle.displayName)")
         }
     }
     
@@ -96,14 +94,12 @@ class VehicleManager: ObservableObject {
         saveVehicles()
         saveSelectedVehicle()
         
-        print("✅ Removed vehicle: \(vehicle.displayName)")
     }
     
     func selectVehicle(_ vehicle: Vehicle) {
         selectedVehicle = vehicle
         saveSelectedVehicle()
         
-        print("✅ Selected vehicle: \(vehicle.displayName)")
     }
     
     // MARK: - Parking Location Management
@@ -113,7 +109,6 @@ class VehicleManager: ObservableObject {
         updatedVehicle.parkingLocation = location
         updateVehicle(updatedVehicle)
         
-        print("🚗 Set parking location for \(vehicle.displayName): \(location.address)")
     }
     
     func clearParkingLocation(for vehicle: Vehicle) {
@@ -121,7 +116,6 @@ class VehicleManager: ObservableObject {
         updatedVehicle.parkingLocation = nil
         updateVehicle(updatedVehicle)
         
-        print("🚗 Cleared parking location for \(vehicle.displayName)")
     }
     
     func setManualParkingLocation(for vehicle: Vehicle, coordinate: CLLocationCoordinate2D, address: String, selectedSchedule: PersistedSweepSchedule? = nil) {

@@ -19,6 +19,10 @@ class NotificationManager: NSObject, ObservableObject {
     private let center = UNUserNotificationCenter.current()
     private let calendar = Calendar.current
     
+    // Dependencies for accessing current app state
+    private var vehicleManager: VehicleManager?
+    private var streetDataManager: StreetDataManager?
+    
     private override init() {
         super.init()
         center.delegate = self
@@ -28,6 +32,13 @@ class NotificationManager: NSObject, ObservableObject {
         
         // Check permission status on init
         checkPermissionStatus()
+    }
+    
+    // MARK: - Dependency Injection
+    
+    func configure(vehicleManager: VehicleManager, streetDataManager: StreetDataManager) {
+        self.vehicleManager = vehicleManager
+        self.streetDataManager = streetDataManager
     }
 
     // MARK: - Enhanced Permission Management
@@ -122,7 +133,6 @@ class NotificationManager: NSObject, ObservableObject {
         // Update our tracking
         scheduledNotifications.append(contentsOf: newNotifications)
         
-        print("Scheduled \(newNotifications.count) street cleaning notifications")
     }
     
     private func createNotificationsForSchedule(_ schedule: StreetCleaningSchedule, location: ParkingLocation) -> [ScheduledNotification] {
@@ -421,6 +431,278 @@ class NotificationManager: NSObject, ObservableObject {
         }
         
         return (hour: 8, minute: 0) // Default to 8 AM
+    }
+    
+    // MARK: - Custom Reminders Management
+    
+    @Published var customReminders: [CustomReminder] = []
+    let maxCustomReminders = 25
+    
+    func loadCustomReminders() {
+        if let data = UserDefaults.standard.data(forKey: "customReminders"),
+           let reminders = try? JSONDecoder().decode([CustomReminder].self, from: data) {
+            self.customReminders = reminders
+        } else {
+            // No custom reminders yet - start with empty list
+            self.customReminders = []
+        }
+    }
+    
+    func saveCustomReminders() {
+        if let encoded = try? JSONEncoder().encode(customReminders) {
+            UserDefaults.standard.set(encoded, forKey: "customReminders")
+        }
+    }
+    
+    enum AddReminderResult {
+        case success
+        case duplicate
+        case maxReached
+    }
+    
+    func checkForDuplicateReminder(_ reminder: CustomReminder) -> CustomReminder? {
+        return customReminders.first { existing in
+            // Check if timing is the same
+            switch (existing.timing, reminder.timing) {
+            case (.preset(let existing), .preset(let new)):
+                return existing == new
+            case (.custom(let existing), .custom(let new)):
+                return existing.amount == new.amount &&
+                       existing.unit == new.unit &&
+                       existing.relativeTo == new.relativeTo &&
+                       existing.specificTime?.hour == new.specificTime?.hour &&
+                       existing.specificTime?.minute == new.specificTime?.minute
+            default:
+                return false
+            }
+        }
+    }
+    
+    func addCustomReminder(_ reminder: CustomReminder) -> AddReminderResult {
+        guard customReminders.count < maxCustomReminders else {
+            print("Maximum number of custom reminders reached (\(maxCustomReminders))")
+            return .maxReached
+        }
+        
+        if let _ = checkForDuplicateReminder(reminder) {
+            return .duplicate
+        }
+        
+        customReminders.append(reminder)
+        saveCustomReminders()
+        return .success
+    }
+    
+    func addCustomReminderForced(_ reminder: CustomReminder) -> Bool {
+        guard customReminders.count < maxCustomReminders else {
+            print("Maximum number of custom reminders reached (\(maxCustomReminders))")
+            return false
+        }
+        
+        customReminders.append(reminder)
+        saveCustomReminders()
+        return true
+    }
+    
+    func removeCustomReminder(withId id: UUID) {
+        customReminders.removeAll { $0.id == id }
+        saveCustomReminders()
+        
+        // Cancel any scheduled notifications for this reminder
+        cancelCustomReminder(withId: id)
+    }
+    
+    func toggleReminderActive(withId id: UUID) {
+        if let index = customReminders.firstIndex(where: { $0.id == id }) {
+            customReminders[index].isActive.toggle()
+            saveCustomReminders()
+            
+            // Reschedule notifications if needed
+            if let location = getCurrentParkingLocation() {
+                scheduleCustomReminders(for: location)
+            }
+        }
+    }
+    
+    func updateCustomReminder(_ reminder: CustomReminder) {
+        if let index = customReminders.firstIndex(where: { $0.id == reminder.id }) {
+            customReminders[index] = reminder
+            saveCustomReminders()
+            
+            // Reschedule notifications if needed
+            if let location = getCurrentParkingLocation() {
+                scheduleCustomReminders(for: location)
+            }
+        }
+    }
+    
+    func toggleCustomReminder(withId id: UUID, isActive: Bool) {
+        if let index = customReminders.firstIndex(where: { $0.id == id }) {
+            customReminders[index].isActive = isActive
+            saveCustomReminders()
+            
+            // Always reschedule all notifications to ensure proper state
+            if let location = getCurrentParkingLocation() {
+                scheduleCustomReminders(for: location)
+            }
+        }
+    }
+    
+    // MARK: - Custom Reminder Scheduling
+    
+    func scheduleCustomReminders(for location: ParkingLocation, cleaningDate: Date? = nil) {
+        guard notificationPermissionStatus == .authorized else {
+            print("Notification permission not granted")
+            return
+        }
+        
+        // Cancel existing custom reminder notifications
+        cancelCustomReminders()
+        
+        let activeReminders = customReminders.filter { $0.isActive }
+        guard !activeReminders.isEmpty else { return }
+        
+        // Use provided cleaning date or find next cleaning date
+        let targetCleaningDate = cleaningDate ?? getNextCleaningDate(for: location) ?? Date().addingTimeInterval(86400) // Default to tomorrow
+        
+        for reminder in activeReminders {
+            scheduleCustomReminder(reminder, for: location, cleaningDate: targetCleaningDate)
+        }
+        
+    }
+    
+    private func scheduleCustomReminder(_ reminder: CustomReminder, for location: ParkingLocation, cleaningDate: Date) {
+        let notificationDate: Date?
+        
+        // Calculate notification date based on reminder timing and cleaning date
+        switch reminder.timing {
+        case .preset(let preset):
+            notificationDate = preset.calculateNotificationDate(from: cleaningDate)
+        case .custom(let custom):
+            notificationDate = custom.calculateNotificationDate(from: cleaningDate)
+        }
+        
+        guard let finalNotificationDate = notificationDate else {
+            print("Could not calculate notification date for reminder: \(reminder.title)")
+            return
+        }
+        
+        // Don't schedule notifications in the past
+        guard finalNotificationDate > Date() else {
+            print("Skipping past notification date for reminder: \(reminder.title)")
+            return
+        }
+        
+        let content = UNMutableNotificationContent()
+        content.title = reminder.title
+        content.body = reminder.message ?? getDefaultMessageForTiming(reminder.timing)
+        content.sound = .default
+        content.categoryIdentifier = "STREET_CLEANING"
+        
+        // Add user info for handling
+        content.userInfo = [
+            "type": "custom_reminder",
+            "reminderId": reminder.id.uuidString,
+            "locationId": location.id.uuidString,
+            "cleaningDate": ISO8601DateFormatter().string(from: cleaningDate)
+        ]
+        
+        // Create trigger
+        let triggerDate = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: finalNotificationDate)
+        let trigger = UNCalendarNotificationTrigger(dateMatching: triggerDate, repeats: false)
+        
+        // Create request
+        let identifier = "custom_reminder_\(reminder.id.uuidString)_\(location.id.uuidString)"
+        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+        
+        // Schedule notification
+        center.add(request) { error in
+            if let error = error {
+                print("Error scheduling custom reminder notification: \(error)")
+            } else {
+                print("Scheduled custom reminder: \(reminder.title) for \(finalNotificationDate)")
+            }
+        }
+    }
+    
+    private func getDefaultMessageForTiming(_ timing: ReminderTiming) -> String {
+        switch timing {
+        case .preset(let preset):
+            switch preset {
+            case .weekBefore, .threeDaysBefore, .dayBefore:
+                return "Don't forget - street cleaning is coming up!"
+            case .morningOf:
+                return "Street cleaning today - move your car!"
+            case .twoHoursBefore, .oneHourBefore:
+                return "Street cleaning starts soon - time to move your car!"
+            case .thirtyMinutes, .fifteenMinutes, .fiveMinutes:
+                return "Move your car now - street cleaning starts soon!"
+            case .atCleaningTime:
+                return "Street cleaning is starting now!"
+            case .afterCleaning:
+                return "Street cleaning is done - you can park again!"
+            }
+        case .custom:
+            return "Parking reminder - check your street cleaning schedule!"
+        }
+    }
+    
+    private func cancelCustomReminders() {
+        center.getPendingNotificationRequests { requests in
+            let customReminderIdentifiers = requests
+                .filter { $0.identifier.starts(with: "custom_reminder_") }
+                .map { $0.identifier }
+            
+            self.center.removePendingNotificationRequests(withIdentifiers: customReminderIdentifiers)
+            print("Cancelled \(customReminderIdentifiers.count) custom reminder notifications")
+        }
+    }
+    
+    private func cancelCustomReminder(withId id: UUID) {
+        let identifierPrefix = "custom_reminder_\(id.uuidString)"
+        center.getPendingNotificationRequests { requests in
+            let matchingIdentifiers = requests
+                .filter { $0.identifier.starts(with: identifierPrefix) }
+                .map { $0.identifier }
+            
+            self.center.removePendingNotificationRequests(withIdentifiers: matchingIdentifiers)
+            print("Cancelled notifications for custom reminder: \(id)")
+        }
+    }
+    
+    private func getCurrentParkingLocation() -> ParkingLocation? {
+        // Use injected VehicleManager to get the current vehicle's parking location
+        return vehicleManager?.currentVehicle?.parkingLocation
+    }
+    
+    private func getNextCleaningDate(for location: ParkingLocation) -> Date? {
+        // Use injected StreetDataManager to get the next cleaning date
+        return streetDataManager?.nextUpcomingSchedule?.date ?? 
+               Calendar.current.date(byAdding: .day, value: 1, to: Date()) // Fallback to tomorrow
+    }
+    
+    // MARK: - Recurring Reminder Logic
+    
+    func handleReminderTriggered(_ reminderId: UUID) {
+        // Update last triggered date
+        if let index = customReminders.firstIndex(where: { $0.id == reminderId }) {
+            customReminders[index].lastTriggered = Date()
+            saveCustomReminders()
+        }
+        
+        // Schedule next occurrence if user is still parked in the same location
+        scheduleNextRecurringReminder(reminderId)
+    }
+    
+    private func scheduleNextRecurringReminder(_ reminderId: UUID) {
+        guard let reminder = customReminders.first(where: { $0.id == reminderId }),
+              reminder.isActive,
+              let location = getCurrentParkingLocation() else { return }
+        
+        // Find next cleaning date (this would integrate with your schedule detection)
+        if let nextCleaningDate = getNextCleaningDate(for: location) {
+            scheduleCustomReminder(reminder, for: location, cleaningDate: nextCleaningDate)
+        }
     }
     
     

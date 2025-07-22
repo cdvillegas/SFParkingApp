@@ -43,6 +43,9 @@ class VehicleParkingViewModel: ObservableObject {
     @Published var confirmedAddress: String?
     @Published var hoveredScheduleIndex: Int?
     
+    // Schedule update coordination
+    @Published var isLoadingNewSchedulesForConfirmation = false
+    
     // Notification state
     @Published var showingNotificationPermissionAlert = false
     
@@ -100,19 +103,20 @@ class VehicleParkingViewModel: ObservableObject {
     func startSettingLocation() {
         isSettingLocation = true
         
-        // Prioritize current vehicle parking location when moving a vehicle
+        // Always center on user location first when moving a vehicle
         let startCoordinate: CLLocationCoordinate2D
-        if let selectedVehicle = vehicleManager.selectedVehicle,
-           let parkingLocation = selectedVehicle.parkingLocation {
-            startCoordinate = parkingLocation.coordinate
-            settingAddress = parkingLocation.address // Use the current parking location address
-            centerMapOnLocationForVehicleMove(startCoordinate)
-        } else if let userLocation = locationManager.userLocation {
+        if let userLocation = locationManager.userLocation {
             startCoordinate = userLocation.coordinate
             centerMapOnLocation(startCoordinate)
         } else {
             startCoordinate = CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194)
             centerMapOnLocation(startCoordinate)
+        }
+        
+        // For existing vehicles, preserve the address but don't center on parking location
+        if let selectedVehicle = vehicleManager.selectedVehicle,
+           let parkingLocation = selectedVehicle.parkingLocation {
+            settingAddress = parkingLocation.address // Use the current parking location address
         }
         
         settingCoordinate = startCoordinate
@@ -130,8 +134,9 @@ class VehicleParkingViewModel: ObservableObject {
             let distance = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
                 .distance(from: CLLocation(latitude: lastCoordinate.latitude, longitude: lastCoordinate.longitude))
             
-            // Only detect if we've moved more than 5 meters (reduced for faster response)
-            if distance < 5 {
+            // Different thresholds for different modes - more responsive
+            let threshold: Double = isConfirmingSchedule ? 15 : 3 // Smaller thresholds for faster updates
+            if distance < threshold {
                 return
             }
         }
@@ -139,9 +144,39 @@ class VehicleParkingViewModel: ObservableObject {
         // Cancel any existing timer
         detectionDebounceTimer?.invalidate()
         
-        // Reduced debounce time for faster response
-        detectionDebounceTimer = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: false) { _ in
-            self.performScheduleDetection(for: coordinate)
+        // Much more responsive debouncing while keeping conflict prevention
+        let debounceTime: TimeInterval = isConfirmingSchedule ? 0.15 : 0.1
+        detectionDebounceTimer = Timer.scheduledTimer(withTimeInterval: debounceTime, repeats: false) { _ in
+            Task { @MainActor in
+                self.performScheduleDetection(for: coordinate)
+            }
+        }
+    }
+    
+    func autoDetectScheduleWithPreservation(for coordinate: CLLocationCoordinate2D) {
+        // Always try to detect schedules as user moves, but preserve selection when schedules are the same
+        
+        // Check if we need to skip this detection (debouncing for API calls)
+        if let lastCoordinate = lastDetectionCoordinate {
+            let distance = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+                .distance(from: CLLocation(latitude: lastCoordinate.latitude, longitude: lastCoordinate.longitude))
+            
+            // Smaller threshold for more responsive updates
+            let threshold: Double = 5 // 5 meters
+            if distance < threshold {
+                return
+            }
+        }
+        
+        // Cancel any existing timer
+        detectionDebounceTimer?.invalidate()
+        
+        // Shorter debounce for continuous updates
+        let debounceTime: TimeInterval = 0.05 // 50ms debounce
+        detectionDebounceTimer = Timer.scheduledTimer(withTimeInterval: debounceTime, repeats: false) { _ in
+            Task { @MainActor in
+                self.performScheduleDetectionWithPreservation(for: coordinate)
+            }
         }
     }
     
@@ -149,19 +184,34 @@ class VehicleParkingViewModel: ObservableObject {
         guard !isAutoDetectingSchedule else { return }
         
         isAutoDetectingSchedule = true
+        if isConfirmingSchedule {
+            isLoadingNewSchedulesForConfirmation = true
+        }
         lastDetectionCoordinate = coordinate
         schedulesLoadedForCurrentLocation = false
         
         StreetDataService.shared.getNearbySchedulesForSelection(for: coordinate) { result in
             DispatchQueue.main.async {
                 self.isAutoDetectingSchedule = false
+                self.isLoadingNewSchedulesForConfirmation = false
                 self.schedulesLoadedForCurrentLocation = true
                 
                 switch result {
                 case .success(let schedulesWithSides):
                     if !schedulesWithSides.isEmpty {
                         self.nearbySchedules = schedulesWithSides
-                        self.initialSmartSelection(for: coordinate, schedulesWithSides: schedulesWithSides)
+                        if self.isConfirmingSchedule {
+                            // During confirmation, set initial selection if we don't have any
+                            if self.selectedScheduleIndex >= schedulesWithSides.count || !self.hasSelectedSchedule {
+                                self.selectedScheduleIndex = 0
+                                self.hasSelectedSchedule = true
+                                self.hoveredScheduleIndex = 0
+                                self.detectedSchedule = schedulesWithSides[0].schedule
+                                self.scheduleConfidence = 0.8
+                            }
+                        } else {
+                            self.initialSmartSelection(for: coordinate, schedulesWithSides: schedulesWithSides)
+                        }
                     } else {
                         self.nearbySchedules = []
                         self.selectedScheduleIndex = 0
@@ -173,6 +223,85 @@ class VehicleParkingViewModel: ObservableObject {
                     self.selectedScheduleIndex = 0
                     self.detectedSchedule = nil
                     self.scheduleConfidence = 0.0
+                }
+            }
+        }
+    }
+    
+    func performScheduleDetectionWithPreservation(for coordinate: CLLocationCoordinate2D) {
+        guard !isAutoDetectingSchedule else { return }
+        
+        // Store current state to potentially preserve
+        let currentSchedules = nearbySchedules
+        let currentSelectedIndex = selectedScheduleIndex
+        let currentHasSelection = hasSelectedSchedule
+        let _ = detectedSchedule
+        let currentScheduleConfidence = scheduleConfidence
+        
+        isAutoDetectingSchedule = true
+        if isConfirmingSchedule {
+            isLoadingNewSchedulesForConfirmation = true
+        }
+        lastDetectionCoordinate = coordinate
+        
+        StreetDataService.shared.getNearbySchedulesForSelection(for: coordinate) { result in
+            DispatchQueue.main.async {
+                self.isAutoDetectingSchedule = false
+                self.isLoadingNewSchedulesForConfirmation = false
+                self.schedulesLoadedForCurrentLocation = true
+                
+                switch result {
+                case .success(let newSchedulesWithSides):
+                    if !newSchedulesWithSides.isEmpty {
+                        // Check if schedules are the same as current ones
+                        let schedulesAreSame = self.areSchedulesSame(current: currentSchedules, new: newSchedulesWithSides)
+                        
+                        if schedulesAreSame && !currentSchedules.isEmpty {
+                            // Schedules are the same, preserve current selection
+                            // Don't update nearbySchedules to avoid disrupting selection
+                            return
+                        } else {
+                            // Schedules are different, update them
+                            self.nearbySchedules = newSchedulesWithSides
+                            
+                            // Try to preserve selection if possible
+                            if !currentSchedules.isEmpty && currentHasSelection && currentSelectedIndex < newSchedulesWithSides.count {
+                                // Check if the previously selected schedule exists in new results
+                                if let preservedIndex = self.findMatchingScheduleIndex(
+                                    target: currentSchedules[currentSelectedIndex],
+                                    in: newSchedulesWithSides
+                                ) {
+                                    self.selectedScheduleIndex = preservedIndex
+                                    self.hasSelectedSchedule = true
+                                    self.detectedSchedule = newSchedulesWithSides[preservedIndex].schedule
+                                    self.scheduleConfidence = currentScheduleConfidence
+                                } else {
+                                    // Previous selection not found, start fresh
+                                    self.initialSmartSelection(for: coordinate, schedulesWithSides: newSchedulesWithSides)
+                                }
+                            } else {
+                                // No previous selection to preserve
+                                self.initialSmartSelection(for: coordinate, schedulesWithSides: newSchedulesWithSides)
+                            }
+                        }
+                    } else {
+                        // No schedules found
+                        self.nearbySchedules = []
+                        self.selectedScheduleIndex = 0
+                        self.detectedSchedule = nil
+                        self.scheduleConfidence = 0.0
+                        self.hasSelectedSchedule = false
+                    }
+                case .failure(_):
+                    // API failed, keep current schedules if we have them
+                    if currentSchedules.isEmpty {
+                        self.nearbySchedules = []
+                        self.selectedScheduleIndex = 0
+                        self.detectedSchedule = nil
+                        self.scheduleConfidence = 0.0
+                        self.hasSelectedSchedule = false
+                    }
+                    // If we have current schedules, don't clear them on API failure
                 }
             }
         }
@@ -201,14 +330,16 @@ class VehicleParkingViewModel: ObservableObject {
         
         centerMapOnLocationWithZoomIn(coordinate)
         
-        // Schedules should already be loaded from background detection
-        // Set initial selection if schedules exist
-        if !nearbySchedules.isEmpty {
+        // Ensure we have schedules loaded for this location
+        if nearbySchedules.isEmpty {
+            // If no schedules were loaded in background, load them now
+            autoDetectSchedule(for: coordinate)
+        } else {
+            // Schedules already exist, set initial selection
             selectedScheduleIndex = 0
             hasSelectedSchedule = true
             hoveredScheduleIndex = 0
         }
-        // Note: If schedules are empty, it means no restrictions found (which is valid)
     }
     
     func goBackToLocationSetting() {
@@ -330,6 +461,7 @@ class VehicleParkingViewModel: ObservableObject {
         detectedSchedule = nil
         scheduleConfidence = 0.0
         isAutoDetectingSchedule = false
+        isLoadingNewSchedulesForConfirmation = false
         lastDetectionCoordinate = nil
         detectionDebounceTimer?.invalidate()
         schedulesLoadedForCurrentLocation = false
@@ -501,6 +633,42 @@ class VehicleParkingViewModel: ObservableObject {
                 return "\(days) days ago"
             }
         }
+    }
+    
+    // MARK: - Schedule Comparison Methods
+    
+    private func areSchedulesSame(current: [SweepScheduleWithSide], new: [SweepScheduleWithSide]) -> Bool {
+        guard current.count == new.count else { return false }
+        
+        // Compare each schedule for equality
+        for (index, currentSchedule) in current.enumerated() {
+            let newSchedule = new[index]
+            
+            // Compare key properties that identify a schedule
+            if currentSchedule.schedule.streetName != newSchedule.schedule.streetName ||
+               currentSchedule.schedule.weekday != newSchedule.schedule.weekday ||
+               currentSchedule.schedule.startTime != newSchedule.schedule.startTime ||
+               currentSchedule.schedule.endTime != newSchedule.schedule.endTime ||
+               currentSchedule.side != newSchedule.side {
+                return false
+            }
+        }
+        
+        return true
+    }
+    
+    private func findMatchingScheduleIndex(target: SweepScheduleWithSide, in schedules: [SweepScheduleWithSide]) -> Int? {
+        for (index, schedule) in schedules.enumerated() {
+            // Check if this schedule matches the target
+            if schedule.schedule.streetName == target.schedule.streetName &&
+               schedule.schedule.weekday == target.schedule.weekday &&
+               schedule.schedule.startTime == target.schedule.startTime &&
+               schedule.schedule.endTime == target.schedule.endTime &&
+               schedule.side == target.side {
+                return index
+            }
+        }
+        return nil
     }
     
     // MARK: - Cleanup

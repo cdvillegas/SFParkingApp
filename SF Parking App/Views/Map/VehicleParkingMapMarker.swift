@@ -43,7 +43,7 @@ struct VehicleParkingMapMarker: View {
             .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isAnimating)
         }
         .buttonStyle(PlainButtonStyle())
-        .onChange(of: isSelected) { selected in
+        .onChange(of: isSelected) { _, selected in
             if selected {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
                     isAnimating = true

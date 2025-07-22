@@ -70,7 +70,7 @@ struct VehicleParkingView: View {
                 startTime: "8:00 AM",
                 endTime: "10:00 AM"
             )
-            NotificationSettingsSheet(
+            RemindersSheet(
                 schedule: schedule,
                 parkingLocation: viewModel.vehicleManager.currentVehicle?.parkingLocation
             )

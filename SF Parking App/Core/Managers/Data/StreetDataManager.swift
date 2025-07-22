@@ -29,12 +29,9 @@ class StreetDataManager: ObservableObject {
     func fetchSchedules(for coordinate: CLLocationCoordinate2D) {
         // Check if we should skip this fetch due to debouncing
         if shouldSkipFetch(for: coordinate) {
-            print("⏭️ Skipping fetch - too recent or too close to previous location")
             return
         }
         
-        // Debug: Convert coordinate to address (only once per fetch)
-        reverseGeocodeForDebug(coordinate: coordinate)
         
         // Update tracking variables
         lastFetchedCoordinate = coordinate
@@ -54,12 +51,10 @@ class StreetDataManager: ObservableObject {
                         self?.schedule = schedule
                         self?.processNextSchedule(for: schedule)
                         self?.hasError = false
-                        print("✅ Successfully found schedule for street: \(schedule.streetName)")
                     } else {
                         self?.hasError = false
                         self?.schedule = nil
                         self?.nextUpcomingSchedule = nil
-                        print("⚠️ No schedule found for this location")
                     }
                 case .failure(let error):
                     print("❌ Error fetching schedule: \(error)")

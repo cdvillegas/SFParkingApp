@@ -83,7 +83,7 @@ struct AddEditVehicleView: View {
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 16)
-                    .padding(.bottom, max(16, UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0))
+                    .padding(.bottom, 16)
                     .background(Color(.systemGroupedBackground))
                 }
             }

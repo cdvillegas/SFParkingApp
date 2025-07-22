@@ -172,11 +172,8 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
         // Use magnetic heading for better accuracy
         let heading = newHeading.magneticHeading >= 0 ? newHeading.magneticHeading : newHeading.trueHeading
-        print("📍 Heading updated: \(heading)° (magnetic: \(newHeading.magneticHeading), true: \(newHeading.trueHeading))")
-        
         DispatchQueue.main.async {
             self.userHeading = heading
-            print("📍 Published heading: \(self.userHeading)°")
         }
     }
     

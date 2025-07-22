@@ -270,7 +270,7 @@ struct VehicleLocationSetting: View {
                 .padding(.leading, 16)
                 .padding(.trailing, 80) // Extra trailing padding to allow scrolling cards off screen
             }
-            .onChange(of: viewModel.selectedScheduleIndex) { newIndex in
+            .onChange(of: viewModel.selectedScheduleIndex) { _, newIndex in
                 if viewModel.hasSelectedSchedule {
                     withAnimation(.spring(response: 0.6, dampingFraction: 0.75, blendDuration: 0.2)) {
                         let totalSchedules = viewModel.nearbySchedules.count
@@ -289,7 +289,7 @@ struct VehicleLocationSetting: View {
                     }
                 }
             }
-            .onChange(of: viewModel.hoveredScheduleIndex) { newIndex in
+            .onChange(of: viewModel.hoveredScheduleIndex) { _, newIndex in
                 if let index = newIndex {
                     withAnimation(.spring(response: 0.6, dampingFraction: 0.75, blendDuration: 0.2)) {
                         let totalSchedules = viewModel.nearbySchedules.count
