@@ -1,0 +1,100 @@
+2025-07-23 01:05:09,781 - INFO - 🚗 Starting Production Citation GPS Processing
+2025-07-23 01:05:09,781 - INFO - ============================================================
+2025-07-23 01:05:09,781 - INFO - Loading citations from file: temp_citations_for_geocoding.csv
+2025-07-23 01:05:19,824 - INFO - ✅ Loaded 493064 citations from file
+2025-07-23 01:05:19,826 - INFO - Processing 493064 citations in batches of 5000
+2025-07-23 01:05:19,826 - INFO - Processing batch 1: citations 1-5000 of 493064
+2025-07-23 01:05:20,372 - INFO - Processed 10 citations. Success rate: 90.0% (H:9, M:0, F:1)
+2025-07-23 01:05:20,491 - INFO - Processed 20 citations. Success rate: 95.0% (H:19, M:0, F:1)
+2025-07-23 01:05:20,609 - INFO - Processed 30 citations. Success rate: 96.7% (H:29, M:0, F:1)
+2025-07-23 01:05:20,733 - INFO - Processed 40 citations. Success rate: 97.5% (H:39, M:0, F:1)
+2025-07-23 01:05:20,844 - INFO - Processed 50 citations. Success rate: 98.0% (H:48, M:1, F:1)
+2025-07-23 01:05:20,961 - INFO - Processed 60 citations. Success rate: 98.3% (H:58, M:1, F:1)
+2025-07-23 01:05:21,087 - INFO - Processed 70 citations. Success rate: 97.1% (H:67, M:1, F:2)
+2025-07-23 01:05:21,202 - INFO - Processed 80 citations. Success rate: 97.5% (H:76, M:2, F:2)
+2025-07-23 01:05:21,334 - INFO - Processed 90 citations. Success rate: 97.8% (H:86, M:2, F:2)
+2025-07-23 01:05:21,504 - INFO - Processed 100 citations. Success rate: 98.0% (H:96, M:2, F:2)
+2025-07-23 01:05:21,611 - INFO - Processed 110 citations. Success rate: 98.2% (H:106, M:2, F:2)
+2025-07-23 01:05:22,403 - INFO - Processed 120 citations. Success rate: 98.3% (H:116, M:2, F:2)
+2025-07-23 01:05:23,368 - INFO - Processed 130 citations. Success rate: 98.5% (H:126, M:2, F:2)
+2025-07-23 01:05:23,946 - INFO - Processed 140 citations. Success rate: 98.6% (H:136, M:2, F:2)
+2025-07-23 01:05:24,795 - INFO - Processed 150 citations. Success rate: 98.7% (H:146, M:2, F:2)
+2025-07-23 01:05:25,262 - INFO - Processed 160 citations. Success rate: 98.8% (H:156, M:2, F:2)
+2025-07-23 01:05:26,026 - INFO - Processed 170 citations. Success rate: 98.2% (H:165, M:2, F:3)
+2025-07-23 01:05:26,866 - INFO - Processed 180 citations. Success rate: 97.8% (H:174, M:2, F:4)
+2025-07-23 01:05:27,738 - INFO - Processed 190 citations. Success rate: 97.4% (H:183, M:2, F:5)
+2025-07-23 01:05:27,942 - ERROR - Error processing citation 1861 HYDE ST: database is locked
+2025-07-23 01:05:28,505 - ERROR - Error processing citation 300 30TH ST: database is locked
+2025-07-23 01:05:28,610 - INFO - Processed 200 citations. Success rate: 97.0% (H:191, M:3, F:8)
+2025-07-23 01:05:28,640 - ERROR - Error processing citation 1028 BUSH ST: database is locked
+2025-07-23 01:05:28,738 - ERROR - Error processing citation 801 SUTTER ST: database is locked
+2025-07-23 01:05:28,788 - ERROR - Error processing citation 200 SHOTWELL ST: database is locked
+2025-07-23 01:05:29,411 - ERROR - Error processing citation 2519 SAN JOSE AVE: database is locked
+2025-07-23 01:05:29,411 - ERROR - Error processing citation 5455 GEARY BLVD: database is locked
+2025-07-23 01:05:30,041 - INFO - Processed 210 citations. Success rate: 96.2% (H:199, M:3, F:15)
+2025-07-23 01:05:30,440 - INFO - Processed 220 citations. Success rate: 95.5% (H:207, M:3, F:17)
+2025-07-23 01:05:30,703 - ERROR - Error processing citation 545 LEAVENWORTH ST: database is locked
+2025-07-23 01:05:30,703 - ERROR - Error processing citation 720 POST ST: database is locked
+2025-07-23 01:05:31,265 - INFO - Processed 230 citations. Success rate: 95.2% (H:216, M:3, F:20)
+2025-07-23 01:05:31,733 - ERROR - Error processing citation 1675 STOCKTON ST: database is locked
+2025-07-23 01:05:31,852 - ERROR - Error processing citation 1895 ELLIS ST: database is locked
+2025-07-23 01:05:32,248 - INFO - Processed 240 citations. Success rate: 95.0% (H:225, M:3, F:23)
+2025-07-23 01:05:33,170 - INFO - Processed 250 citations. Success rate: 95.2% (H:235, M:3, F:23)
+2025-07-23 01:05:33,785 - INFO - Processed 260 citations. Success rate: 95.4% (H:245, M:3, F:23)
+2025-07-23 01:05:34,942 - INFO - Processed 270 citations. Success rate: 95.2% (H:254, M:3, F:24)
+2025-07-23 01:05:35,693 - INFO - Processed 280 citations. Success rate: 95.4% (H:264, M:3, F:24)
+2025-07-23 01:05:36,107 - ERROR - Error processing citation 3144 18TH ST: database is locked
+2025-07-23 01:05:36,108 - ERROR - Error processing citation 10 DORE ST: database is locked
+2025-07-23 01:05:36,108 - ERROR - Error processing citation 826 FOLSOM ST: database is locked
+2025-07-23 01:05:36,212 - ERROR - Error processing citation 1413 NORIEGA ST: database is locked
+2025-07-23 01:05:36,212 - INFO - Processed 290 citations. Success rate: 95.2% (H:273, M:3, F:29)
+2025-07-23 01:05:36,583 - ERROR - Error processing citation 1461 PLYMOUTH AVE: database is locked
+2025-07-23 01:05:36,603 - ERROR - Error processing citation 164 RUSS ST: database is locked
+2025-07-23 01:05:36,883 - INFO - Processed 300 citations. Success rate: 95.3% (H:283, M:3, F:31)
+2025-07-23 01:05:38,200 - INFO - Processed 310 citations. Success rate: 95.5% (H:293, M:3, F:31)
+2025-07-23 01:05:39,350 - INFO - Processed 320 citations. Success rate: 95.6% (H:300, M:6, F:31)
+2025-07-23 01:05:39,767 - INFO - Processed 330 citations. Success rate: 95.8% (H:309, M:7, F:31)
+2025-07-23 01:05:40,679 - INFO - Processed 340 citations. Success rate: 95.9% (H:319, M:7, F:31)
+2025-07-23 01:05:42,093 - INFO - Processed 350 citations. Success rate: 96.0% (H:328, M:8, F:31)
+2025-07-23 01:05:44,154 - INFO - Processed 360 citations. Success rate: 96.1% (H:338, M:8, F:31)
+2025-07-23 01:05:44,273 - INFO - Processed 370 citations. Success rate: 96.2% (H:348, M:8, F:31)
+2025-07-23 01:05:44,527 - ERROR - Error processing citation 1265 PLYMOUTH AVE: database is locked
+2025-07-23 01:05:45,272 - INFO - Processed 380 citations. Success rate: 96.3% (H:358, M:8, F:32)
+2025-07-23 01:05:45,470 - ERROR - Error processing citation 671 SHOTWELL ST: database is locked
+2025-07-23 01:05:45,555 - ERROR - Error processing citation 3622 RIVERA ST: database is locked
+2025-07-23 01:05:45,767 - ERROR - Error processing citation 1005 SHOTWELL ST: database is locked
+2025-07-23 01:05:45,935 - ERROR - Error processing citation 2255 47TH AVE: database is locked
+2025-07-23 01:05:45,935 - ERROR - Error processing citation 587 SHOTWELL ST: database is locked
+2025-07-23 01:05:46,134 - ERROR - Error processing citation 2211 SILVER AVE: database is locked
+2025-07-23 01:05:46,273 - INFO - Processed 390 citations. Success rate: 96.4% (H:368, M:8, F:38)
+2025-07-23 01:05:47,389 - INFO - Processed 400 citations. Success rate: 96.5% (H:378, M:8, F:38)
+2025-07-23 01:05:48,145 - INFO - Processed 410 citations. Success rate: 96.3% (H:387, M:8, F:39)
+2025-07-23 01:05:48,625 - INFO - Processed 420 citations. Success rate: 96.0% (H:395, M:8, F:41)
+2025-07-23 01:05:49,664 - INFO - Processed 430 citations. Success rate: 95.6% (H:403, M:8, F:43)
+2025-07-23 01:05:50,818 - INFO - Processed 440 citations. Success rate: 95.7% (H:413, M:8, F:43)
+2025-07-23 01:05:51,607 - ERROR - Error processing citation 3835 19TH ST: database is locked
+2025-07-23 01:05:51,607 - ERROR - Error processing citation 1085 TREAT AVE: database is locked
+2025-07-23 01:05:51,645 - ERROR - Error processing citation 1204 GOLDEN GATE AVE: database is locked
+2025-07-23 01:05:51,734 - ERROR - Error processing citation 1067 TREAT AVE: database is locked
+2025-07-23 01:05:51,806 - ERROR - Error processing citation 1075 TREAT AVE: database is locked
+2025-07-23 01:05:52,646 - INFO - Processed 450 citations. Success rate: 95.8% (H:423, M:8, F:48)
+2025-07-23 01:05:53,095 - ERROR - Error processing citation 4430 18TH ST: database is locked
+2025-07-23 01:05:53,186 - ERROR - Error processing citation 1 VALLETTA CT: database is locked
+2025-07-23 01:05:53,186 - ERROR - Error processing citation 1217 TREAT AVE: database is locked
+2025-07-23 01:05:53,186 - ERROR - Error processing citation 4401 19TH ST: database is locked
+2025-07-23 01:05:54,042 - INFO - Processed 460 citations. Success rate: 95.9% (H:433, M:8, F:52)
+2025-07-23 01:05:54,890 - INFO - Processed 470 citations. Success rate: 96.0% (H:443, M:8, F:52)
+2025-07-23 01:05:55,134 - INFO - Processed 480 citations. Success rate: 96.0% (H:453, M:8, F:52)
+2025-07-23 01:05:55,717 - ERROR - Error processing citation 1700 GOLDEN GATE AVE: database is locked
+2025-07-23 01:05:55,775 - ERROR - Error processing citation 325 MIRAMAR AVE: database is locked
+2025-07-23 01:05:56,156 - INFO - Processed 490 citations. Success rate: 96.1% (H:463, M:8, F:54)
+2025-07-23 01:05:57,046 - INFO - Processed 500 citations. Success rate: 96.2% (H:472, M:9, F:54)
+2025-07-23 01:05:57,457 - ERROR - Error processing citation 1995 TURK ST: database is locked
+2025-07-23 01:05:57,634 - INFO - Processed 510 citations. Success rate: 96.3% (H:480, M:11, F:55)
+2025-07-23 01:05:58,651 - INFO - Processed 520 citations. Success rate: 96.3% (H:488, M:13, F:55)
+2025-07-23 01:05:59,515 - INFO - Processed 530 citations. Success rate: 96.4% (H:498, M:13, F:55)
+2025-07-23 01:05:59,830 - ERROR - Error processing citation 1123 TURK ST: database is locked
+2025-07-23 01:06:00,301 - INFO - Processed 540 citations. Success rate: 95.9% (H:505, M:13, F:59)
+2025-07-23 01:06:00,434 - ERROR - Error processing citation 1119 TURK ST: database is locked
+2025-07-23 01:06:00,435 - ERROR - Error processing citation 2918 CABRILLO ST: database is locked
+2025-07-23 01:06:00,435 - ERROR - Error processing citation 550 JARBOE AVE: database is locked

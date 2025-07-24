@@ -1,0 +1,485 @@
+citation_id,address,datetime,latitude,longitude,returned_address,confidence,confidence_score,geocoding_status
+980168652,703 GREAT HWY,2025-06-27T02:49:00.000,37.7749105,-122.5110806,"703, Great Highway, San Francisco, California, 94121, United States",MEDIUM,50,SUCCESS
+980168641,701 GREAT HWY,2025-06-27T02:46:00.000,37.7749488,-122.5110849,"701, Great Highway, San Francisco, California, 94121, United States",MEDIUM,50,SUCCESS
+988458914,700 EMBARCADERO SOUTH,2025-06-27T00:21:00.000,37.782123,-122.388495,"700, The Embarcadero, South Beach, South of Market, San Francisco, California, 94107, United States",MEDIUM,50,SUCCESS
+989262886,321 PHELAN AVE,2025-06-26T13:10:00.000,37.7294562,-122.4526705,"321, Frida Kahlo Way, Westwood Park, San Francisco, California, 94112, United States",MEDIUM,50,SUCCESS
+989345011,2071 GREAT HWY,2025-06-26T13:05:00.000,37.747825,-122.5078754,"2071, Great Highway, Outer Sunset, Sunset District, San Francisco, California, 94122, United States",MEDIUM,50,SUCCESS
+989179505,2055 GREAT HWY,2025-06-26T13:05:00.000,37.748089,-122.5079105,"2055, Great Highway, Outer Sunset, Sunset District, San Francisco, California, 94122, United States",MEDIUM,50,SUCCESS
+989054533,402 WEBSTER ST,2025-06-27T12:11:00.000,37.7743364,-122.4291042,"402, Webster Street, Western Addition, San Francisco, California, 94117, United States",HIGH,90,SUCCESS
+989341824,3680 21ST ST,2025-06-27T12:09:00.000,37.7565747,-122.429596,"3680, 21st Street, Noe Valley, Mission District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989078451,11 SEYMOUR ST,2025-06-27T12:08:00.000,37.7790113,-122.4378482,"11, Seymour Street, North of Panhandle, Western Addition, San Francisco, California, 94115, United States",HIGH,90,SUCCESS
+989263284,27 MELROSE AVE,2025-06-27T12:08:00.000,37.7336756,-122.4427096,"27, Melrose Avenue, Sunnyside, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989425010,222 WEBSTER ST,2025-06-27T12:07:00.000,37.772686,-122.4286859,"222, Webster Street, Lower Haight, Western Addition, San Francisco, California, 94143, United States",HIGH,90,SUCCESS
+989026301,3795 25TH ST,2025-06-27T12:07:00.000,37.7501681,-122.4247048,"3795, 25th Street, Noe Valley, Mission District, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+989345324,2584 37TH AVE,2025-06-27T12:07:00.000,37.7388314,-122.494642,"2584, 37th Avenue, Parkside, San Francisco, California, 94116, United States",HIGH,90,SUCCESS
+989257975,36 DOUGLASS ST,2025-06-27T12:07:00.000,37.7633127,-122.4397954,"34;36, Douglass Street, Castro District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989343600,3811 25TH ST,2025-06-27T12:06:00.000,37.7500985,-122.4258667,"3811, 25th Street, Noe Valley, Mission District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989426793,98 JOOST AVE,2025-06-27T12:06:00.000,37.7325289,-122.4373371,"98, Joost Avenue, Glen Park, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989431575,755 BRUNSWICK ST,2025-06-27T12:06:00.000,37.708591,-122.4488158,"755, Brunswick Street, Crocker-Amazon, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989410951,88 SHORE VIEW AVE,2025-06-27T12:05:00.000,37.7806927,-122.4985154,"88, Shore View Avenue, Outer Richmond, San Francisco, California, 94121, United States",HIGH,90,SUCCESS
+989410940,82 SHORE VIEW AVE,2025-06-27T12:04:00.000,37.7807374,-122.4983281,"82, Shore View Avenue, Outer Richmond, San Francisco, California, 94121, United States",HIGH,90,SUCCESS
+989054511,4 WEBSTER ST,2025-06-27T12:04:00.000,37.7705935,-122.4283493,"4, Webster Street, Western Addition, San Francisco, California, 94117, United States",HIGH,90,SUCCESS
+989305376,1001 MADRID ST,2025-06-27T12:04:00.000,37.714753,-122.43782,"1001, Madrid Street, Excelsior, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989428742,1455 LAGUNA ST,2025-06-27T12:02:00.000,37.7842255,-122.4279453,"1455, Laguna Street, Japantown, Western Addition, San Francisco, California, 94115, United States",HIGH,90,SUCCESS
+989297035,662 36TH AVE,2025-06-27T12:00:00.000,37.7764704,-122.4960389,"662, 36th Avenue, Outer Richmond, San Francisco, California, 94121, United States",HIGH,90,SUCCESS
+989263251,30 CASTRO ST,2025-06-27T11:50:00.000,37.7684962,-122.4358427,"30, Castro Street, Duboce Triangle, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989352604,635 35TH AVE,2025-06-27T10:19:00.000,37.7769649,-122.4954713,"635;637, 35th Avenue, Outer Richmond, San Francisco, California, 94121, United States",HIGH,90,SUCCESS
+989408910,585 33RD AVE,2025-06-27T10:14:00.000,37.7781024,-122.4933617,"583;585, 33rd Avenue, Outer Richmond, San Francisco, California, 94121, United States",HIGH,90,SUCCESS
+989296980,862 31ST AVE,2025-06-27T10:12:00.000,37.772976,-122.4904436,"862, 31st Avenue, Outer Richmond, San Francisco, California, 94121, United States",HIGH,90,SUCCESS
+989408895,743 30TH AVE,2025-06-27T10:09:00.000,37.7752361,-122.4898599,"743, 30th Avenue, Outer Richmond, San Francisco, California, 94121, United States",HIGH,90,SUCCESS
+989131920,35 COSO AVE,2025-06-27T10:00:00.000,37.7462557,-122.4178207,"29;35, Coso Avenue, Bernal Heights, San Francisco, California, 90110, United States",HIGH,90,SUCCESS
+989374201,375 ELIZABETH ST,2025-06-27T09:51:00.000,37.7522316,-122.4291182,"375, Elizabeth Street, Noe Valley, Mission District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989385784,900 BAKER ST,2025-06-27T09:50:00.000,37.779352,-122.441924,"900, Baker Street, Anza Vista, Western Addition, San Francisco, California, 94115, United States",HIGH,90,SUCCESS
+989374186,663 ELIZABETH ST,2025-06-27T09:47:00.000,37.7519289,-122.4355146,"663, Elizabeth Street, Noe Valley, Mission District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989301740,292 HARBOR RD,2025-06-27T09:46:00.000,37.731158,-122.377018,"292, Harbor Road, Westbrook Apartments, Bayview District, San Francisco, California, 94124, United States",HIGH,90,SUCCESS
+989280541,1802 CABRILLO ST,2025-06-27T09:45:00.000,37.7748811,-122.4781553,"1800;1802;1804;1806, Cabrillo Street, Richmond District, San Francisco, California, 94121, United States",HIGH,90,SUCCESS
+989026216,218 JERSEY ST,2025-06-27T09:43:00.000,37.7508137,-122.4300903,"218, Jersey Street, Noe Valley, Mission District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989339466,190 JERSEY ST,2025-06-27T09:42:00.000,37.7508612,-122.4292965,"190, Jersey Street, Noe Valley, Mission District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989176985,3241 FOLSOM ST,2025-06-27T09:42:00.000,37.7460656,-122.4133604,"3241, Folsom Street, Bernal Heights, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+989333203,2426 BRYANT ST,2025-06-27T09:41:00.000,37.7555004,-122.4096928,"2426, Bryant Street, Mission District, San Francisco, California, 90110, United States",HIGH,90,SUCCESS
+989410811,410 CABRILLO ST,2025-06-27T09:40:00.000,37.7755447,-122.4630877,"410;426, Cabrillo Street, Inner Richmond, Richmond District, San Francisco, California, 94118, United States",HIGH,90,SUCCESS
+989384303,41 ANNAPOLIS TER,2025-06-27T09:40:00.000,37.777883,-122.4481369,"41, Annapolis Terrace, Anza Vista, San Francisco, California, 94118, United States",HIGH,90,SUCCESS
+989263166,61 ELK ST,2025-06-27T09:39:00.000,37.7364317,-122.4395552,"61, Elk Street, Glen Park, San Francisco, California, 94131, United States",HIGH,90,SUCCESS
+989078370,135 BLAKE ST,2025-06-27T09:38:00.000,37.7814337,-122.4511134,"135, Blake Street, Laurel Heights, San Francisco, California, 94118, United States",HIGH,90,SUCCESS
+989307421,747 SPRUCE ST,2025-06-27T09:37:00.000,37.7810297,-122.4532242,"747, Spruce Street, Laurel Heights, San Francisco, California, 94118, United States",HIGH,90,SUCCESS
+989280515,741 BALBOA ST,2025-06-27T09:36:00.000,37.776886,-122.4668306,"741, Balboa Street, Inner Richmond, Richmond District, San Francisco, California, 94118, United States",HIGH,90,SUCCESS
+989188115,50 JERROLD AVE,2025-06-27T09:34:00.000,37.7277501,-122.369504,"50, Jerrold Avenue, The Shipyard, San Francisco, California, 94188, United States",HIGH,90,SUCCESS
+989343482,3839 26TH ST,2025-06-27T09:34:00.000,37.7483662,-122.4258305,"3839;3841, 26th Street, Noe Valley, Mission District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989131861,3096 FOLSOM ST,2025-06-27T09:31:00.000,37.748414,-122.413788,"3096, Folsom Street, Mission District, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+989054426,419 PIERCE ST,2025-06-27T09:31:00.000,37.7737834,-122.434261,"419, Pierce Street, Western Addition, San Francisco, California, 94117, United States",HIGH,90,SUCCESS
+989388886,1741 BALBOA ST,2025-06-27T09:30:00.000,37.7764741,-122.4777614,"1737;1741;1751, Balboa Street, Richmond District, San Francisco, California, 94121, United States",HIGH,90,SUCCESS
+989395945,523 PIERCE ST,2025-06-27T09:30:00.000,37.7748114,-122.4346492,"521;523;529, Pierce Street, North of Panhandle, Western Addition, San Francisco, California, 95115, United States",HIGH,90,SUCCESS
+989343460,4245 25TH ST,2025-06-27T09:29:00.000,37.7494044,-122.4353011,"4245, 25th Street, Noe Valley, Mission District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989316716,1225 GUERRERO ST,2025-06-27T09:29:00.000,37.7514953,-122.4229853,"1225, Guerrero Street, Mission District, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+988948516,420 AMAZON AVE,2025-06-27T09:26:00.000,37.7158381,-122.4368329,"420, Amazon Avenue, Excelsior, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989176930,1375 GUERRERO ST,2025-06-27T09:26:00.000,37.7492066,-122.4227707,"1375, Guerrero Street, Mission District, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+989316694,711 SAN JOSE AVE,2025-06-27T09:23:00.000,37.7436831,-122.422476,"707;709;711, San Jose Avenue, San Francisco, California, 90110, United States",HIGH,90,SUCCESS
+989341570,285 DUNCAN ST,2025-06-27T09:20:00.000,37.7460016,-122.426479,"285;287, Duncan Street, Noe Valley, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989395923,850 STEINER ST,2025-06-27T09:20:00.000,37.7772533,-122.4328973,"848;850, Steiner Street, Lower Haight, Western Addition, San Francisco, California, 94143, United States",HIGH,90,SUCCESS
+989026113,440 27TH ST,2025-06-27T09:18:00.000,37.7469076,-122.4301398,"440, 27th Street, Noe Valley, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989131813,1410 SOUTH VAN NESS AVE,2025-06-27T09:14:00.000,37.7505125,-122.4163367,"1410;1412, South Van Ness Avenue, Mission District, San Francisco, California, 90110, United States",HIGH,90,SUCCESS
+989327894,660 27TH ST,2025-06-27T09:09:00.000,37.7464922,-122.4353255,"660, 27th Street, Noe Valley, San Francisco, California, 94131, United States",HIGH,90,SUCCESS
+989257813,348 CHURCH ST,2025-06-27T09:03:00.000,37.76537,-122.4290723,"348, Church Street, Duboce Triangle, Mission District, San Francisco, California, 94143, United States",HIGH,90,SUCCESS
+989401641,647 CAMPBELL AVE,2025-06-27T09:03:00.000,37.7160556,-122.4094409,"647, Campbell Avenue, Visitacion Valley, San Francisco, California, 94134, United States",HIGH,90,SUCCESS
+989298833,374 COLERIDGE ST,2025-06-27T09:01:00.000,37.7410322,-122.4217279,"374, Coleridge Street, Bernal Heights, San Francisco, California, 90110, United States",HIGH,90,SUCCESS
+989352405,1950 ANZA ST,2025-06-27T09:00:00.000,37.7790839,-122.4693504,"1950, Anza Street, Inner Richmond, Richmond District, San Francisco, California, 94118, United States",HIGH,90,SUCCESS
+989339385,480 28TH ST,2025-06-27T08:59:00.000,37.7449977,-122.432971,"480, 28th Street, Noe Valley, San Francisco, California, 94131, United States",HIGH,90,SUCCESS
+989410704,1908 ANZA ST,2025-06-27T08:59:00.000,37.7790966,-122.4687269,"1908;1910, Anza Street, Inner Richmond, Richmond District, San Francisco, California, 94118, United States",HIGH,90,SUCCESS
+989263026,537 ANDOVER ST,2025-06-27T08:58:00.000,37.7367206,-122.416485,"537, Andover Street, Bernal Heights, San Francisco, California, 94134, United States",HIGH,90,SUCCESS
+989026054,404 28TH ST,2025-06-27T08:57:00.000,37.7450977,-122.4314976,"404, 28th Street, Noe Valley, San Francisco, California, 94131, United States",HIGH,90,SUCCESS
+989298800,443 ANDOVER ST,2025-06-27T08:57:00.000,37.7378841,-122.4163967,"443;459, Andover Street, Bernal Heights, San Francisco, California, 94134, United States",HIGH,90,SUCCESS
+989339363,372 28TH ST,2025-06-27T08:56:00.000,37.7452333,-122.4306203,"370;372;376, 28th Street, Noe Valley, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989388816,1046 ANZA ST,2025-06-27T08:55:00.000,37.779492,-122.459603,"1046, Anza Street, Inner Richmond, Richmond District, San Francisco, California, 94118, United States",HIGH,90,SUCCESS
+989188045,82 BERTHA LN,2025-06-27T08:54:00.000,37.7328996,-122.3803646,"82, Bertha Lane, Bayview District, San Francisco, California, 94124, United States",HIGH,90,SUCCESS
+989395890,256 NOE ST,2025-06-27T08:53:00.000,37.764931,-122.433268,"256, Noe Street, Duboce Triangle, Mission District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989296851,147 LAKE ST,2025-06-27T08:53:00.000,37.7867134,-122.4611874,"143;147;149, Lake Street, Presidio Terrace, Richmond District, San Francisco, California, 94118, United States",HIGH,90,SUCCESS
+989339326,201 VALLEY ST,2025-06-27T08:49:00.000,37.744406,-122.426893,"201, Valley Street, Noe Valley, San Francisco, California, 94131, United States",HIGH,90,SUCCESS
+989349944,795 LAKE ST,2025-06-27T08:49:00.000,37.786457,-122.4677071,"795, Lake Street, Presidio Terrace, Richmond District, San Francisco, California, 94118, United States",HIGH,90,SUCCESS
+989408711,809 LAKE ST,2025-06-27T08:49:00.000,37.7864411,-122.4681095,"809, Lake Street, Presidio Terrace, Richmond District, San Francisco, California, 94118, United States",HIGH,90,SUCCESS
+989428576,14 WALTER ST,2025-06-27T08:48:00.000,37.768861,-122.4326737,"14,16,18, Walter Street, Western Addition, San Francisco, California, 94143, United States",HIGH,90,SUCCESS
+989410634,1325 LAKE ST,2025-06-27T08:46:00.000,37.7861902,-122.4736051,"1325, Lake Street, Seacliff, Richmond District, San Francisco, California, 94118, United States",HIGH,90,SUCCESS
+989399714,2544 23RD AVE,2025-06-27T08:47:00.000,37.7401522,-122.4796853,"2544, 23rd Avenue, Parkside, Sunset District, San Francisco, California, 94116, United States",HIGH,90,SUCCESS
+989301552,75 WESTBROOK CT,2025-06-27T08:44:00.000,37.734892,-122.3827103,"75, Westbrook Court, Bayview District, San Francisco, California, 94124, United States",HIGH,90,SUCCESS
+989349911,1901 LAKE ST,2025-06-27T08:42:00.000,37.785894,-122.479935,"1901, Lake Street, Seacliff, Richmond District, San Francisco, California, 94121, United States",HIGH,90,SUCCESS
+989327813,312 29TH ST,2025-06-27T08:42:00.000,37.7438967,-122.4274744,"312;314;316, 29th Street, Noe Valley, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989339293,264 29TH ST,2025-06-27T08:41:00.000,37.7439074,-122.4259492,"264, 29th Street, Noe Valley, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989327802,77 RANDALL ST,2025-06-27T08:38:00.000,37.7396615,-122.4251316,"73,75,77, Randall Street, Glen Park, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989352313,2315 LAKE ST,2025-06-27T08:38:00.000,37.7855649,-122.4844078,"2315;2317, Lake Street, Seacliff, Richmond District, San Francisco, California, 94121, United States",HIGH,90,SUCCESS
+989375553,501 HAIGHT ST,2025-06-27T08:37:00.000,37.7719921,-122.4305641,"Haight Fillmore Whole Foods Co., 501, Haight Street, Lower Haight, Western Addition, San Francisco, California, 94117, United States",HIGH,90,SUCCESS
+989395864,623 HAIGHT ST,2025-06-27T08:34:00.000,37.7716413,-122.4325088,"619;621;623, Haight Street, Lower Haight, Western Addition, San Francisco, California, 94143, United States",HIGH,90,SUCCESS
+989395842,145 FILLMORE ST,2025-06-27T08:30:00.000,37.7709011,-122.4304545,"143;145;147;155, Fillmore Street, Lower Haight, Western Addition, San Francisco, California, 94143, United States",HIGH,90,SUCCESS
+989327754,100 LAIDLEY ST,2025-06-27T08:27:00.000,37.7402005,-122.430819,"100, Laidley Street, Glen Park, San Francisco, California, 94131, United States",HIGH,90,SUCCESS
+989395831,821 FILLMORE ST,2025-06-27T08:26:00.000,37.7770345,-122.4317446,"821;823, Fillmore Street, Lower Haight, Western Addition, San Francisco, California, 95115, United States",HIGH,90,SUCCESS
+989307362,114 LYON ST,2025-06-27T08:25:00.000,37.7721454,-122.4420846,"114, Lyon Street, North of Panhandle, San Francisco, California, 94177, United States",HIGH,90,SUCCESS
+989384211,48 CENTRAL AVE,2025-06-27T08:23:00.000,37.7693566,-122.4435388,"48, Central Avenue, Haight-Ashbury, San Francisco, California, 94117, United States",HIGH,90,SUCCESS
+989343213,151 DAY ST,2025-06-27T08:23:00.000,37.7428204,-122.4254487,"151, Day Street, Noe Valley, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989261534,222 BENTON AVE,2025-06-27T08:23:00.000,37.7328626,-122.4230855,"222, Benton Avenue, St. Mary's Park, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989301526,1463 HUDSON AVE,2025-06-27T08:17:00.000,37.7384211,-122.3858467,"1463, Hudson Avenue, Bayview District, San Francisco, California, 94188, United States",HIGH,90,SUCCESS
+989384174,722 CLAYTON ST,2025-06-27T08:15:00.000,37.7684416,-122.4480846,"720;722, Clayton Street, Haight-Ashbury, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+988948402,320 FOOTE AVE,2025-06-27T08:15:00.000,37.7154827,-122.4481616,"320, Foote Avenue, Outer Mission, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989316591,280 SHOTWELL ST,2025-06-27T08:14:00.000,37.7640031,-122.416368,"280, Shotwell Street, Mission District, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+988948391,320 FOOTE AVE,2025-06-27T08:14:00.000,37.7154827,-122.4481616,"320, Foote Avenue, Outer Mission, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989327684,300 30TH ST,2025-06-27T08:14:00.000,37.7421796,-122.426842,"300, 30th Street, Noe Valley, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989025892,232 30TH ST,2025-06-27T08:13:00.000,37.7423662,-122.425115,"232;234, 30th Street, Noe Valley, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989316580,200 SHOTWELL ST,2025-06-27T08:12:00.000,37.765119,-122.416479,"200, Shotwell Street, Mission District, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+988948380,51 ROME ST,2025-06-27T08:11:00.000,37.7169145,-122.4444818,"51, Rome Street, Outer Mission, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989341463,1735 HYDE ST,2025-06-27T08:10:00.000,37.7968232,-122.4188021,"1735, Hyde Street, Russian Hill, San Francisco, California, 90214, United States",HIGH,90,SUCCESS
+989128162,2519 SAN JOSE AVE,2025-06-27T08:09:00.000,37.7174885,-122.4491708,"2519, San Jose Avenue, Outer Mission, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989341430,1861 HYDE ST,2025-06-27T08:08:00.000,37.7980348,-122.4190686,"1861, Hyde Street, Russian Hill, San Francisco, California, 90214, United States",HIGH,90,SUCCESS
+989280386,2761 SAN JOSE AVE,2025-06-27T08:05:00.000,37.7134501,-122.4528077,"2761, San Jose Avenue, Outer Mission, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989343132,100 27TH ST,2025-06-27T08:04:00.000,37.747241,-122.422616,"100, 27th Street, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+989395805,968 BUSH ST,2025-06-27T08:02:00.000,37.7896827,-122.4131793,"968, Bush Street, Lower Nob Hill, South of Market, San Francisco, California, 94109, United States",HIGH,90,SUCCESS
+989375461,1028 BUSH ST,2025-06-27T08:01:00.000,37.7896831,-122.4142578,"1022;1024;1026;1028, Bush Street, Lower Nob Hill, South of Market, San Francisco, California, 94164, United States",HIGH,90,SUCCESS
+989375450,1074 BUSH ST,2025-06-27T07:59:00.000,37.7894882,-122.4147083,"1074, Bush Street, Lower Nob Hill, South of Market, San Francisco, California, 94109, United States",HIGH,90,SUCCESS
+989395772,1330 BUSH ST,2025-06-27T07:55:00.000,37.7891008,-122.4192321,"The Terraces, 1330, Bush Street, Polk Gulch, San Francisco, California, 94109, United States",HIGH,90,SUCCESS
+989401604,3428 SAN BRUNO AVE,2025-06-27T07:45:00.000,37.7187359,-122.400437,"3428, San Bruno Avenue, Little Hollywood, San Francisco, California, 94134, United States",HIGH,90,SUCCESS
+989375354,1845 CLAY ST,2025-06-27T07:41:00.000,37.7919895,-122.4234916,"1845, Clay Street, Polk Gulch, San Francisco, California, 94109, United States",HIGH,90,SUCCESS
+988952565,425 MANSELL ST,2025-06-27T07:36:00.000,37.7202365,-122.4052568,"425, Mansell Street, Portola, San Francisco, California, 94134, United States",HIGH,90,SUCCESS
+988952521,3020 SAN BRUNO AVE,2025-06-27T07:23:00.000,37.7236029,-122.4020394,"3020, San Bruno Avenue, Portola, Bayview District, San Francisco, California, 94134, United States",HIGH,90,SUCCESS
+989339186,37 29TH ST,2025-06-27T07:21:00.000,37.743835,-122.4216398,"33;37, 29th Street, Bernal Heights, San Francisco, California, 90110, United States",HIGH,90,SUCCESS
+989349863,5455 GEARY BLVD,2025-06-27T07:20:00.000,37.780089,-122.4780703,"5445;5455, Geary Boulevard, Richmond District, San Francisco, California, 94121, United States",HIGH,90,SUCCESS
+989262934,652 CHENERY ST,2025-06-27T07:17:00.000,37.7346791,-122.4330212,"630;636;642;648;650;652, Chenery Street, Glen Park, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989375236,1549 CALIFORNIA ST,2025-06-27T07:15:00.000,37.7905038,-122.4197927,"1545;1547;1549, California Street, Lower Nob Hill, South of Market, San Francisco, California, 94164, United States",HIGH,90,SUCCESS
+989352210,6107 GEARY BLVD,2025-06-27T07:14:00.000,37.7799239,-122.4849229,"6107, Geary Boulevard, Richmond District, San Francisco, California, 94121, United States",HIGH,90,SUCCESS
+989298693,933 IRVING ST,2025-06-27T07:13:00.000,37.7638902,-122.4677802,"933, Irving Street, Inner Sunset, San Francisco, California, 94122, United States",HIGH,90,SUCCESS
+989261490,1101 IRVING ST,2025-06-27T07:13:00.000,37.7637582,-122.469795,"1101;1115;1117, Irving Street, Inner Sunset, San Francisco, California, 94122, United States",HIGH,90,SUCCESS
+989343106,3602 25TH ST,2025-06-27T07:11:00.000,37.7505699,-122.4216792,"3600;3602, 25th Street, Noe Valley, Mission District, San Francisco, California, 90110, United States",HIGH,90,SUCCESS
+989187953,1025 PHELPS ST,2025-06-27T07:11:00.000,37.7387924,-122.3920053,"1025, Phelps Street, Silver Terrace, Bayview District, San Francisco, California, 94124, United States",HIGH,90,SUCCESS
+989327614,3620 25TH ST,2025-06-27T07:11:00.000,37.7506075,-122.4218836,"3618;3620, 25th Street, Noe Valley, Mission District, San Francisco, California, 90110, United States",HIGH,90,SUCCESS
+989298671,1629 IRVING ST,2025-06-27T07:10:00.000,37.7634058,-122.4755209,"1627;1629, Irving Street, Inner Sunset, San Francisco, California, 94122, United States",HIGH,90,SUCCESS
+989341415,1416 POWELL ST,2025-06-27T07:09:00.000,37.7978553,-122.4101588,"1416;1422, Powell Street, North Beach, San Francisco, California, 94133, United States",HIGH,90,SUCCESS
+989280331,4 GENEVA AVE,2025-06-27T07:05:00.000,37.7228773,-122.4522443,"4, Geneva Avenue, Ingleside, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989384093,240 TURK ST,2025-06-27T07:02:00.000,37.7832818,-122.4133306,"The Salvation Army Railton Place, 230;240;242, Turk Street, Tenderloin, South of Market, San Francisco, California, 94102, United States",HIGH,90,SUCCESS
+989257570,594 ELLIS ST,2025-06-27T07:00:00.000,37.7845561,-122.4158869,"594, Ellis Street, Little Saigon, South of Market, San Francisco, California, 94109, United States",HIGH,90,SUCCESS
+989384082,140 TURK ST,2025-06-27T07:00:00.000,37.783239,-122.4112247,"140, Turk Street, Tenderloin, South of Market, San Francisco, California, 94102, United States",HIGH,90,SUCCESS
+989384071,483 ELLIS ST,2025-06-27T06:57:00.000,37.7846155,-122.4140419,"483, Ellis Street, Tenderloin, South of Market, San Francisco, California, 94102, United States",HIGH,90,SUCCESS
+989384060,553 ELLIS ST,2025-06-27T06:55:00.000,37.7844457,-122.4154387,"553, Ellis Street, Little Saigon, South of Market, San Francisco, California, 94109, United States",HIGH,90,SUCCESS
+989424682,517 ELLIS ST,2025-06-27T06:55:00.000,37.7844916,-122.4150761,"517, Ellis Street, Little Saigon, South of Market, San Francisco, California, 94109, United States",HIGH,90,SUCCESS
+989025833,4144 24TH ST,2025-06-27T06:50:00.000,37.7514445,-122.435142,"4144, 24th Street, Noe Valley, Mission District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989375144,67 DASHIELL HAMMETT ST,2025-06-27T06:33:00.000,37.790846,-122.4080922,"67, Dashiell Hammett Street, Chinatown, South of Market, San Francisco, California, 94108, United States",HIGH,90,SUCCESS
+989131732,3274 21ST ST,2025-06-27T06:43:00.000,37.7571437,-122.4205324,"3266;3270;3274, 21st Street, Mission District, San Francisco, California, 90110, United States",HIGH,90,SUCCESS
+989176845,1940 15TH ST,2025-06-27T06:32:00.000,37.7662913,-122.427507,"1940, 15th Street, Duboce Triangle, Mission District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989395632,720 POST ST,2025-06-27T06:31:00.000,37.7877343,-122.4138013,"iThai, 720, Post Street, Lower Nob Hill, South of Market, San Francisco, California, 94102, United States",HIGH,90,SUCCESS
+989373921,2168 GREENWICH ST,2025-06-27T06:31:00.000,37.799105,-122.4353203,"2168, Greenwich Street, Cow Hollow, San Francisco, California, 94123, United States",HIGH,90,SUCCESS
+989054080,830 POST ST,2025-06-27T06:29:00.000,37.7876037,-122.4155881,"830, Post Street, Lower Nob Hill, South of Market, San Francisco, California, 94102, United States",HIGH,90,SUCCESS
+989375111,826 POST ST,2025-06-27T06:28:00.000,37.7874709,-122.4155197,"826, Post Street, Lower Nob Hill, South of Market, San Francisco, California, 94109, United States",HIGH,90,SUCCESS
+989395610,1125 LARKIN ST,2025-06-27T06:23:00.000,37.7881294,-122.418603,"1125, Larkin Street, Polk Gulch, San Francisco, California, 94109, United States",HIGH,90,SUCCESS
+989175530,1895 ELLIS ST,2025-06-27T06:23:00.000,37.7816723,-122.4372274,"1895, Ellis Street, Fillmore District, Western Addition, San Francisco, California, 94115, United States",HIGH,90,SUCCESS
+989054054,1113 LARKIN ST,2025-06-27T06:22:00.000,37.7881022,-122.4185975,"1113, Larkin Street, Polk Gulch, San Francisco, California, 94109, United States",HIGH,90,SUCCESS
+989327570,3775 MISSION ST,2025-06-27T06:21:00.000,37.7362811,-122.4241428,"3773;3775;3777, Mission Street, St. Mary's Park, San Francisco, California, 94134, United States",HIGH,90,SUCCESS
+989131636,3490 25TH ST,2025-06-27T06:21:00.000,37.7506023,-122.4202723,"3490, 25th Street, Noe Valley, Mission District, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+989383850,652 EDDY ST,2025-06-27T06:21:00.000,37.7832811,-122.4184125,"652, Eddy Street, Little Saigon, San Francisco, California, 94109, United States",HIGH,90,SUCCESS
+989383846,650 EDDY ST,2025-06-27T06:20:00.000,37.7834461,-122.4185778,"650;660, Eddy Street, Little Saigon, San Francisco, California, 94109, United States",HIGH,90,SUCCESS
+989254523,670 EDDY ST,2025-06-27T06:20:00.000,37.7834183,-122.4188683,"Elk Hotel, 670;678, Eddy Street, Little Saigon, San Francisco, California, 94109, United States",HIGH,90,SUCCESS
+989341312,2324 CHESTNUT ST,2025-06-27T06:14:00.000,37.800338,-122.4417487,"Crunch Fitness, 2324, Chestnut Street, Marina District, San Francisco, California, 94123, United States",HIGH,90,SUCCESS
+989373862,3207 PIERCE ST,2025-06-27T06:14:00.000,37.7996354,-122.4394799,"3207, Pierce Street, Marina District, San Francisco, California, 94123, United States",HIGH,90,SUCCESS
+989349804,2514 SACRAMENTO ST,2025-06-27T06:12:00.000,37.7898749,-122.4343883,"2514, Sacramento Street, Pacific Heights, San Francisco, California, 94115, United States",HIGH,90,SUCCESS
+989254475,545 LEAVENWORTH ST,2025-06-27T06:11:00.000,37.7861232,-122.4149379,"545, Leavenworth Street, Tenderloin, South of Market, San Francisco, California, 94102, United States",HIGH,90,SUCCESS
+989254464,311 LEAVENWORTH ST,2025-06-27T06:10:00.000,37.7839033,-122.4143831,"311, Leavenworth Street, Tenderloin, South of Market, San Francisco, California, 94102, United States",HIGH,90,SUCCESS
+989341286,2002 CHESTNUT ST,2025-06-27T06:09:00.000,37.8008722,-122.436474,"2002, Chestnut Street, Marina District, San Francisco, California, 94123, United States",HIGH,90,SUCCESS
+989254431,147 LEAVENWORTH ST,2025-06-27T06:06:00.000,37.7822945,-122.4140582,"147, Leavenworth Street, Tenderloin, South of Market, San Francisco, California, 94102, United States",HIGH,90,SUCCESS
+989373840,1056 BAY ST,2025-06-27T06:05:00.000,37.8044082,-122.4246565,"Galileo Gymnaseum, 1056, Bay Street, Russian Hill, San Francisco, California, 94123, United States",HIGH,90,SUCCESS
+989131581,2635 23RD ST,2025-06-27T06:05:00.000,37.7541879,-122.4061435,"Luna's Coffee House, 2631;2633;2635, 23rd Street, Mission District, San Francisco, California, 90110, United States",HIGH,90,SUCCESS
+980168674,3 GOUGH ST,2025-06-27T05:25:00.000,37.7732675,-122.4223538,"3, Gough Street, Western Addition, San Francisco, California, 94102, United States",HIGH,90,SUCCESS
+989169344,288 SHIPLEY ST,2025-06-27T04:08:00.000,37.778341,-122.4048712,"288, Shipley Street, West SoMa, South of Market, San Francisco, California, 94107, United States",HIGH,90,SUCCESS
+988459113,2 HOFF ST,2025-06-27T04:04:00.000,37.764438,-122.420633,"2, Hoff Street, Mission District, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+989288952,1621 STOCKTON ST,2025-06-27T03:16:00.000,37.8006942,-122.4093429,"1621, Stockton Street, North Beach, San Francisco, California, 94133, United States",HIGH,90,SUCCESS
+989288941,1675 STOCKTON ST,2025-06-27T03:15:00.000,37.80107,-122.4094157,"1675, Stockton Street, North Beach, San Francisco, California, 94133, United States",HIGH,90,SUCCESS
+989169300,1512 CARROLL AVE,2025-06-27T03:02:00.000,37.7241652,-122.3917556,"1512, Carroll Avenue, Bayview District, San Francisco, California, 94124, United States",HIGH,90,SUCCESS
+989242925,1391 DONNER AVE,2025-06-27T03:00:00.000,37.722012,-122.3899866,"1391, Donner Avenue, Bayview District, San Francisco, California, 94124, United States",HIGH,90,SUCCESS
+989169296,2311 KEITH ST,2025-06-27T02:59:00.000,37.7266593,-122.3917152,"2311, Keith Street, Bayview District, San Francisco, California, 94124, United States",HIGH,90,SUCCESS
+989288893,210 BEACH ST,2025-06-27T02:59:00.000,37.8077349,-122.4126364,"210, Beach Street, Fisherman's Wharf, San Francisco, California, 94133, United States",HIGH,90,SUCCESS
+989169285,2285 KEITH ST,2025-06-27T02:58:00.000,37.7269646,-122.3914406,"2285, Keith Street, Bayview District, San Francisco, California, 94124, United States",HIGH,90,SUCCESS
+989421915,25 CEDAR ST,2025-06-27T02:39:00.000,37.7864239,-122.4186466,"25, Cedar Street, Lower Nob Hill, San Francisco, California, 94109, United States",HIGH,90,SUCCESS
+989421893,75 CEDAR ST,2025-06-27T02:37:00.000,37.7863381,-122.4193334,"75, Cedar Street, Lower Nob Hill, San Francisco, California, 94109, United States",HIGH,90,SUCCESS
+988459043,3189 16TH ST,2025-06-27T02:33:00.000,37.7647215,-122.4237583,"3189, 16th Street, Mission District, San Francisco, California, 94103, United States",HIGH,90,SUCCESS
+989421860,35 OLIVE ST,2025-06-27T02:32:00.000,37.78455,-122.4184086,"35, Olive Street, Little Saigon, San Francisco, California, 94109, United States",HIGH,90,SUCCESS
+989421856,709 GOLDEN GATE AVE,2025-06-27T02:27:00.000,37.7807061,-122.4223331,"709, Golden Gate Avenue, Japantown, Western Addition, San Francisco, California, 94102, United States",HIGH,90,SUCCESS
+989288823,233 SANSOME ST,2025-06-27T02:26:00.000,37.792611,-122.4013278,"233;241, Sansome Street, Transbay, South of Market, San Francisco, California, 94111, United States",HIGH,90,SUCCESS
+989421823,85 OAK ST,2025-06-27T02:17:00.000,37.7751809,-122.4206684,"85, Oak Street, Hayes Valley, San Francisco, California, 94102, United States",HIGH,90,SUCCESS
+980168615,1413 NORIEGA ST,2025-06-27T02:14:00.000,37.754053,-122.4788591,"1413, Noriega Street, Golden Gate Heights, San Francisco, California, 94122, United States",HIGH,90,SUCCESS
+989288790,660 PINE ST,2025-06-27T02:13:00.000,37.7914614,-122.4066883,"660, Pine Street, Chinatown, South of Market, San Francisco, California, 94108, United States",HIGH,90,SUCCESS
+989415140,380 O'FARRELL ST,2025-06-27T02:12:00.000,37.7861932,-122.4108796,"Your New Barber, 380, O'Farrell Street, Tenderloin, South of Market, San Francisco, California, 94102, United States",HIGH,90,SUCCESS
+989421812,180 MCALLISTER ST,2025-06-27T02:07:00.000,37.7808507,-122.4149341,"180, McAllister Street, Civic Center, South of Market, San Francisco, California, 94102, United States",HIGH,90,SUCCESS
+989421764,329 MCALLISTER ST,2025-06-27T01:59:00.000,37.7803201,-122.417469,"329, McAllister Street, Civic Center, San Francisco, California, 94102, United States",HIGH,90,SUCCESS
+989242892,1798 EGBERT AVE,2025-06-27T01:28:00.000,37.726824,-122.399092,"1798, Egbert Avenue, Silver Terrace, Bayview District, San Francisco, California, 94124, United States",HIGH,90,SUCCESS
+989242881,1788 EGBERT AVE,2025-06-27T01:27:00.000,37.7267852,-122.3989242,"1788, Egbert Avenue, Silver Terrace, Bayview District, San Francisco, California, 94124, United States",HIGH,90,SUCCESS
+989421672,120 10TH ST,2025-06-27T01:04:00.000,37.7748267,-122.4157305,"120;122, 10th Street, Civic Center, South of Market, San Francisco, California, 94103, United States",HIGH,90,SUCCESS
+989242833,1207 INDIANA ST,2025-06-27T01:03:00.000,37.7548356,-122.390232,"1207, Indiana Street, Dogpatch, San Francisco, California, 94124, United States",HIGH,90,SUCCESS
+989169204,1242 PENNSYLVANIA AVE,2025-06-27T01:02:00.000,37.7521748,-122.3924974,"1242, Pennsylvania Avenue, Potrero Terrace, San Francisco, California, 94107, United States",HIGH,90,SUCCESS
+989242822,822 PENNSYLVANIA AVE,2025-06-27T01:00:00.000,37.7560993,-122.3930819,"822, Pennsylvania Avenue, Potrero Terrace, San Francisco, California, 94107, United States",HIGH,90,SUCCESS
+989415103,150 STEUART ST,2025-06-27T00:59:00.000,37.7926209,-122.3925635,"150, Steuart Street, Rincon Hill, South of Market, San Francisco, California, 94105, United States",HIGH,90,SUCCESS
+980168582,70 12TH ST,2025-06-27T00:57:00.000,37.7733607,-122.4191486,"70, 12th Street, Hayes Valley, San Francisco, California, 94103, United States",HIGH,90,SUCCESS
+989421650,16 12TH ST,2025-06-27T00:54:00.000,37.7739784,-122.4199134,"16, 12th Street, Hayes Valley, San Francisco, California, 94103, United States",HIGH,90,SUCCESS
+980168571,3 GOUGH ST,2025-06-27T00:52:00.000,37.7732675,-122.4223538,"3, Gough Street, Western Addition, San Francisco, California, 94102, United States",HIGH,90,SUCCESS
+989421580,1750 MISSION ST,2025-06-27T00:45:00.000,37.7690928,-122.4203539,"1750, Mission Street, Mission District, San Francisco, California, 90110, United States",HIGH,90,SUCCESS
+989169112,1625 BRYANT ST,2025-06-27T00:41:00.000,37.7665286,-122.4104705,"1625, Bryant Street, Mission District, San Francisco, California, 94103, United States",HIGH,90,SUCCESS
+989288694,58 TEHAMA ST,2025-06-27T00:44:00.000,37.7872906,-122.3966426,"58, Tehama Street, Transbay, South of Market, San Francisco, California, 94105, United States",HIGH,90,SUCCESS
+980168560,72 DORE ST,2025-06-27T00:40:00.000,37.7736007,-122.4127669,"72, Dore Street, West SoMa, South of Market, San Francisco, California, 94103, United States",HIGH,90,SUCCESS
+989169090,1885 BRYANT ST,2025-06-27T00:38:00.000,37.7633059,-122.4101659,"1885, Bryant Street, Mission District, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+980168545,10 DORE ST,2025-06-27T00:36:00.000,37.7742821,-122.4136226,"10, Dore Street, West SoMa, South of Market, San Francisco, California, 94103, United States",HIGH,90,SUCCESS
+989245961,458 BRANNAN ST,2025-06-27T00:33:00.000,37.7792065,-122.3958505,"Miroculus, 458, Brannan Street, South Beach, South of Market, San Francisco, California, 94107, United States",HIGH,90,SUCCESS
+989288635,80 HAWTHORNE ST,2025-06-27T00:33:00.000,37.7854529,-122.3989525,"80, Hawthorne Street, Transbay, South of Market, San Francisco, California, 94105, United States",HIGH,90,SUCCESS
+989288602,10 HAWTHORNE ST,2025-06-27T00:31:00.000,37.7856328,-122.3992407,"Berggruen Gallery, 10, Hawthorne Street, Transbay, South of Market, San Francisco, California, 94105, United States",HIGH,90,SUCCESS
+980168501,164 RUSS ST,2025-06-27T00:23:00.000,37.7779249,-122.4075793,"160;164, Russ Street, West SoMa, South of Market, San Francisco, California, 94103, United States",HIGH,90,SUCCESS
+980168490,160 RUSS ST,2025-06-27T00:21:00.000,37.7779249,-122.4075793,"160;164, Russ Street, West SoMa, South of Market, San Francisco, California, 94103, United States",HIGH,90,SUCCESS
+980168486,162 RUSS ST,2025-06-27T00:20:00.000,37.7780463,-122.4073952,"162, Russ Street, West SoMa, South of Market, San Francisco, California, 94103, United States",HIGH,90,SUCCESS
+989288565,132 MINNA ST,2025-06-27T00:20:00.000,37.7866541,-122.4005817,"132, Minna Street, Transbay, South of Market, San Francisco, California, 94105, United States",HIGH,90,SUCCESS
+980168475,130 RUSS ST,2025-06-27T00:18:00.000,37.7782771,-122.4079856,"130, Russ Street, West SoMa, South of Market, San Francisco, California, 94103, United States",HIGH,90,SUCCESS
+980168464,465 TEHAMA ST,2025-06-27T00:13:00.000,37.7798722,-122.4056587,"465, Tehama Street, West SoMa, South of Market, San Francisco, California, 94107, United States",HIGH,90,SUCCESS
+989288495,826 FOLSOM ST,2025-06-27T00:11:00.000,37.781644,-122.4020721,"826, Folsom Street, West SoMa, South of Market, San Francisco, California, 94107, United States",HIGH,90,SUCCESS
+989128114,81 WESTWOOD DR,2025-06-26T13:28:00.000,37.7271673,-122.4592876,"81, Westwood Drive, Westwood Park, San Francisco, California, 94127, United States",HIGH,90,SUCCESS
+989187931,61 VENUS ST,2025-06-26T13:28:00.000,37.7317522,-122.3969211,"61, Venus Street, Silver Terrace, Bayview District, San Francisco, California, 94124, United States",HIGH,90,SUCCESS
+989128103,168 SOUTHWOOD DR,2025-06-26T13:26:00.000,37.7256925,-122.4593983,"168, Southwood Drive, Westwood Park, San Francisco, California, 94127, United States",HIGH,90,SUCCESS
+989335034,168 SOUTHWOOD DR,2025-06-26T13:25:00.000,37.7256925,-122.4593983,"168, Southwood Drive, Westwood Park, San Francisco, California, 94127, United States",HIGH,90,SUCCESS
+989280305,1461 PLYMOUTH AVE,2025-06-26T13:24:00.000,37.7288606,-122.4566937,"1461, Plymouth Avenue, Westwood Park, San Francisco, California, 94127, United States",HIGH,90,SUCCESS
+989309344,56 NEPTUNE ST,2025-06-26T13:24:00.000,37.7305745,-122.3972652,"56, Neptune Street, Silver Terrace, Bayview District, San Francisco, California, 94124, United States",HIGH,90,SUCCESS
+989265476,3821 FULTON ST,2025-06-26T13:22:00.000,37.773141,-122.469865,"3821, Fulton Street, Inner Richmond, Richmond District, San Francisco, California, 94117, United States",HIGH,90,SUCCESS
+989261442,121 MONTEREY BLVD,2025-06-26T13:22:00.000,37.7314545,-122.4381065,"121, Monterey Boulevard, Sunnyside, San Francisco, California, 94131, United States",HIGH,90,SUCCESS
+989128092,2 PIZARRO WAY,2025-06-26T13:21:00.000,37.729326,-122.45901,"2, Pizarro Way, Westwood Park, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989399600,831 SANTIAGO ST,2025-06-26T13:20:00.000,37.7446836,-122.4763777,"831, Santiago Street, Parkside, Sunset District, San Francisco, California, 94116, United States",HIGH,90,SUCCESS
+989265465,4227 FULTON ST,2025-06-26T13:20:00.000,37.7730074,-122.4728375,"4227, Fulton Street, Richmond District, San Francisco, California, 94117, United States",HIGH,90,SUCCESS
+989290164,847 SANTIAGO ST,2025-06-26T13:20:00.000,37.74473,-122.4767013,"847;849, Santiago Street, Parkside, Sunset District, San Francisco, California, 94116, United States",HIGH,90,SUCCESS
+989345103,947 SANTIAGO ST,2025-06-26T13:19:00.000,37.7446883,-122.4777098,"945;947;949, Santiago Street, Parkside, Sunset District, San Francisco, California, 94116, United States",HIGH,90,SUCCESS
+989265454,4241 FULTON ST,2025-06-26T13:19:00.000,37.7730012,-122.4729741,"4241, Fulton Street, Richmond District, San Francisco, California, 94117, United States",HIGH,90,SUCCESS
+989399596,837 SANTIAGO ST,2025-06-26T13:19:00.000,37.7447137,-122.4765211,"837, Santiago Street, Parkside, Sunset District, San Francisco, California, 94116, United States",HIGH,90,SUCCESS
+989399585,1325 SANTIAGO ST,2025-06-26T13:18:00.000,37.744461,-122.4816554,"1325, Santiago Street, Parkside, Sunset District, San Francisco, California, 94116, United States",HIGH,90,SUCCESS
+989265443,4299 FULTON ST,2025-06-26T13:18:00.000,37.7729622,-122.4738286,"4299, Fulton Street, Richmond District, San Francisco, California, 94117, United States",HIGH,90,SUCCESS
+989290153,1249 SANTIAGO ST,2025-06-26T13:18:00.000,37.7446262,-122.4805566,"1249, Santiago Street, Parkside, Sunset District, San Francisco, California, 94116, United States",HIGH,90,SUCCESS
+989175515,4315 FULTON ST,2025-06-26T13:18:00.000,37.772955,-122.4739835,"4315, Fulton Street, Richmond District, San Francisco, California, 94117, United States",HIGH,90,SUCCESS
+989175504,4409 FULTON ST,2025-06-26T13:17:00.000,37.7729012,-122.4751482,"4409, Fulton Street, Richmond District, San Francisco, California, 94117, United States",HIGH,90,SUCCESS
+989128081,167 VALDEZ AVE,2025-06-26T13:17:00.000,37.7309597,-122.4557628,"167, Valdez Avenue, Westwood Park, San Francisco, California, 94127, United States",HIGH,90,SUCCESS
+989265432,4445 FULTON ST,2025-06-26T13:17:00.000,37.772873,-122.475763,"4445, Fulton Street, Richmond District, San Francisco, California, 94117, United States",HIGH,90,SUCCESS
+989179564,1325 SANTIAGO ST,2025-06-26T13:17:00.000,37.744461,-122.4816554,"1325, Santiago Street, Parkside, Sunset District, San Francisco, California, 94116, United States",HIGH,90,SUCCESS
+989345081,1101 SANTIAGO ST,2025-06-26T13:17:00.000,37.744686,-122.479185,"1101, Santiago Street, Parkside, Sunset District, San Francisco, California, 94116, United States",HIGH,90,SUCCESS
+989345070,1103 SANTIAGO ST,2025-06-26T13:17:00.000,37.7446852,-122.4792035,"1103, Santiago Street, Parkside, Sunset District, San Francisco, California, 94116, United States",HIGH,90,SUCCESS
+989399574,1325 SANTIAGO ST,2025-06-26T13:17:00.000,37.744461,-122.4816554,"1325, Santiago Street, Parkside, Sunset District, San Francisco, California, 94116, United States",HIGH,90,SUCCESS
+989290142,1225 SANTIAGO ST,2025-06-26T13:16:00.000,37.7446359,-122.4803342,"1225, Santiago Street, Parkside, Sunset District, San Francisco, California, 94116, United States",HIGH,90,SUCCESS
+989175493,5015 FULTON ST,2025-06-26T13:15:00.000,37.7725555,-122.4826866,"5015, Fulton Street, Richmond District, San Francisco, California, 94117, United States",HIGH,90,SUCCESS
+989179553,1425 SANTIAGO ST,2025-06-26T13:15:00.000,37.744421,-122.4827283,"1425, Santiago Street, Parkside, Sunset District, San Francisco, California, 94116, United States",HIGH,90,SUCCESS
+989345066,1325 SANTIAGO ST,2025-06-26T13:15:00.000,37.744461,-122.4816554,"1325, Santiago Street, Parkside, Sunset District, San Francisco, California, 94116, United States",HIGH,90,SUCCESS
+989179542,1635 SANTIAGO ST,2025-06-26T13:14:00.000,37.7444396,-122.4848087,"1635, Santiago Street, Parkside, Sunset District, San Francisco, California, 94116, United States",HIGH,90,SUCCESS
+989335012,154 EASTWOOD DR,2025-06-26T13:14:00.000,37.7287494,-122.4570324,"154, Eastwood Drive, Westwood Park, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989265421,5249 FULTON ST,2025-06-26T13:13:00.000,37.7724189,-122.4856838,"5249, Fulton Street, Richmond District, San Francisco, California, 94117, United States",HIGH,90,SUCCESS
+989280294,154 EASTWOOD DR,2025-06-26T13:14:00.000,37.7287494,-122.4570324,"154, Eastwood Drive, Westwood Park, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989345055,1925 SANTIAGO ST,2025-06-26T13:13:00.000,37.7441823,-122.4880871,"1925, Santiago Street, Parkside, Sunset District, San Francisco, California, 94166, United States",HIGH,90,SUCCESS
+989187920,1783 SILVER AVE,2025-06-26T13:12:00.000,37.7341879,-122.4028388,"1783, Silver Avenue, Silver Terrace, Bayview District, San Francisco, California, 94124, United States",HIGH,90,SUCCESS
+989175482,5249 FULTON ST,2025-06-26T13:12:00.000,37.7724189,-122.4856838,"5249, Fulton Street, Richmond District, San Francisco, California, 94117, United States",HIGH,90,SUCCESS
+989298623,227 MONTEREY BLVD,2025-06-26T13:12:00.000,37.7314034,-122.4404115,"227, Monterey Boulevard, Sunnyside, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989265410,5251 FULTON ST,2025-06-26T13:12:00.000,37.772418,-122.4857019,"5251, Fulton Street, Richmond District, San Francisco, California, 94117, United States",HIGH,90,SUCCESS
+989335001,1227 PLYMOUTH AVE,2025-06-26T13:12:00.000,37.7245285,-122.4566597,"1227, Plymouth Avenue, Ingleside, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989128070,1221 PLYMOUTH AVE,2025-06-26T13:12:00.000,37.7244299,-122.4566531,"1221, Plymouth Avenue, Ingleside, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989128066,1265 PLYMOUTH AVE,2025-06-26T13:11:00.000,37.7251042,-122.456585,"1265, Plymouth Avenue, Ingleside, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989280272,1245 PLYMOUTH AVE,2025-06-26T13:11:00.000,37.7247924,-122.4566484,"1245, Plymouth Avenue, Ingleside, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989175471,5311 FULTON ST,2025-06-26T13:11:00.000,37.7723805,-122.4865369,"5311, Fulton Street, Richmond District, San Francisco, California, 94117, United States",HIGH,90,SUCCESS
+989334990,1239 PLYMOUTH AVE,2025-06-26T13:11:00.000,37.7247009,-122.4566404,"1239, Plymouth Avenue, Ingleside, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989290131,2805 SANTIAGO ST,2025-06-26T13:11:00.000,37.7438837,-122.4974291,"2805, Santiago Street, Parkside, Sunset District, San Francisco, California, 94116, United States",HIGH,90,SUCCESS
+989280250,1251 PLYMOUTH AVE,2025-06-26T13:10:00.000,37.7248819,-122.4566559,"1251, Plymouth Avenue, Ingleside, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989334986,1245 PLYMOUTH AVE,2025-06-26T13:10:00.000,37.7247924,-122.4566484,"1245, Plymouth Avenue, Ingleside, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989265406,5831 FULTON ST,2025-06-26T13:10:00.000,37.7720858,-122.4930006,"5831, Fulton Street, Outer Richmond, San Francisco, California, 94117, United States",HIGH,90,SUCCESS
+989128055,1265 PLYMOUTH AVE,2025-06-26T13:10:00.000,37.7251042,-122.456585,"1265, Plymouth Avenue, Ingleside, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989128044,1265 PLYMOUTH AVE,2025-06-26T13:09:00.000,37.7251042,-122.456585,"1265, Plymouth Avenue, Ingleside, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989179520,3229 SANTIAGO ST,2025-06-26T13:09:00.000,37.7435991,-122.5020639,"3229, Santiago Street, Parkside, Sunset District, San Francisco, California, 94166, United States",HIGH,90,SUCCESS
+989345044,3415 SANTIAGO ST,2025-06-26T13:09:00.000,37.7434993,-122.5040327,"3415, Santiago Street, Parkside, Sunset District, San Francisco, California, 94166, United States",HIGH,90,SUCCESS
+989301456,55 CONKLING ST,2025-06-26T13:09:00.000,37.7356789,-122.4017808,"55, Conkling Street, Silver Terrace, Bayview District, San Francisco, California, 94124, United States",HIGH,90,SUCCESS
+989179531,3217 SANTIAGO ST,2025-06-26T13:09:00.000,37.7436077,-122.501891,"3217, Santiago Street, Parkside, Sunset District, San Francisco, California, 94166, United States",HIGH,90,SUCCESS
+989265395,5947 FULTON ST,2025-06-26T13:09:00.000,37.7720243,-122.4943434,"5947, Fulton Street, Outer Richmond, San Francisco, California, 94117, United States",HIGH,90,SUCCESS
+989290120,3049 SANTIAGO ST,2025-06-26T13:09:00.000,37.7437738,-122.4999152,"3049, Santiago Street, Parkside, Sunset District, San Francisco, California, 94116, United States",HIGH,90,SUCCESS
+989309333,57 CONKLING ST,2025-06-26T13:09:00.000,37.7356416,-122.4017779,"57, Conkling Street, Silver Terrace, Bayview District, San Francisco, California, 94124, United States",HIGH,90,SUCCESS
+989175460,5815 FULTON ST,2025-06-26T13:09:00.000,37.7721056,-122.4925637,"5815, Fulton Street, Outer Richmond, San Francisco, California, 94117, United States",HIGH,90,SUCCESS
+988952506,005 YALE ST,2025-06-26T13:08:00.000,37.7289096,-122.4182186,"5, Yale Street, St. Mary's Park, San Francisco, California, 94134, United States",HIGH,90,SUCCESS
+989345033,3415 SANTIAGO ST,2025-06-26T13:08:00.000,37.7434993,-122.5040327,"3415, Santiago Street, Parkside, Sunset District, San Francisco, California, 94166, United States",HIGH,90,SUCCESS
+989179516,3435 SANTIAGO ST,2025-06-26T13:07:00.000,37.7435896,-122.504095,"3435, Santiago Street, Parkside, Sunset District, San Francisco, California, 94116, United States",HIGH,90,SUCCESS
+989290116,3601 SANTIAGO ST,2025-06-26T13:07:00.000,37.7434288,-122.5060388,"3601, Santiago Street, Parkside, Sunset District, San Francisco, California, 94166, United States",HIGH,90,SUCCESS
+989175456,3541 FULTON ST,2025-06-26T13:06:00.000,37.7732436,-122.4675262,"3541, Fulton Street, Inner Richmond, Richmond District, San Francisco, California, 94117, United States",HIGH,90,SUCCESS
+989345022,3421 SANTIAGO ST,2025-06-26T13:07:00.000,37.7435047,-122.504121,"3421, Santiago Street, Parkside, Sunset District, San Francisco, California, 94166, United States",HIGH,90,SUCCESS
+989262864,324 GENNESSEE ST,2025-06-26T13:06:00.000,37.7310936,-122.4509386,"324, Gennessee Street, Westwood Park, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989262875,326 GENNESSEE ST,2025-06-26T13:06:00.000,37.7308559,-122.4510383,"326, Gennessee Street, Westwood Park, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989262853,22 GENNESSEE ST,2025-06-26T13:05:00.000,37.7287329,-122.450924,"22, Gennessee Street, Westwood Park, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989265384,6823 FULTON ST,2025-06-26T13:05:00.000,37.771707,-122.5048824,"6823, Fulton Street, Outer Richmond, San Francisco, California, 94121, United States",HIGH,90,SUCCESS
+988952495,001 INA CT,2025-06-26T13:03:00.000,37.723941,-122.424039,"1, Ina Court, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+988952484,89 INA CT,2025-06-26T13:01:00.000,37.722737,-122.4251659,"89, Ina Court, San Francisco, California, 94134, United States",HIGH,90,SUCCESS
+989327533,411 SHOTWELL ST,2025-06-26T13:01:00.000,37.7617787,-122.4159501,"411, Shotwell Street, Mission District, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+989316506,405 SHOTWELL ST,2025-06-26T13:00:00.000,37.7618617,-122.4159579,"405, Shotwell Street, Mission District, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+989316495,425 SHOTWELL ST,2025-06-26T12:59:00.000,37.7615852,-122.4159321,"425, Shotwell Street, Mission District, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+989327500,441 SHOTWELL ST,2025-06-26T12:58:00.000,37.7613639,-122.4159116,"441, Shotwell Street, Mission District, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+988952473,881 PERU AVE,2025-06-26T12:58:00.000,37.7241505,-122.422758,"881, Peru Avenue, San Francisco, California, 94134, United States",HIGH,90,SUCCESS
+989316484,525 SHOTWELL ST,2025-06-26T12:58:00.000,37.7599837,-122.4157829,"525, Shotwell Street, Mission District, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+989316473,583 SHOTWELL ST,2025-06-26T12:56:00.000,37.7592405,-122.4155025,"577;579;583, Shotwell Street, Mission District, San Francisco, California, 90110, United States",HIGH,90,SUCCESS
+989327496,551 SHOTWELL ST,2025-06-26T12:56:00.000,37.7596237,-122.4157492,"551, Shotwell Street, Mission District, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+989327485,551 SHOTWELL ST,2025-06-26T12:56:00.000,37.7596237,-122.4157492,"551, Shotwell Street, Mission District, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+988952462,230 MADISON ST,2025-06-26T12:55:00.000,37.726158,-122.4227676,"230, Madison Street, St. Mary's Park, San Francisco, California, 94134, United States",HIGH,90,SUCCESS
+989290105,3825 QUINTARA ST,2025-06-26T12:55:00.000,37.7471101,-122.5066591,"3825, Quintara Street, Sunset District, San Francisco, California, 94166, United States",HIGH,90,SUCCESS
+989345000,3501 QUINTARA ST,2025-06-26T12:55:00.000,37.747373,-122.50302,"3501, Quintara Street, Sunset District, San Francisco, California, 94116, United States",HIGH,90,SUCCESS
+989327474,583 SHOTWELL ST,2025-06-26T12:55:00.000,37.7592405,-122.4155025,"577;579;583, Shotwell Street, Mission District, San Francisco, California, 90110, United States",HIGH,90,SUCCESS
+989316462,587 SHOTWELL ST,2025-06-26T12:55:00.000,37.7591252,-122.4157026,"587, Shotwell Street, Mission District, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+989316451,619 SHOTWELL ST,2025-06-26T12:53:00.000,37.7584647,-122.4156401,"619, Shotwell Street, Mission District, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+989327463,619 SHOTWELL ST,2025-06-26T12:53:00.000,37.7584647,-122.4156401,"619, Shotwell Street, Mission District, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+988952451,001 GAMBIER ST,2025-06-26T12:53:00.000,37.72873,-122.422519,"1, Gambier Street, St. Mary's Park, San Francisco, California, 94134, United States",HIGH,90,SUCCESS
+989327452,671 SHOTWELL ST,2025-06-26T12:52:00.000,37.7577216,-122.4154488,"671;673, Shotwell Street, Mission District, San Francisco, California, 90110, United States",HIGH,90,SUCCESS
+989301434,1545 QUINT ST,2025-06-26T12:52:00.000,37.7365813,-122.3968225,"1545, Quint Street, Silver Terrace, Bayview District, San Francisco, California, 94124, United States",HIGH,90,SUCCESS
+989316440,637 SHOTWELL ST,2025-06-26T12:52:00.000,37.7582077,-122.4154864,"637;639, Shotwell Street, Mission District, San Francisco, California, 90110, United States",HIGH,90,SUCCESS
+989290083,4335 PACHECO ST,2025-06-26T12:51:00.000,37.7490014,-122.5068273,"4335, Pacheco Street, Outer Sunset, Sunset District, San Francisco, California, 94166, United States",HIGH,90,SUCCESS
+988952440,35 GAMBIER ST,2025-06-26T12:51:00.000,37.728543,-122.4224413,"35, Gambier Street, St. Mary's Park, San Francisco, California, 94134, United States",HIGH,90,SUCCESS
+989327441,670 SHOTWELL ST,2025-06-26T12:51:00.000,37.7576995,-122.4159189,"670;672, Shotwell Street, Mission District, San Francisco, California, 90110, United States",HIGH,90,SUCCESS
+989316425,665 SHOTWELL ST,2025-06-26T12:50:00.000,37.7578301,-122.4155791,"665, Shotwell Street, Mission District, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+989316436,665 SHOTWELL ST,2025-06-26T12:51:00.000,37.7578301,-122.4155791,"665, Shotwell Street, Mission District, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+989327430,879 SHOTWELL ST,2025-06-26T12:49:00.000,37.7542647,-122.4151045,"879;881, Shotwell Street, Mission District, San Francisco, California, 90110, United States",HIGH,90,SUCCESS
+989344996,2258 48TH AVE,2025-06-26T12:49:00.000,37.7443084,-122.5067581,"2258, 48th Avenue, Outer Sunset, Sunset District, San Francisco, California, 94166, United States",HIGH,90,SUCCESS
+989316414,915 SHOTWELL ST,2025-06-26T12:48:00.000,37.7537244,-122.4151871,"915, Shotwell Street, Mission District, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+989343062,1135 ELLIS ST,2025-06-26T12:48:00.000,37.7830288,-122.4250802,"1135;1155;1175, Ellis Street, Japantown, Western Addition, San Francisco, California, 95115, United States",HIGH,90,SUCCESS
+989309322,2211 SILVER AVE,2025-06-26T12:48:00.000,37.736723,-122.3983269,"2211, Silver Avenue, Silver Terrace, Bayview District, San Francisco, California, 94124, United States",HIGH,90,SUCCESS
+989179483,2335 47TH AVE,2025-06-26T12:47:00.000,37.7428897,-122.5060113,"2335, 47th Avenue, Outer Sunset, Sunset District, San Francisco, California, 94166, United States",HIGH,90,SUCCESS
+989327426,993 SHOTWELL ST,2025-06-26T12:47:00.000,37.7526515,-122.4150877,"993, Shotwell Street, Mission District, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+989309311,2211 SILVER AVE,2025-06-26T12:47:00.000,37.736723,-122.3983269,"2211, Silver Avenue, Silver Terrace, Bayview District, San Francisco, California, 94124, United States",HIGH,90,SUCCESS
+988952436,1520 BURROWS ST,2025-06-26T12:47:00.000,37.7252247,-122.418226,"1520, Burrows Street, San Francisco, California, 94134, United States",HIGH,90,SUCCESS
+989290072,3622 RIVERA ST,2025-06-26T12:46:00.000,37.7456682,-122.5053475,"3622, Rivera Street, Sunset District, San Francisco, California, 94166, United States",HIGH,90,SUCCESS
+989316403,1005 SHOTWELL ST,2025-06-26T12:46:00.000,37.7522676,-122.4150506,"1005, Shotwell Street, Mission District, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+988952425,1510 BURROWS ST,2025-06-26T12:46:00.000,37.7252428,-122.418156,"1510, Burrows Street, San Francisco, California, 94134, United States",HIGH,90,SUCCESS
+989344985,2255 47TH AVE,2025-06-26T12:46:00.000,37.7444189,-122.5061143,"2255, 47th Avenue, Outer Sunset, Sunset District, San Francisco, California, 94166, United States",HIGH,90,SUCCESS
+989327393,1091 SHOTWELL ST,2025-06-26T12:45:00.000,37.7510768,-122.4149339,"1091, Shotwell Street, Mission District, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+989327382,1099 SHOTWELL ST,2025-06-26T12:44:00.000,37.750966,-122.414923,"1099, Shotwell Street, Mission District, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+989187905,1535 QUINT ST,2025-06-26T12:44:00.000,37.7368612,-122.3966556,"1535, Quint Street, Silver Terrace, Bayview District, San Francisco, California, 94124, United States",HIGH,90,SUCCESS
+989061566,1703 O'FARRELL ST,2025-06-26T12:44:00.000,37.7831903,-122.4328565,"1703, O'Farrell Street, Fillmore District, Western Addition, San Francisco, California, 94115, United States",HIGH,90,SUCCESS
+988952414,1500 BURROWS ST,2025-06-26T12:44:00.000,37.7252896,-122.4181464,"1500, Burrows Street, San Francisco, California, 94134, United States",HIGH,90,SUCCESS
+989341275,1739 O'FARRELL ST,2025-06-26T12:43:00.000,37.7831593,-122.4330996,"1739, O'Farrell Street, Fillmore District, Western Addition, San Francisco, California, 94115, United States",HIGH,90,SUCCESS
+989344974,2131 45TH AVE,2025-06-26T12:43:00.000,37.7467896,-122.5041451,"2131, 45th Avenue, Outer Sunset, Sunset District, San Francisco, California, 94166, United States",HIGH,90,SUCCESS
+989343051,1731 O'FARRELL ST,2025-06-26T12:43:00.000,37.7831662,-122.4330456,"1731, O'Farrell Street, Fillmore District, Western Addition, San Francisco, California, 94115, United States",HIGH,90,SUCCESS
+989179472,2009 45TH AVE,2025-06-26T12:43:00.000,37.7490218,-122.5041596,"2009, 45th Avenue, Outer Sunset, Sunset District, San Francisco, California, 94116, United States",HIGH,90,SUCCESS
+989316392,1165 SHOTWELL ST,2025-06-26T12:43:00.000,37.7498364,-122.4148141,"1165, Shotwell Street, Mission District, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+988952403,1500 BURROWS ST,2025-06-26T12:43:00.000,37.7252896,-122.4181464,"1500, Burrows Street, San Francisco, California, 94134, United States",HIGH,90,SUCCESS
+989290061,2198 46TH AVE,2025-06-26T12:42:00.000,37.745632,-122.504791,"2198, 46th Avenue, Sunset District, San Francisco, California, 94116, United States",HIGH,90,SUCCESS
+989341264,1795 O'FARRELL ST,2025-06-26T12:42:00.000,37.7829102,-122.4341394,"1795, O'Farrell Street, Fillmore District, Western Addition, San Francisco, California, 95115, United States",HIGH,90,SUCCESS
+989327371,1299 SHOTWELL ST,2025-06-26T12:42:00.000,37.748417,-122.41484,"1299, Shotwell Street, Mission District, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+989375041,1751 O'FARRELL ST,2025-06-26T12:42:00.000,37.783149,-122.4331806,"1751, O'Farrell Street, Fillmore District, Western Addition, San Francisco, California, 94115, United States",HIGH,90,SUCCESS
+989179461,4145 PACHECO ST,2025-06-26T12:42:00.000,37.7491782,-122.5045666,"4145, Pacheco Street, Outer Sunset, Sunset District, San Francisco, California, 94116, United States",HIGH,90,SUCCESS
+989309296,95 MADDUX AVE,2025-06-26T12:41:00.000,37.7336753,-122.3983267,"95, Maddux Avenue, Silver Terrace, Bayview District, San Francisco, California, 94124, United States",HIGH,90,SUCCESS
+989344963,2242 46TH AVE,2025-06-26T12:41:00.000,37.7446849,-122.5045996,"2242, 46th Avenue, Sunset District, San Francisco, California, 94166, United States",HIGH,90,SUCCESS
+989343040,1550 EDDY ST,2025-06-26T12:41:00.000,37.7814021,-122.433181,"1550, Eddy Street, Fillmore District, Western Addition, San Francisco, California, 94115, United States",HIGH,90,SUCCESS
+989375030,1512 EDDY ST,2025-06-26T12:40:00.000,37.7814689,-122.4326627,"1512, Eddy Street, Fillmore District, Western Addition, San Francisco, California, 94115, United States",HIGH,90,SUCCESS
+988952392,002 HARVARD ST,2025-06-26T12:39:00.000,37.728733,-122.421647,"2, Harvard Street, St. Mary's Park, San Francisco, California, 94134, United States",HIGH,90,SUCCESS
+989341253,1380 EDDY ST,2025-06-26T12:39:00.000,37.7817847,-122.4301743,"1380, Eddy Street, Fillmore District, Western Addition, San Francisco, California, 94115, United States",HIGH,90,SUCCESS
+989316381,715 TREAT AVE,2025-06-26T12:36:00.000,37.7586517,-122.4134664,"715, Treat Avenue, Mission District, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+989176786,4310 20TH ST,2025-06-26T12:36:00.000,37.7576912,-122.4360494,"4310, 20th Street, Castro District, Mission District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989252515,4330 20TH ST,2025-06-26T12:36:00.000,37.7577583,-122.4365105,"4330;4332, 20th Street, Castro District, Mission District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+988952381,237 OXFORD ST,2025-06-26T12:36:00.000,37.7269317,-122.4194725,"237, Oxford Street, St. Mary's Park, San Francisco, California, 94134, United States",HIGH,90,SUCCESS
+989252504,4328 20TH ST,2025-06-26T12:36:00.000,37.757791,-122.4364273,"4328, 20th Street, Castro District, Mission District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989252493,4250 20TH ST,2025-06-26T12:35:00.000,37.7577365,-122.4352687,"4250, 20th Street, Castro District, Mission District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989373836,4302 20TH ST,2025-06-26T12:35:00.000,37.7578701,-122.4355194,"4242;4302, 20th Street, Castro District, Mission District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989053995,852 TURK ST,2025-06-26T12:35:00.000,37.7817668,-122.4228057,"852, Turk Street, Hayes Valley, San Francisco, California, 94102, United States",HIGH,90,SUCCESS
+989327360,733 TREAT AVE,2025-06-26T12:35:00.000,37.7583671,-122.4132128,"733, Treat Avenue, Mission District, San Francisco, California, 90110, United States",HIGH,90,SUCCESS
+989061555,852 GOLDEN GATE AVE,2025-06-26T12:35:00.000,37.7804717,-122.4254816,"852, Golden Gate Avenue, Japantown, Western Addition, San Francisco, California, 94102, United States",HIGH,90,SUCCESS
+989316370,871 TREAT AVE,2025-06-26T12:34:00.000,37.7562706,-122.4131236,"871, Treat Avenue, Mission District, San Francisco, California, 90110, United States",HIGH,90,SUCCESS
+989373814,4162 20TH ST,2025-06-26T12:33:00.000,37.7579196,-122.4340327,"4162;4166, 20th Street, Castro District, Mission District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989373825,4162 20TH ST,2025-06-26T12:33:00.000,37.7579196,-122.4340327,"4162;4166, 20th Street, Castro District, Mission District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989375026,884 GOLDEN GATE AVE,2025-06-26T12:33:00.000,37.7803481,-122.4264544,"884, Golden Gate Avenue, Japantown, Western Addition, San Francisco, California, 94102, United States",HIGH,90,SUCCESS
+989341242,870 GOLDEN GATE AVE,2025-06-26T12:33:00.000,37.7804021,-122.4260288,"870, Golden Gate Avenue, Japantown, Western Addition, San Francisco, California, 94102, United States",HIGH,90,SUCCESS
+989176775,4172 20TH ST,2025-06-26T12:33:00.000,37.7578825,-122.4341162,"4172, 20th Street, Castro District, Mission District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989327356,877 TREAT AVE,2025-06-26T12:33:00.000,37.756167,-122.4131714,"877, Treat Avenue, Mission District, San Francisco, California, 90110, United States",HIGH,90,SUCCESS
+989252482,150 HANCOCK ST,2025-06-26T12:32:00.000,37.7604841,-122.4315897,"146;148;150, Hancock Street, Castro District, Mission District, San Francisco, California, 94143, United States",HIGH,90,SUCCESS
+989327345,1027 TREAT AVE,2025-06-26T12:32:00.000,37.7537078,-122.4128788,"1025;1027;1029, Treat Avenue, Mission District, San Francisco, California, 90110, United States",HIGH,90,SUCCESS
+989053984,972 TURK ST,2025-06-26T12:32:00.000,37.7812987,-122.4251229,"972, Turk Street, Fillmore District, Western Addition, San Francisco, California, 94102, United States",HIGH,90,SUCCESS
+989298612,312 EDNA ST,2025-06-26T12:32:00.000,37.7293544,-122.4463638,"312, Edna Street, Sunnyside, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989373803,4156 20TH ST,2025-06-26T12:32:00.000,37.7579128,-122.4338594,"4156;4158, 20th Street, Castro District, Mission District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989252460,6 HANCOCK ST,2025-06-26T12:31:00.000,37.7605592,-122.4285205,"6, Hancock Street, Castro District, Mission District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989316366,1067 TREAT AVE,2025-06-26T12:31:00.000,37.7531412,-122.4128175,"1067;1069, Treat Avenue, Mission District, San Francisco, California, 90110, United States",HIGH,90,SUCCESS
+989252471,10 HANCOCK ST,2025-06-26T12:31:00.000,37.7605543,-122.4286001,"10, Hancock Street, Castro District, Mission District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989262842,602 CIRCULAR AVE,2025-06-26T12:31:00.000,37.7274179,-122.4454972,"602, Circular Avenue, Sunnyside, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989061544,1048 GOLDEN GATE AVE,2025-06-26T12:31:00.000,37.780212,-122.427524,"1048, Golden Gate Avenue, Japantown, Western Addition, San Francisco, California, 94115, United States",HIGH,90,SUCCESS
+989261431,106 EDNA ST,2025-06-26T12:31:00.000,37.7276609,-122.4463405,"106, Edna Street, Sunnyside, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989309285,96 BITTING AVE,2025-06-26T12:30:00.000,37.7272881,-122.3988053,"96, Bitting Avenue, Bayview District, San Francisco, California, 94134, United States",HIGH,90,SUCCESS
+989327334,1081 TREAT AVE,2025-06-26T12:30:00.000,37.7529266,-122.4128785,"1081, Treat Avenue, Mission District, San Francisco, California, 90110, United States",HIGH,90,SUCCESS
+989179450,2390 46TH AVE,2025-06-26T12:30:00.000,37.7420261,-122.5045345,"2390, 46th Avenue, Sunset District, San Francisco, California, 94116, United States",HIGH,90,SUCCESS
+989375015,1204 GOLDEN GATE AVE,2025-06-26T12:30:00.000,37.7798271,-122.4305441,"1204, Golden Gate Avenue, Fillmore District, Western Addition, San Francisco, California, 94115, United States",HIGH,90,SUCCESS
+989316355,1075 TREAT AVE,2025-06-26T12:30:00.000,37.7530285,-122.4128154,"1071;1073;1075;1077, Treat Avenue, Mission District, San Francisco, California, 90110, United States",HIGH,90,SUCCESS
+989061533,1202 GOLDEN GATE AVE,2025-06-26T12:29:00.000,37.7798306,-122.430517,"1202, Golden Gate Avenue, Fillmore District, Western Addition, San Francisco, California, 94115, United States",HIGH,90,SUCCESS
+989290050,3550 RIVERA ST,2025-06-26T12:29:00.000,37.7456092,-122.5043628,"3550, Rivera Street, Sunset District, San Francisco, California, 94116, United States",HIGH,90,SUCCESS
+989298601,331 DETROIT ST,2025-06-26T12:29:00.000,37.7303736,-122.4445274,"331, Detroit Street, Sunnyside, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989261420,349 DETROIT ST,2025-06-26T12:29:00.000,37.7302962,-122.4443984,"349, Detroit Street, Sunnyside, San Francisco, California, 94131, United States",HIGH,90,SUCCESS
+989316344,1085 TREAT AVE,2025-06-26T12:29:00.000,37.7528943,-122.4129206,"1085, Treat Avenue, Mission District, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+989252456,3835 19TH ST,2025-06-26T12:29:00.000,37.7594169,-122.4289726,"3835, 19th Street, Castro District, Mission District, San Francisco, California, 94143, United States",HIGH,90,SUCCESS
+989344941,2390 46TH AVE,2025-06-26T12:29:00.000,37.7420261,-122.5045345,"2390, 46th Avenue, Sunset District, San Francisco, California, 94116, United States",HIGH,90,SUCCESS
+989179446,2390 46TH AVE,2025-06-26T12:29:00.000,37.7420261,-122.5045345,"2390, 46th Avenue, Sunset District, San Francisco, California, 94116, United States",HIGH,90,SUCCESS
+989375004,1202 GOLDEN GATE AVE,2025-06-26T12:28:00.000,37.7798306,-122.430517,"1202, Golden Gate Avenue, Fillmore District, Western Addition, San Francisco, California, 94115, United States",HIGH,90,SUCCESS
+989339116,578 GATES ST,2025-06-26T12:28:00.000,37.7360987,-122.414373,"578, Gates Street, Bernal Heights, San Francisco, California, 94134, United States",HIGH,90,SUCCESS
+989373792,4043 19TH ST,2025-06-26T12:28:00.000,37.7592474,-122.4335119,"4043, 19th Street, Castro District, Mission District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989309274,2680 NEWHALL ST,2025-06-26T12:28:00.000,37.7270759,-122.39927,"2680, Newhall Street, Silver Terrace, Bayview District, San Francisco, California, 94124, United States",HIGH,90,SUCCESS
+989373781,4043 19TH ST,2025-06-26T12:28:00.000,37.7592474,-122.4335119,"4043, 19th Street, Castro District, Mission District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989327323,1217 TREAT AVE,2025-06-26T12:27:00.000,37.7506303,-122.4127029,"1217, Treat Avenue, Mission District, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+989290046,3330 RIVERA ST,2025-06-26T12:27:00.000,37.7457831,-122.502262,"3330, Rivera Street, Sunset District, San Francisco, California, 94166, United States",HIGH,90,SUCCESS
+989374993,1302 GOLDEN GATE AVE,2025-06-26T12:27:00.000,37.7796225,-122.4321493,"1302, Golden Gate Avenue, Fillmore District, Western Addition, San Francisco, California, 94115, United States",HIGH,90,SUCCESS
+989262831,609 DETROIT ST,2025-06-26T12:27:00.000,37.7325103,-122.4444193,"609, Detroit Street, Sunnyside, San Francisco, California, 94131, United States",HIGH,90,SUCCESS
+989176764,4309 19TH ST,2025-06-26T12:26:00.000,37.7589964,-122.437325,"4309, 19th Street, Castro District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989061522,1340 GOLDEN GATE AVE,2025-06-26T12:26:00.000,37.7797635,-122.432733,"1340, Golden Gate Avenue, Fillmore District, Western Addition, San Francisco, California, 95115, United States",HIGH,90,SUCCESS
+989265373,4414 CABRILLO ST,2025-06-26T12:26:00.000,37.7736208,-122.5061038,"4412;4414, Cabrillo Street, Outer Richmond, San Francisco, California, 94121, United States",HIGH,90,SUCCESS
+989262820,649 DETROIT ST,2025-06-26T12:26:00.000,37.732712,-122.444421,"649, Detroit Street, Sunnyside, San Francisco, California, 94131, United States",HIGH,90,SUCCESS
+989298590,1 VALLETTA CT,2025-06-26T12:25:00.000,37.7364958,-122.444864,"1;3, Valletta Court, Sunnyside, San Francisco, California, 94131, United States",HIGH,90,SUCCESS
+989252445,4430 18TH ST,2025-06-26T12:25:00.000,37.7607506,-122.4386613,"4430, 18th Street, Castro District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989373770,4401 19TH ST,2025-06-26T12:25:00.000,37.759001,-122.438259,"4401, 19th Street, Castro District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989265362,4400 CABRILLO ST,2025-06-26T12:25:00.000,37.7736086,-122.5059524,"4400, Cabrillo Street, Outer Richmond, San Francisco, California, 94121, United States",HIGH,90,SUCCESS
+989341231,1350 GOLDEN GATE AVE,2025-06-26T12:25:00.000,37.7797025,-122.4330075,"1350, Golden Gate Avenue, Fillmore District, Western Addition, San Francisco, California, 95115, United States",HIGH,90,SUCCESS
+989261416,51 MALTA DR,2025-06-26T12:25:00.000,37.735995,-122.4446226,"51, Malta Drive, Sunnyside, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989175445,4204 CABRILLO ST,2025-06-26T12:25:00.000,37.7736276,-122.5038011,"4204, Cabrillo Street, Outer Richmond, San Francisco, California, 94121, United States",HIGH,90,SUCCESS
+989176753,4315 19TH ST,2025-06-26T12:25:00.000,37.7589695,-122.4374151,"4315;4317, 19th Street, Castro District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989352136,4302 CABRILLO ST,2025-06-26T12:25:00.000,37.7735793,-122.5048564,"4302, Cabrillo Street, Outer Richmond, San Francisco, California, 94121, United States",HIGH,90,SUCCESS
+989388621,4030 CABRILLO ST,2025-06-26T12:25:00.000,37.7738396,-122.5020579,"4030, Cabrillo Street, Outer Richmond, San Francisco, California, 94121, United States",HIGH,90,SUCCESS
+989349782,4000 CABRILLO ST,2025-06-26T12:25:00.000,37.773728,-122.501624,"4000, Cabrillo Street, Outer Richmond, San Francisco, California, 94121, United States",HIGH,90,SUCCESS
+989344930,3945 PACHECO ST,2025-06-26T12:25:00.000,37.7492732,-122.5024226,"3945, Pacheco Street, Outer Sunset, Sunset District, San Francisco, California, 94116, United States",HIGH,90,SUCCESS
+989334964,329 MIRAMAR AVE,2025-06-26T12:24:00.000,37.7248031,-122.4580565,"329, Miramar Avenue, Westwood Park, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989262816,837 DETROIT ST,2025-06-26T12:24:00.000,37.7340331,-122.4444282,"837, Detroit Street, Sunnyside, San Francisco, California, 94131, United States",HIGH,90,SUCCESS
+989339105,480 PRENTISS ST,2025-06-26T12:24:00.000,37.7373123,-122.4123143,"480, Prentiss Street, Bernal Heights, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+989296696,3808 CABRILLO ST,2025-06-26T12:24:00.000,37.7738231,-122.4995418,"3808, Cabrillo Street, Outer Richmond, San Francisco, California, 94121, United States",HIGH,90,SUCCESS
+989383732,1862 GOLDEN GATE AVE,2025-06-26T12:24:00.000,37.7784642,-122.4412346,"1862, Golden Gate Avenue, North of Panhandle, Western Addition, San Francisco, California, 94115, United States",HIGH,90,SUCCESS
+989349771,4000 CABRILLO ST,2025-06-26T12:24:00.000,37.773728,-122.501624,"4000, Cabrillo Street, Outer Richmond, San Francisco, California, 94121, United States",HIGH,90,SUCCESS
+989179424,2050 44TH AVE,2025-06-26T12:24:00.000,37.7483845,-122.5026957,"2050, 44th Avenue, Outer Sunset, Sunset District, San Francisco, California, 94166, United States",HIGH,90,SUCCESS
+989280246,335 MIRAMAR AVE,2025-06-26T12:24:00.000,37.7248531,-122.4584943,"335, Miramar Avenue, Westwood Park, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989025811,3502 CABRILLO ST,2025-06-26T12:23:00.000,37.7739723,-122.4962915,"3502, Cabrillo Street, Outer Richmond, San Francisco, California, 94121, United States",HIGH,90,SUCCESS
+989352125,3510 CABRILLO ST,2025-06-26T12:23:00.000,37.7739694,-122.4963533,"3510, Cabrillo Street, Outer Richmond, San Francisco, California, 94121, United States",HIGH,90,SUCCESS
+989385611,1910 GOLDEN GATE AVE,2025-06-26T12:23:00.000,37.7784259,-122.4424687,"1910, Golden Gate Avenue, North of Panhandle, Western Addition, San Francisco, California, 94177, United States",HIGH,90,SUCCESS
+989307233,1800 GOLDEN GATE AVE,2025-06-26T12:23:00.000,37.778573,-122.440383,"1800, Golden Gate Avenue, North of Panhandle, Western Addition, San Francisco, California, 94115, United States",HIGH,90,SUCCESS
+989383721,1836 GOLDEN GATE AVE,2025-06-26T12:23:00.000,37.7787226,-122.4409199,"1834;1836;1838, Golden Gate Avenue, North of Panhandle, Western Addition, San Francisco, California, 94115, United States",HIGH,90,SUCCESS
+989261405,2 VALLETTA CT,2025-06-26T12:23:00.000,37.7365186,-122.4444643,"2;4, Valletta Court, Sunnyside, San Francisco, California, 94131, United States",HIGH,90,SUCCESS
+989373766,4318 18TH ST,2025-06-26T12:23:00.000,37.7609767,-122.4375257,"4316;4318, 18th Street, Castro District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989128033,495 MIRAMAR AVE,2025-06-26T12:23:00.000,37.7255866,-122.4583672,"495, Miramar Avenue, Westwood Park, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989179413,2174 44TH AVE,2025-06-26T12:23:00.000,37.7460966,-122.5025569,"2174, 44th Avenue, Outer Sunset, Sunset District, San Francisco, California, 94166, United States",HIGH,90,SUCCESS
+989252434,4426 18TH ST,2025-06-26T12:23:00.000,37.7608409,-122.438896,"4426, 18th Street, Castro District, San Francisco, California, 94114, United States",HIGH,90,SUCCESS
+989078171,1700 GOLDEN GATE AVE,2025-06-26T12:23:00.000,37.7788402,-122.4389303,"1700, Golden Gate Avenue, North of Panhandle, Western Addition, San Francisco, California, 95115, United States",HIGH,90,SUCCESS
+989334953,325 MIRAMAR AVE,2025-06-26T12:23:00.000,37.7247408,-122.4584943,"325, Miramar Avenue, Westwood Park, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989327312,810 FLORIDA ST,2025-06-26T12:22:00.000,37.7588632,-122.4108074,"810, Florida Street, Mission District, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+989175434,3440 CABRILLO ST,2025-06-26T12:22:00.000,37.7740077,-122.4955127,"3440, Cabrillo Street, Outer Richmond, San Francisco, California, 94121, United States",HIGH,90,SUCCESS
+989378633,2065 TURK BLVD,2025-06-26T12:22:00.000,37.7789505,-122.4431402,"2065, Turk Boulevard, Anza Vista, Western Addition, San Francisco, California, 94177, United States",HIGH,90,SUCCESS
+989388606,3430 CABRILLO ST,2025-06-26T12:22:00.000,37.7740874,-122.4955477,"3430, Cabrillo Street, Outer Richmond, San Francisco, California, 94121, United States",HIGH,90,SUCCESS
+989296685,330 CABRILLO ST,2025-06-26T12:21:00.000,37.7756228,-122.4623322,"330, Cabrillo Street, Inner Richmond, Richmond District, San Francisco, California, 94118, United States",HIGH,90,SUCCESS
+989383710,1995 TURK ST,2025-06-26T12:21:00.000,37.7791558,-122.4417158,"1995, Turk Street, Anza Vista, Western Addition, San Francisco, California, 94115, United States",HIGH,90,SUCCESS
+989352114,3030 CABRILLO ST,2025-06-26T12:21:00.000,37.7743428,-122.4913107,"3030, Cabrillo Street, Outer Richmond, Richmond District, San Francisco, California, 94121, United States",HIGH,90,SUCCESS
+989316333,824 FLORIDA ST,2025-06-26T12:21:00.000,37.7586535,-122.410818,"824, Florida Street, Mission District, San Francisco, California, 90110, United States",HIGH,90,SUCCESS
+989298586,530 CONGO ST,2025-06-26T12:21:00.000,37.733564,-122.4418044,"530, Congo Street, Glen Park, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989334942,874 FAXON AVE,2025-06-26T12:21:00.000,37.7290548,-122.4597157,"874, Faxon Avenue, Westwood Park, San Francisco, California, 94127, United States",HIGH,90,SUCCESS
+989175423,3020 CABRILLO ST,2025-06-26T12:21:00.000,37.7742109,-122.4910685,"3020, Cabrillo Street, Outer Richmond, Richmond District, San Francisco, California, 94121, United States",HIGH,90,SUCCESS
+989307222,1995 ELLIS ST,2025-06-26T12:21:00.000,37.781468,-122.4388536,"1995, Ellis Street, Fillmore District, Western Addition, San Francisco, California, 94115, United States",HIGH,90,SUCCESS
+989298575,530 CONGO ST,2025-06-26T12:21:00.000,37.733564,-122.4418044,"530, Congo Street, Glen Park, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989265351,3112 CABRILLO ST,2025-06-26T12:21:00.000,37.7742679,-122.4922053,"3112, Cabrillo Street, Outer Richmond, Richmond District, San Francisco, California, 94121, United States",HIGH,90,SUCCESS
+988952370,1600 SILLIMAN ST,2025-06-26T12:20:00.000,37.7271688,-122.4211413,"1600, Silliman Street, Portola, San Francisco, California, 94134, United States",HIGH,90,SUCCESS
+989128022,575 WILDWOOD WAY,2025-06-26T12:20:00.000,37.727346,-122.4617145,"575, Wildwood Way, Westwood Park, San Francisco, California, 94127, United States",HIGH,90,SUCCESS
+989385600,2211 TURK BLVD,2025-06-26T12:20:00.000,37.7787246,-122.4455747,"2211, Turk Boulevard, Anza Vista, Western Addition, San Francisco, California, 94118, United States",HIGH,90,SUCCESS
+989388595,2830 CABRILLO ST,2025-06-26T12:20:00.000,37.7744135,-122.4892036,"2830;2832, Cabrillo Street, Outer Richmond, Richmond District, San Francisco, California, 94121, United States",HIGH,90,SUCCESS
+989176742,3934 18TH ST,2025-06-26T12:20:00.000,37.76125,-122.4314759,"3934, 18th Street, Castro District, Mission District, San Francisco, California, 94143, United States",HIGH,90,SUCCESS
+989265340,3000 CABRILLO ST,2025-06-26T12:20:00.000,37.774218,-122.490913,"3000, Cabrillo Street, Outer Richmond, Richmond District, San Francisco, California, 94121, United States",HIGH,90,SUCCESS
+989298564,418 CONGO ST,2025-06-26T12:20:00.000,37.7326277,-122.4417553,"418, Congo Street, Glen Park, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989262805,520 CONGO ST,2025-06-26T12:20:00.000,37.7334848,-122.4418202,"520, Congo Street, Glen Park, San Francisco, California, 94112, United States",HIGH,90,SUCCESS
+989261394,504 CONGO ST,2025-06-26T12:20:00.000,37.7332594,-122.4418992,"504, Congo Street, Glen Park, San Francisco, California, 94131, United States",HIGH,90,SUCCESS
+989316322,805 ALABAMA ST,2025-06-26T12:20:00.000,37.7589118,-122.4114596,"805, Alabama Street, Mission District, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+989352103,2918 CABRILLO ST,2025-06-26T12:20:00.000,37.7743551,-122.4901069,"2918, Cabrillo Street, Outer Richmond, Richmond District, San Francisco, California, 94121, United States",HIGH,90,SUCCESS
+989373755,19 FORD ST,2025-06-26T12:19:00.000,37.7617448,-122.4311862,"17;19, Ford Street, Castro District, Mission District, San Francisco, California, 94143, United States",HIGH,90,SUCCESS
+989349760,2605 CLEMENT ST,2025-06-26T12:19:00.000,37.7818335,-122.4871998,"2605, Clement Street, Seacliff, Richmond District, San Francisco, California, 94121, United States",HIGH,90,SUCCESS
+989262794,322 CONGO ST,2025-06-26T12:19:00.000,37.7318517,-122.4419189,"322, Congo Street, Glen Park, San Francisco, California, 94131, United States",HIGH,90,SUCCESS
+989333030,550 JARBOE AVE,2025-06-26T12:18:00.000,37.7382143,-122.4130589,"550, Jarboe Avenue, Bernal Heights, San Francisco, California, 94110, United States",HIGH,90,SUCCESS
+989374956,867 MCALLISTER ST,2025-06-26T12:18:00.000,37.7791413,-122.4263712,"867;869;871;873;875;877;879;881;883;885;887;889;891;893;895;897;899, McAllister Street, Freedom West Homes, Western Addition, San Francisco, California, 94102, United States",HIGH,90,SUCCESS
+989383706,2102 ELLIS ST,2025-06-26T12:18:00.000,37.7813693,-122.4409601,"2102, Ellis Street, Anza Vista, Western Addition, San Francisco, California, 94115, United States",HIGH,90,SUCCESS
+989290024,2278 42ND AVE,2025-06-26T12:17:00.000,37.7442652,-122.5003068,"2278, 42nd Avenue, Outer Sunset, Sunset District, San Francisco, California, 94166, United States",HIGH,90,SUCCESS
+989078160,1980 ELLIS ST,2025-06-26T12:17:00.000,37.7817905,-122.4386335,"1980;1982, Ellis Street, Fillmore District, Western Addition, San Francisco, California, 94115, United States",HIGH,90,SUCCESS
+989373744,3818 17TH ST,2025-06-26T12:17:00.000,37.7628666,-122.4312182,"3816;3818;3820;3826, 17th Street, Castro District, Mission District, San Francisco, California, 94143, United States",HIGH,90,SUCCESS
+989345453,2438 47TH AVE,2025-06-27T13:15:00.000,37.74098800341,-122.50556793029,"2438 47TH AVE, SAN FRANCISCO, CA, 94116",HIGH,90,SUCCESS
+989188270,608 48TH AVE,2025-06-27T13:15:00.000,37.77686352722,-122.509142319174,"608 48TH AVE, SAN FRANCISCO, CA, 94121",HIGH,90,SUCCESS
+989426885,595 HEARST AVE,2025-06-27T13:14:00.000,37.730620396555,-122.450982772019,"595 HEARST AVE, SAN FRANCISCO, CA, 94112",HIGH,90,SUCCESS
+989426874,308 JUDSON AVE,2025-06-27T13:11:00.000,37.728428404166,-122.449089766986,"308 JUDSON AVE, SAN FRANCISCO, CA, 94112",HIGH,90,SUCCESS
+989425216,111 BUCHANAN ST,2025-06-27T12:39:00.000,37.770794553938,-122.426879808907,"111 BUCHANAN ST, SAN FRANCISCO, CA, 94102",HIGH,90,SUCCESS
+989333332,668 ELLSWORTH ST,2025-06-27T12:33:00.000,37.735222754334,-122.414968792898,"668 ELLSWORTH ST, SAN FRANCISCO, CA, 94110",HIGH,90,SUCCESS
+989026452,400 22ND ST,2025-06-27T12:31:00.000,37.757828941104,-122.383513440093,"400 22ND ST, SAN FRANCISCO, CA, 94107",HIGH,90,SUCCESS
+989425135,739 BUCHANAN ST,2025-06-27T12:31:00.000,37.776438197027,-122.428024573647,"739 BUCHANAN ST, SAN FRANCISCO, CA, 94102",HIGH,90,SUCCESS
+989428926,46 OCTAVIA ST,2025-06-27T12:28:00.000,37.772439852635,-122.423693573374,"46 OCTAVIA ST, SAN FRANCISCO, CA, 94102",HIGH,90,SUCCESS
+989269212,333 BAKER ST,2025-06-27T12:22:00.000,37.773950510574,-122.441059020139,"333 BAKER ST, SAN FRANCISCO, CA, 94117",HIGH,90,SUCCESS
+989341920,3801 22ND ST,2025-06-27T12:19:00.000,37.754564534934,-122.432241977938,"3801 22ND ST, SAN FRANCISCO, CA, 94114",HIGH,90,SUCCESS
+989131990,126 PRENTISS ST,2025-06-27T12:18:00.000,37.741075630492,-122.41206530794,"126 PRENTISS ST, SAN FRANCISCO, CA, 94110",HIGH,90,SUCCESS
+989341905,3879 22ND ST,2025-06-27T12:18:00.000,37.754464085037,-122.433892706457,"3879 22ND ST, SAN FRANCISCO, CA, 94114",HIGH,90,SUCCESS
+989026371,4128 23RD ST,2025-06-27T12:18:00.000,37.752908443646,-122.434909535591,"4128 23RD ST, SAN FRANCISCO, CA, 94114",HIGH,90,SUCCESS
+989297083,645 41ST AVE,2025-06-27T12:17:00.000,37.776541499515,-122.501743108298,"645 41ST AVE, SAN FRANCISCO, CA, 94121",HIGH,90,SUCCESS
+989269190,627 BAKER ST,2025-06-27T12:17:00.000,37.776878191167,-122.441651035903,"627 BAKER ST, SAN FRANCISCO, CA, 94117",HIGH,90,SUCCESS
+989341894,3885 22ND ST,2025-06-27T12:17:00.000,37.754456358122,-122.434019685574,"3885 22ND ST, SAN FRANCISCO, CA, 94114",HIGH,90,SUCCESS
+989258012,2555 MARKET ST,2025-06-27T12:17:00.000,37.761873340689,-122.436791537433,"2555 MARKET ST, SAN FRANCISCO, CA, 94114",HIGH,90,SUCCESS
+989054555,902 WEBSTER ST,2025-06-27T12:16:00.000,37.778949715642,-122.429902624863,"902 WEBSTER ST, SAN FRANCISCO, CA, 94115",HIGH,90,SUCCESS
+989333295,211 BRADFORD ST,2025-06-27T12:14:00.000,37.739509985946,-122.409438648745,"211 BRADFORD ST, SAN FRANCISCO, CA, 94110",HIGH,90,SUCCESS
+989343633,3854 23RD ST,2025-06-27T12:14:00.000,37.753272306912,-122.428838860504,"3854 23RD ST, SAN FRANCISCO, CA, 94114",HIGH,90,SUCCESS
+989054544,502 WEBSTER ST,2025-06-27T12:14:00.000,37.774698405378,-122.429355972299,"502 WEBSTER ST, SAN FRANCISCO, CA, 94117",HIGH,90,SUCCESS
+988013563,601 SCOTT ST,2025-06-27T12:13:00.000,37.775256507092,-122.436213879449,"601 SCOTT ST, SAN FRANCISCO, CA, 94117",HIGH,90,SUCCESS
+989410962,703 39TH AVE,2025-06-27T12:11:00.000,37.775517897692,-122.499520411234,"703 39TH AVE, SAN FRANCISCO, CA, 94121",HIGH,90,SUCCESS

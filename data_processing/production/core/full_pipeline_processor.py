@@ -34,19 +34,21 @@ import os
 class FullPipelineProcessor:
     def __init__(self, 
                  days_back: int = 365,
-                 workers: int = 6,
-                 output_dir: str = "../output/pipeline_results",
-                 rate_limit: float = 0.3,
-                 batch_size: int = 200):
+                 workers: int = 50,
+                 output_dir: str = "../output/pipeline_results", 
+                 rate_limit: float = 0.01,
+                 batch_size: int = 5000,
+                 skip_geocoding: bool = False):
         
         self.days_back = days_back
         self.workers = workers
-        self.output_dir = Path(output_dir)
+        self.skip_geocoding = skip_geocoding
         self.rate_limit = rate_limit
         self.batch_size = batch_size
         
         # File paths for pipeline stages
         self.timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        self.output_dir = Path(output_dir) / self.timestamp
         
         # Create output directory
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -57,7 +59,7 @@ class FullPipelineProcessor:
         self.schedule_clean_file = self.output_dir / f"schedule_cleaned_{self.timestamp}.csv"
         self.citations_raw_file = self.output_dir / f"citations_raw_{self.timestamp}.csv"
         self.citations_geocoded_file = self.output_dir / f"citations_geocoded_{self.timestamp}.csv"
-        self.final_estimates_file = self.output_dir / f"sweeper_time_estimates_{self.timestamp}.csv"
+        self.final_estimates_file = self.output_dir / f"day_specific_sweeper_estimates_{self.timestamp}.csv"
         self.pipeline_report_file = self.output_dir / f"pipeline_report_{self.timestamp}.json"
         
     def setup_logging(self):
@@ -126,20 +128,20 @@ class FullPipelineProcessor:
         """Step 2: Clean and consolidate schedule data"""
         self.logger.info("🧹 Step 2: Cleaning and consolidating schedule data")
         
-        # Use the simple cleaning logic from clean_schedule_data_simple.py
-        # We'll call it as a subprocess to leverage existing code
-        
-        # First save the raw data in the expected location
+        # Use our tested clean_schedule_data_simple.py script
         temp_raw_file = "temp_schedule_raw.csv"
         schedule_df.to_csv(temp_raw_file, index=False)
         
         try:
-            # Create a temporary cleaning script that works with our data
-            temp_script = self._create_temp_cleaning_script(temp_raw_file, str(self.schedule_clean_file))
+            # Run our tested cleaning script
+            cmd = [
+                sys.executable, 'clean_schedule_data_day_specific.py',
+                '--input', temp_raw_file,
+                '--output', str(self.schedule_clean_file),
+                '--output-dir', str(self.output_dir)
+            ]
             
-            # Run the cleaning process
-            result = subprocess.run([sys.executable, temp_script], 
-                                  capture_output=True, text=True, timeout=300)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
             
             if result.returncode != 0:
                 self.logger.error(f"Schedule cleaning failed: {result.stderr}")
@@ -151,9 +153,8 @@ class FullPipelineProcessor:
             cleaned_df = pd.read_csv(self.schedule_clean_file)
             self.logger.info(f"📊 Cleaned schedule: {len(schedule_df):,} → {len(cleaned_df):,} records")
             
-            # Cleanup temporary files
+            # Cleanup temporary file
             os.remove(temp_raw_file)
-            os.remove(temp_script)
             
             return cleaned_df
             
@@ -336,6 +337,21 @@ print(f"Saved cleaned schedule data: {{len(df)}} -> {{len(result_df)}} records")
         """Step 4: Geocode all citations using the production citation processor"""
         self.logger.info("📍 Step 4: Geocoding all citations with parallel processing")
         
+        # Check if we should skip geocoding (for testing/rerun scenarios)
+        if self.skip_geocoding:
+            existing_geocoded_file = "../output/pipeline_results/20250721_223722/citations_geocoded_20250721_223722.csv"
+            if Path(existing_geocoded_file).exists():
+                self.logger.info(f"   ⚡ --skip-geocoding flag used: Loading existing geocoded data")
+                self.logger.info(f"   📁 Using data from: {existing_geocoded_file}")
+                existing_df = pd.read_csv(existing_geocoded_file)
+                # Copy to our expected output location
+                existing_df.to_csv(self.citations_geocoded_file, index=False)
+                self.logger.info(f"   ✅ Loaded {len(existing_df):,} pre-geocoded citations")
+                return existing_df
+            else:
+                self.logger.warning(f"   ⚠️  --skip-geocoding flag used but no existing data found at {existing_geocoded_file}")
+                self.logger.info("   🔄 Proceeding with full geocoding process...")
+        
         # Check if we have citations to process
         if len(citations_df) == 0:
             self.logger.warning("No citations to geocode - creating empty result dataset")
@@ -381,11 +397,12 @@ print(f"Saved cleaned schedule data: {{len(df)}} -> {{len(result_df)}} records")
                 sys.executable, 'production_citation_processor.py',
                 '--input-file', temp_citations_file,
                 '--workers', str(self.workers),
-                '--batch-size', str(self.batch_size),
-                '--rate-limit', str(self.rate_limit),
+                '--batch-size', str(self.batch_size),  # Aggressive batch size for Census API
+                '--rate-limit', str(self.rate_limit),  # Aggressive rate limit
                 '--min-confidence', 'MEDIUM',
                 '--output', str(self.citations_geocoded_file),
-                '--no-resume'
+                '--output-dir', str(self.output_dir),
+                '--no-resume'  # Disable SQLite database to avoid concurrency issues
             ]
             
             self.logger.info(f"   Running: {' '.join(cmd)}")
@@ -431,11 +448,12 @@ print(f"Saved cleaned schedule data: {{len(df)}} -> {{len(result_df)}} records")
         try:
             # Use the citation_schedule_matcher.py script
             cmd = [
-                sys.executable, 'citation_schedule_matcher.py',
+                sys.executable, 'production_hybrid_matcher_day_specific.py',
                 '--citation-file', str(self.citations_geocoded_file),
                 '--schedule-file', str(self.schedule_clean_file),
-                '--max-distance', '50',
-                '--output-prefix', str(self.output_dir / f"final_analysis_{self.timestamp}")
+                '--max-distance', '200',
+                '--output-prefix', str(self.output_dir / f"final_analysis_{self.timestamp}"),
+                '--output-dir', str(self.output_dir)
             ]
             
             self.logger.info(f"   Running: {' '.join(cmd)}")
@@ -448,10 +466,10 @@ print(f"Saved cleaned schedule data: {{len(df)}} -> {{len(result_df)}} records")
                 
             self.logger.info("✅ Schedule matching and analysis completed successfully")
             
-            # Find the estimates file
-            estimates_files = list(self.output_dir.glob(f"final_analysis_{self.timestamp}_estimates_*.csv"))
+            # Find the schedules file (day-specific matcher outputs _schedules_ not _estimates_)
+            estimates_files = list(self.output_dir.glob(f"final_analysis_{self.timestamp}_schedules_*.csv"))
             if not estimates_files:
-                raise RuntimeError("Estimates file not found")
+                raise RuntimeError("Day-specific schedules file not found")
                 
             estimates_df = pd.read_csv(estimates_files[0])
             
@@ -584,14 +602,16 @@ def main():
     parser = argparse.ArgumentParser(description='SF Parking Citation Analysis - Full Production Pipeline')
     parser.add_argument('--days', type=int, default=365,
                        help='Number of days back to process citations (default: 365)')
-    parser.add_argument('--workers', type=int, default=6,
-                       help='Number of parallel workers for geocoding (default: 6)')
+    parser.add_argument('--workers', type=int, default=50,
+                       help='Number of parallel workers for geocoding (default: 50)')
     parser.add_argument('--output-dir', default='../output/pipeline_results',
                        help='Output directory for all pipeline results')
-    parser.add_argument('--rate-limit', type=float, default=0.3,
-                       help='Rate limit for API calls in seconds (default: 0.3)')
-    parser.add_argument('--batch-size', type=int, default=200,
-                       help='Batch size for geocoding (default: 200)')
+    parser.add_argument('--rate-limit', type=float, default=0.01,
+                       help='Rate limit for API calls in seconds (default: 0.01)')
+    parser.add_argument('--batch-size', type=int, default=5000,
+                       help='Batch size for geocoding (default: 5000)')
+    parser.add_argument('--skip-geocoding', action='store_true',
+                       help='Skip geocoding and use existing geocoded data for testing (default: False)')
     
     args = parser.parse_args()
     
@@ -601,7 +621,8 @@ def main():
         workers=args.workers,
         output_dir=args.output_dir,
         rate_limit=args.rate_limit,
-        batch_size=args.batch_size
+        batch_size=args.batch_size,
+        skip_geocoding=args.skip_geocoding
     )
     
     try:

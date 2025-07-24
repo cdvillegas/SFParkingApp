@@ -1,0 +1,384 @@
+schedule_id,cnn,corridor,limits,cnn_right_left,block_side,full_name,week_day,scheduled_from_hour,scheduled_to_hour,monday,tuesday,wednesday,thursday,friday,saturday,sunday,week1,week2,week3,week4,week5,holidays,citation_count,avg_citation_time,min_citation_time,max_citation_time
+2020285,12032000,South Van Ness Ave,25th St  -  26th St,R,West,Monday/Wednesday/Friday,Mon/Wed/Fri,9,11,1,0,1,0,1,0,0,1,1,1,1,1,0,112,9.215476190476192,9.133333333333333,9.433333333333334
+2016582,9726000,O'Farrell St,Mason St  -  Taylor St,R,North,Monday/Wednesday/Friday/Saturday,Mon/Wed/Fri/Sat,2,6,1,0,1,0,1,1,0,1,1,1,1,1,0,411,2.2157745336577452,2.066666666666667,2.4166666666666665
+2016562,9725000,O'Farrell St,Elwood St  -  Mason St,R,North,Monday/Wednesday/Friday/Saturday,Mon/Wed/Fri/Sat,2,6,1,0,1,0,1,1,0,1,1,1,1,1,0,411,2.2157745336577452,2.066666666666667,2.4166666666666665
+2016563,9738000,O'Farrell St,Fillmore St  -  Steiner St,L,South,Thursday,Thu,12,14,0,0,0,1,0,0,0,1,1,1,1,1,0,224,12.41577380952381,12.116666666666667,12.733333333333333
+2016553,9741000,O'Farrell St,Beideman St  -  Divisadero St,L,South,Thursday,Thu,12,14,0,0,0,1,0,0,0,1,1,1,1,1,0,134,12.234452736318408,12.116666666666667,12.366666666666667
+2016591,9740000,O'Farrell St,Scott St  -  Beideman St,L,South,Thursday,Thu,12,14,0,0,0,1,0,0,0,1,1,1,1,1,0,134,12.234452736318408,12.116666666666667,12.366666666666667
+2016583,9739000,O'Farrell St,Pierce St  -  Scott St,L,South,Thursday,Thu,12,14,0,0,0,1,0,0,0,1,1,1,1,1,0,28,12.24642857142857,12.183333333333334,12.366666666666667
+2005135,2833000,Bay View St,Flora St  -  Newhall St,L,South,Thursday,Thu,12,14,0,0,0,1,0,0,0,1,1,1,1,1,0,6,12.08611111111111,12.083333333333334,12.1
+2005138,2831000,Bay View St,Latona St  -  Pomona St,R,North,Thursday,Thu,9,11,0,0,0,1,0,0,0,1,1,1,1,1,0,16,9.681249999999999,9.383333333333333,10.033333333333333
+2005140,2832000,Bay View St,Pomona St  -  Flora St,R,North,Thursday,Thu,9,11,0,0,0,1,0,0,0,1,1,1,1,1,0,15,9.668888888888889,9.383333333333333,10.033333333333333
+2005134,2830000,Bay View St,03rd St  -  Latona St,R,North,Thursday,Thu,9,11,0,0,0,1,0,0,0,1,1,1,1,1,0,10,9.671666666666667,9.383333333333333,10.033333333333333
+2005136,2833000,Bay View St,Flora St  -  Newhall St,R,North,Thursday,Thu,9,11,0,0,0,1,0,0,0,1,1,1,1,1,0,15,9.668888888888889,9.383333333333333,10.033333333333333
+2020274,12027000,South Van Ness Ave,20th St  -  21st St,L,East,Tuesday/Thursday,Tues/Thu,9,11,0,1,0,1,0,0,0,1,1,1,1,1,0,82,9.68191056910569,9.516666666666667,9.966666666666667
+2020276,12028000,South Van Ness Ave,21st St  -  22nd St,L,East,Tuesday/Thursday,Tues/Thu,9,11,0,1,0,1,0,0,0,1,1,1,1,1,0,99,9.656902356902357,9.5,9.95
+2020278,12029000,South Van Ness Ave,22nd St  -  23rd St,L,East,Tuesday/Thursday,Tues/Thu,9,11,0,1,0,1,0,0,0,1,1,1,1,1,0,94,9.609397163120569,9.333333333333334,9.933333333333334
+2020284,12032000,South Van Ness Ave,25th St  -  26th St,L,East,Tuesday/Thursday,Tues/Thu,9,11,0,1,0,1,0,0,0,1,1,1,1,1,0,66,9.553787878787878,9.216666666666667,9.866666666666667
+2022673,13648000,Willard St North,Golden Gate Ave  -  Golden Gate Ave,R,West,Thursday,Thu,9,11,0,0,0,1,0,0,0,1,1,1,1,1,0,67,9.41467661691542,9.25,9.55
+2022679,13647000,Willard St North,Turk Blvd  -  Golden Gate Ave,R,West,Thursday,Thu,9,11,0,0,0,1,0,0,0,1,1,1,1,1,0,67,9.41467661691542,9.25,9.55
+2022675,13649000,Willard St North,Golden Gate Ave  -  McAllister St,R,West,Thursday,Thu,9,11,0,0,0,1,0,0,0,1,1,1,1,1,0,71,9.41737089201878,9.25,9.55
+2022671,13646000,Willard St North,Edward St  -  Turk Blvd,R,West,Thursday,Thu,9,11,0,0,0,1,0,0,0,1,1,1,1,1,0,39,9.398290598290597,9.25,9.5
+2005992,3371000,Buena Vista Ave West,Waller St  -  Haight St,R,NorthEast,Thursday,Thu,9,11,0,0,0,1,0,0,0,1,1,1,1,1,0,33,9.185858585858586,9.133333333333333,9.283333333333333
+2005986,3370000,Buena Vista Ave West,Central Ave  -  Waller St,R,SouthEast,Thursday,Thu,9,11,0,0,0,1,0,0,0,1,1,1,1,1,0,39,9.180341880341878,9.133333333333333,9.283333333333333
+2005984,3367000,Buena Vista Ave West,Buena Vista Ave East  -  Java St,R,NorthEast,Thursday,Thu,9,11,0,0,0,1,0,0,0,1,1,1,1,1,0,143,9.124592074592075,9.083333333333334,9.2
+2005990,3368000,Buena Vista Ave West,Java St  -  Frederick St,R,East,Thursday,Thu,9,11,0,0,0,1,0,0,0,1,1,1,1,1,0,132,9.12828282828283,9.083333333333334,9.2
+2005988,3369000,Buena Vista Ave West,Frederick St  -  Central Ave,R,East,Thursday,Thu,9,11,0,0,0,1,0,0,0,1,1,1,1,1,0,94,9.133687943262409,9.083333333333334,9.2
+2005980,3365000,Buena Vista Ave East,Park Hill Ave  -  Upper Ter,R,NorthWest,Thursday,Thu,9,11,0,0,0,1,0,0,0,1,1,1,1,1,0,82,9.085975609756098,9.05,9.166666666666666
+2005062,2823101,Bay Shore Blvd,Tunnel Ave  -  Blanken Ave,L,SouthEast,Tuesday/Thursday,Tues/Thu,7,8,0,1,0,1,0,0,0,1,1,1,1,1,0,12,7.233333333333333,7.15,7.3
+2005009,2822102,Bay Shore Blvd,Hester Ave  -  Tunnel Ave,L,SouthEast,Tuesday/Thursday,Tues/Thu,7,8,0,1,0,1,0,0,0,1,1,1,1,1,0,7,7.245238095238094,7.15,7.3
+2004989,2823102,Bay Shore Blvd,Blanken Ave  -  San Bruno Ave,L,South,Tuesday/Thursday,Tues/Thu,7,8,0,1,0,1,0,0,0,1,1,1,1,1,0,11,7.221212121212122,7.15,7.283333333333333
+2016571,9729000,O'Farrell St,Jones St  -  Leavenworth St,L,South,Tuesday/Thursday/Sunday,Tues/Thu/Sun,6,8,0,1,0,1,0,0,1,1,1,1,1,1,0,136,6.875,6.2,7.266666666666667
+2016595,9728000,O'Farrell St,Shannon St  -  Jones St,L,South,Tuesday/Thursday/Sunday,Tues/Thu/Sun,6,8,0,1,0,1,0,0,1,1,1,1,1,1,0,80,6.880208333333334,6.2,7.266666666666667
+2016575,9730000,O'Farrell St,Leavenworth St  -  Harlem Aly,L,South,Tuesday/Thursday/Sunday,Tues/Thu/Sun,6,8,0,1,0,1,0,0,1,1,1,1,1,1,0,179,6.868621973929235,6.2,7.266666666666667
+2016569,9733000,O'Farrell St,Hyde St  -  Larkin St,L,South,Tuesday/Thursday/Sunday,Tues/Thu/Sun,6,8,0,1,0,1,0,0,1,1,1,1,1,1,0,225,6.860518518518519,6.6,7.1
+2016573,9734000,O'Farrell St,Larkin St  -  Polk St,L,South,Tuesday/Thursday/Sunday,Tues/Thu/Sun,6,8,0,1,0,1,0,0,1,1,1,1,1,1,0,422,6.874052132701421,6.566666666666666,7.233333333333333
+2016585,9735000,O'Farrell St,Polk St  -  Van Ness Ave,L,South,Tuesday/Thursday/Sunday,Tues/Thu/Sun,6,8,0,1,0,1,0,0,1,1,1,1,1,1,0,381,6.880883639545057,6.566666666666666,7.233333333333333
+2020290,12019102,South Van Ness Ave,Erie St  -  14th St,L,East,Tuesday/Thursday,Tues/Thu,6,8,0,1,0,1,0,0,0,1,1,1,1,1,0,43,6.681782945736435,6.416666666666667,7.0
+2020262,12020000,South Van Ness Ave,14th St  -  15th St,L,East,Tuesday/Thursday,Tues/Thu,6,8,0,1,0,1,0,0,0,1,1,1,1,1,0,109,6.683639143730887,6.4,7.0
+2020261,12019101,South Van Ness Ave,13th St  -  Erie St,L,East,Tuesday/Thursday,Tues/Thu,6,8,0,1,0,1,0,0,0,1,1,1,1,1,0,19,6.6263157894736855,6.416666666666667,7.0
+2020270,12025000,South Van Ness Ave,18th St  -  19th St,L,East,Tuesday/Thursday,Tues/Thu,6,8,0,1,0,1,0,0,0,1,1,1,1,1,0,65,6.577435897435897,6.283333333333333,7.016666666666667
+2016511,9690000,North Point St,Mason St  -  Taylor St,L,South,Tuesday/Thursday,Tues/Thu,2,6,0,1,0,1,0,0,0,1,1,1,1,1,0,57,2.8546783625730994,2.1666666666666665,3.1
+2016521,9691000,North Point St,Taylor St  -  Jones St,L,South,Tuesday/Thursday,Tues/Thu,2,6,0,1,0,1,0,0,0,1,1,1,1,1,0,67,2.8626865671641792,2.4,3.1666666666666665
+2016561,9725000,O'Farrell St,Elwood St  -  Mason St,L,South,Tuesday/Thursday/Sunday,Tues/Thu/Sun,2,6,0,1,0,1,0,0,1,1,1,1,1,1,0,73,2.1910958904109585,2.05,3.0833333333333335
+2016581,9726000,O'Farrell St,Mason St  -  Taylor St,L,South,Tuesday/Thursday/Sunday,Tues/Thu/Sun,2,6,0,1,0,1,0,0,1,1,1,1,1,1,0,73,2.1910958904109585,2.05,3.0833333333333335
+2016557,9724000,O'Farrell St,Cyril Magnin St  -  Elwood St,L,South,Tuesday/Thursday/Sunday,Tues/Thu/Sun,2,6,0,1,0,1,0,0,1,1,1,1,1,1,0,15,2.1722222222222225,2.1,2.2333333333333334
+2016587,9723000,O'Farrell St,Powell St  -  Cyril Magnin St,L,South,Tuesday/Thursday/Sunday,Tues/Thu/Sun,2,6,0,1,0,1,0,0,1,1,1,1,1,1,0,15,2.1722222222222225,2.1,2.2333333333333334
+2004986,2799106,Bay Shore Blvd,Bay Shore Blvd  -  Oakdale Ave,L,SouthEast,Tuesday/Thursday,Tues/Thu,0,6,0,1,0,1,0,0,0,1,1,1,1,1,0,3,0.9055555555555556,0.8166666666666667,0.9666666666666667
+2004988,2799106,Bay Shore Blvd,Bay Shore Blvd  -  Oakdale Ave,R,NorthWest,Monday/Wednesday/Thursday/Friday,Mon/Wed/Thu/Fri,0,6,1,0,1,1,1,0,0,1,1,1,1,1,0,6,1.0222222222222221,0.8166666666666667,1.45
+2013428,7921000,La Playa,Cabrillo St  -  Fulton St,L,East,Wednesday,Wed,13,15,0,0,1,0,0,0,0,0,1,0,1,0,0,34,13.395588235294115,13.083333333333334,13.516666666666667
+2019780,11734000,Sea View Ter,30th Ave  -  31st Ave,R,North,Wednesday,Wed,9,11,0,0,1,0,0,0,0,0,1,0,1,0,0,24,9.975,9.816666666666666,10.15
+2019781,11735000,Sea View Ter,31st Ave  -  End: 55-199 Block,L,South,Wednesday,Wed,9,11,0,0,1,0,0,0,0,0,1,0,1,0,0,24,9.975,9.816666666666666,10.15
+2019782,11735000,Sea View Ter,31st Ave  -  End: 55-199 Block,R,North,Wednesday,Wed,9,11,0,0,1,0,0,0,0,0,1,0,1,0,0,24,9.975,9.816666666666666,10.15
+2019789,11728000,Seacliff Ave,27th Ave  -  El Camino Del Mar,L,South,Wednesday,Wed,9,11,0,0,1,0,0,0,0,0,1,0,1,0,0,34,9.90686274509804,9.75,10.233333333333333
+2008886,5121000,El Camino Del Mar,25th Ave  -  26th Ave,R,North,Wednesday,Wed,9,11,0,0,1,0,0,0,0,0,1,0,1,0,0,34,9.853921568627452,9.633333333333333,10.233333333333333
+2008888,5122000,El Camino Del Mar,26th Ave  -  27th Ave,R,North,Wednesday,Wed,9,11,0,0,1,0,0,0,0,0,1,0,1,0,0,59,9.846610169491525,9.633333333333333,10.233333333333333
+2008900,5120000,El Camino Del Mar,Lincoln Blvd  -  25th Ave,R,North,Wednesday,Wed,9,11,0,0,1,0,0,0,0,0,1,0,1,0,0,21,9.90079365079365,9.766666666666667,10.233333333333333
+2022670,13646000,Willard St North,Edward St  -  Turk Blvd,L,East,Wednesday,Wed,9,11,0,0,1,0,0,0,0,1,1,1,1,1,0,32,9.644270833333334,9.25,10.0
+2022678,13647000,Willard St North,Turk Blvd  -  Golden Gate Ave,L,East,Wednesday,Wed,9,11,0,0,1,0,0,0,0,1,1,1,1,1,0,57,9.628947368421056,9.183333333333334,10.05
+2022672,13648000,Willard St North,Golden Gate Ave  -  Golden Gate Ave,L,East,Wednesday,Wed,9,11,0,0,1,0,0,0,0,1,1,1,1,1,0,57,9.628947368421056,9.183333333333334,10.05
+2020279,12029000,South Van Ness Ave,22nd St  -  23rd St,R,West,Monday/Wednesday/Friday,Mon/Wed/Fri,9,11,1,0,1,0,1,0,0,1,1,1,1,1,0,169,9.16518737672584,9.1,9.4
+2020277,12028000,South Van Ness Ave,21st St  -  22nd St,R,West,Monday/Wednesday/Friday,Mon/Wed/Fri,9,11,1,0,1,0,1,0,0,1,1,1,1,1,0,162,9.146810699588476,9.066666666666666,9.383333333333333
+2020275,12027000,South Van Ness Ave,20th St  -  21st St,R,West,Monday/Wednesday/Friday,Mon/Wed/Fri,9,11,1,0,1,0,1,0,0,1,1,1,1,1,0,154,9.117748917748917,9.066666666666666,9.383333333333333
+2020273,12026000,South Van Ness Ave,19th St  -  20th St,R,West,Monday/Wednesday/Friday,Mon/Wed/Fri,9,11,1,0,1,0,1,0,0,1,1,1,1,1,0,66,9.10530303030303,9.066666666666666,9.183333333333334
+2016502,9695000,North Point St,Hyde St  -  Larkin St,R,North,Wednesday,Wed,8,10,0,0,1,0,0,0,0,1,1,1,1,0,0,46,8.272101449275363,8.066666666666666,8.75
+2005139,2832000,Bay View St,Pomona St  -  Flora St,L,South,Wednesday,Wed,7,8,0,0,1,0,0,0,0,1,1,1,1,1,0,20,7.163333333333332,7.15,7.233333333333333
+2020271,12025000,South Van Ness Ave,18th St  -  19th St,R,West,Monday/Wednesday/Friday,Mon/Wed/Fri,6,8,1,0,1,0,1,0,0,1,1,1,1,1,0,69,6.82512077294686,6.566666666666666,7.1
+2020269,12024000,South Van Ness Ave,17th St  -  18th St,R,West,Monday/Wednesday/Friday,Mon/Wed/Fri,6,8,1,0,1,0,1,0,0,1,1,1,1,1,0,210,6.7882539682539695,6.5,7.1
+2020267,12023000,South Van Ness Ave,16th St  -  17th St,R,West,Monday/Wednesday/Friday/Saturday/Sunday,Mon/Wed/Fri/Sat/Sun,6,8,1,0,1,0,1,1,1,1,1,1,1,1,0,500,6.637366666666667,6.016666666666667,7.083333333333333
+2020289,12022000,South Van Ness Ave,Adair St  -  16th St,R,West,Monday/Wednesday/Friday,Mon/Wed/Fri,6,8,1,0,1,0,1,0,0,1,1,1,1,1,0,396,6.769191919191919,6.45,7.083333333333333
+2020265,12021000,South Van Ness Ave,15th St  -  Adair St,R,West,Monday/Wednesday/Friday,Mon/Wed/Fri,6,8,1,0,1,0,1,0,0,1,1,1,1,1,0,249,6.735609103078982,6.4,7.033333333333333
+2020263,12020000,South Van Ness Ave,14th St  -  15th St,R,West,Monday/Wednesday/Friday,Mon/Wed/Fri,6,8,1,0,1,0,1,0,0,1,1,1,1,1,0,135,6.702962962962962,6.4,6.95
+2016508,9696000,North Point St,Larkin St  -  Polk St,R,North,Wednesday,Wed,6,8,0,0,1,0,0,0,0,1,1,1,1,0,0,17,6.157843137254901,6.083333333333333,6.366666666666666
+2016514,9697000,North Point St,Polk St  -  Van Ness Ave,R,North,Wednesday,Wed,6,8,0,0,1,0,0,0,0,1,1,1,1,0,0,26,6.1608974358974375,6.083333333333333,6.366666666666666
+2016500,9687000,North Point St,Grant Ave  -  Stockton St,R,North,Monday/Wednesday/Friday,Mon/Wed/Fri,2,6,1,0,1,0,1,0,0,1,1,1,1,1,0,6,2.713888888888889,2.5166666666666666,2.8833333333333333
+2016520,9688000,North Point St,Stockton St  -  Powell St,R,North,Monday/Wednesday/Friday,Mon/Wed/Fri,2,6,1,0,1,0,1,0,0,1,1,1,1,1,0,44,2.807196969696969,2.3,3.25
+2016504,9692000,North Point St,Jones St  -  Columbus Ave,R,North,Monday/Wednesday/Friday,Mon/Wed/Fri,2,6,1,0,1,0,1,0,0,1,1,1,1,1,0,81,2.855761316872428,2.35,3.6
+2016522,9691000,North Point St,Taylor St  -  Jones St,R,North,Monday/Wednesday/Friday,Mon/Wed/Fri,2,6,1,0,1,0,1,0,0,1,1,1,1,1,0,105,2.8333333333333326,2.35,3.6
+2016512,9690000,North Point St,Mason St  -  Taylor St,R,North,Monday/Wednesday/Friday,Mon/Wed/Fri,2,6,1,0,1,0,1,0,0,1,1,1,1,1,0,72,2.8372685185185187,2.466666666666667,3.3
+2016580,9720000,O'Farrell St,Market St  -  Security Pacific Pl,R,North,Monday/Wednesday/Friday/Saturday,Mon/Wed/Fri/Sat,2,6,1,0,1,0,1,1,0,1,1,1,1,1,0,23,2.2884057971014498,2.183333333333333,2.783333333333333
+2016594,9721000,O'Farrell St,Security Pacific Pl  -  Stockton St,R,North,Monday/Wednesday/Friday/Saturday,Mon/Wed/Fri/Sat,2,6,1,0,1,0,1,1,0,1,1,1,1,1,0,23,2.2884057971014498,2.183333333333333,2.783333333333333
+2016598,9722000,O'Farrell St,Stockton St  -  Powell St,R,North,Monday/Wednesday/Friday/Saturday,Mon/Wed/Fri/Sat,2,6,1,0,1,0,1,1,0,1,1,1,1,1,0,65,2.263846153846154,2.1166666666666667,2.783333333333333
+2021026,12555102,The Embarcadero,Broadway  -  Green St,L,SouthWest,Monday/Tuesday/Wednesday/Thursday/Friday,Mon/Tues/Wed/Thu/Fri,0,2,1,1,1,1,1,0,0,1,1,1,1,1,1,55,0.26606060606060605,0.016666666666666666,1.2666666666666666
+2021029,12555102,The Embarcadero,Broadway  -  Green St,R,NorthEast,Monday/Tuesday/Wednesday/Thursday/Friday,Mon/Tues/Wed/Thu/Fri,0,2,1,1,1,1,1,0,0,1,1,1,1,1,1,55,0.26606060606060605,0.016666666666666666,1.2666666666666666
+2021062,12552101,The Embarcadero,Howard St  -  Mission St,L,SouthWest,Monday/Tuesday/Wednesday/Thursday/Friday,Mon/Tues/Wed/Thu/Fri,0,2,1,1,1,1,1,0,0,1,1,1,1,1,1,42,0.3384920634920635,0.05,1.2666666666666666
+2021065,12552101,The Embarcadero,Howard St  -  Mission St,R,NorthEast,Monday/Tuesday/Wednesday/Thursday/Friday,Mon/Tues/Wed/Thu/Fri,0,2,1,1,1,1,1,0,0,1,1,1,1,1,1,42,0.3384920634920635,0.05,1.2666666666666666
+2020246,12008000,South Park,02nd St  -  South Park,L,SouthEast,Wednesday,Wed,0,2,0,0,1,0,0,0,0,1,1,1,1,1,0,27,0.058024691358024696,0.016666666666666666,0.21666666666666667
+2020252,12009101,South Park,South Park  -  Jack London Aly,L,SouthEast,Wednesday/Friday,Wed/Fri,0,2,0,0,1,0,1,0,0,1,1,1,1,1,0,110,0.1006060606060606,0.016666666666666666,0.38333333333333336
+2020248,12009102,South Park,Jack London Aly  -  South Park,L,SouthEast,Wednesday/Friday,Wed/Fri,0,2,0,0,1,0,1,0,0,1,1,1,1,1,0,133,0.10087719298245613,0.016666666666666666,0.38333333333333336
+2005133,2830000,Bay View St,03rd St  -  Latona St,L,South,Tuesday,Tues,13,15,0,1,0,0,0,0,0,1,1,1,1,1,0,15,13.131111111111112,13.083333333333334,13.316666666666666
+2005137,2831000,Bay View St,Latona St  -  Pomona St,L,South,Tuesday,Tues,13,15,0,1,0,0,0,0,0,1,1,1,1,1,0,15,13.131111111111112,13.083333333333334,13.316666666666666
+2013429,7921000,La Playa,Cabrillo St  -  Fulton St,R,West,Tuesday,Tues,11,13,0,1,0,0,0,0,0,0,1,0,1,0,0,45,12.200370370370367,12.1,12.333333333333334
+2013427,7920000,La Playa,Balboa St  -  Cabrillo St,R,West,Tuesday,Tues,11,13,0,1,0,0,0,0,0,0,1,0,1,0,0,16,12.1625,12.1,12.266666666666667
+2016589,9744000,O'Farrell St,Saint Joseph's Ave  -  Lyon St,L,South,Tuesday,Tues,9,11,0,1,0,0,0,0,0,1,1,1,1,1,0,10,10.093333333333332,9.833333333333334,10.283333333333333
+2016577,9745000,O'Farrell St,Lyon St  -  Anzavista Ave,L,South,Tuesday,Tues,9,11,0,1,0,0,0,0,0,1,1,1,1,1,0,59,10.071186440677964,9.8,10.283333333333333
+2020280,12030000,South Van Ness Ave,23rd St  -  24th St,L,East,Tuesday/Thursday,Tues/Thu,9,11,0,1,0,1,0,0,0,1,1,1,1,1,0,143,9.607692307692309,9.283333333333333,9.9
+2020282,12031000,South Van Ness Ave,24th St  -  25th St,L,East,Tuesday/Thursday,Tues/Thu,9,11,0,1,0,1,0,0,0,1,1,1,1,1,0,122,9.6120218579235,9.25,9.9
+2016564,9738000,O'Farrell St,Fillmore St  -  Steiner St,R,North,Tuesday,Tues,9,11,0,1,0,0,0,0,0,1,1,1,1,1,0,107,9.13644859813084,9.0,9.733333333333333
+2005977,3364000,Buena Vista Ave East,Duboce Ave  -  Park Hill Ave,L,SouthEast,Tuesday,Tues,8,10,0,1,0,0,0,0,0,1,1,1,1,1,0,88,8.431439393939394,8.333333333333334,8.55
+2005979,3365000,Buena Vista Ave East,Park Hill Ave  -  Upper Ter,L,SouthEast,Tuesday,Tues,8,10,0,1,0,0,0,0,0,1,1,1,1,1,0,191,8.41457242582897,8.316666666666666,8.55
+2014969,8781000,Marsily St,Saint Mary's Ave  -  Bosworth St,L,East,Tuesday,Tues,8,10,0,1,0,0,0,0,0,0,1,0,1,0,0,14,8.330952380952379,8.3,8.383333333333333
+2014967,8782000,Marsily St,Bosworth St  -  End: 100-199 Block,L,East,Tuesday,Tues,8,10,0,1,0,0,0,0,0,0,1,0,1,0,0,15,8.332222222222219,8.3,8.383333333333333
+2005985,3370000,Buena Vista Ave West,Central Ave  -  Waller St,L,NorthWest,Tuesday,Tues,8,10,0,1,0,0,0,0,0,1,1,1,1,1,0,142,8.33638497652582,8.233333333333333,8.5
+2005991,3371000,Buena Vista Ave West,Waller St  -  Haight St,L,SouthWest,Tuesday,Tues,8,10,0,1,0,0,0,0,0,1,1,1,1,1,0,110,8.335303030303026,8.233333333333333,8.5
+2016501,9695000,North Point St,Hyde St  -  Larkin St,L,South,Tuesday,Tues,8,10,0,1,0,0,0,0,0,1,1,1,1,0,0,66,8.279545454545454,8.05,8.75
+2016509,9694000,North Point St,Leavenworth St  -  Hyde St,L,South,Tuesday,Tues,8,10,0,1,0,0,0,0,0,1,1,1,1,0,0,51,8.262091503267975,8.083333333333334,8.75
+2016495,9693000,North Point St,Columbus Ave  -  Leavenworth St,L,South,Tuesday,Tues,8,10,0,1,0,0,0,0,0,1,1,1,1,0,0,51,8.262091503267975,8.083333333333334,8.75
+2016513,9697000,North Point St,Polk St  -  Van Ness Ave,L,South,Tuesday,Tues,8,10,0,1,0,0,0,0,0,1,1,1,1,0,0,51,8.335294117647058,8.066666666666666,8.716666666666667
+2013426,7920000,La Playa,Balboa St  -  Cabrillo St,L,East,Tuesday,Tues,7,8,0,1,0,0,0,0,0,1,0,1,0,1,0,45,7.727777777777776,7.583333333333333,7.866666666666667
+2005050,2824101,Bay Shore Blvd,San Bruno Ave  -  Leland Ave,L,SouthEast,Tuesday/Thursday,Tues/Thu,7,8,0,1,0,1,0,0,0,1,1,1,1,1,0,7,7.211904761904762,7.166666666666667,7.266666666666667
+2016565,9731000,O'Farrell St,Harlem Aly  -  Ada Ct,L,South,Tuesday/Thursday/Sunday,Tues/Thu/Sun,6,8,0,1,0,1,0,0,1,1,1,1,1,1,0,199,6.861306532663316,6.616666666666667,7.1
+2016549,9732000,O'Farrell St,Ada Ct  -  Hyde St,L,South,Tuesday/Thursday/Sunday,Tues/Thu/Sun,6,8,0,1,0,1,0,0,1,1,1,1,1,1,0,199,6.861306532663316,6.616666666666667,7.1
+2016556,9743000,O'Farrell St,Broderick St  -  Saint Joseph's Ave,R,North,Tuesday,Tues,6,8,0,1,0,0,0,0,0,1,1,1,1,0,0,54,6.5475308641975305,6.366666666666666,6.733333333333333
+2016590,9744000,O'Farrell St,Saint Joseph's Ave  -  Lyon St,R,North,Tuesday,Tues,6,8,0,1,0,0,0,0,0,1,1,1,1,0,0,54,6.5475308641975305,6.366666666666666,6.733333333333333
+2016515,9689000,North Point St,Powell St  -  Mason St,L,South,Tuesday/Thursday,Tues/Thu,2,6,0,1,0,1,0,0,0,1,1,1,1,1,0,35,2.8352380952380947,2.1666666666666665,3.05
+2016519,9688000,North Point St,Stockton St  -  Powell St,L,South,Tuesday/Thursday,Tues/Thu,2,6,0,1,0,1,0,0,0,1,1,1,1,1,0,32,2.8421875,2.4833333333333334,3.0
+2016503,9692000,North Point St,Jones St  -  Columbus Ave,L,South,Tuesday/Thursday,Tues/Thu,2,6,0,1,0,1,0,0,0,1,1,1,1,1,0,34,2.906862745098039,2.5,3.1666666666666665
+2008885,5121000,El Camino Del Mar,25th Ave  -  26th Ave,L,South,Monday,Mon,13,15,1,0,0,0,0,0,0,0,1,0,1,0,0,37,13.453603603603606,13.383333333333333,13.616666666666667
+2008899,5120000,El Camino Del Mar,Lincoln Blvd  -  25th Ave,L,South,Monday,Mon,13,15,1,0,0,0,0,0,0,0,1,0,1,0,0,24,13.469444444444443,13.383333333333333,13.616666666666667
+2008887,5122000,El Camino Del Mar,26th Ave  -  27th Ave,L,South,Monday,Mon,13,15,1,0,0,0,0,0,0,0,1,0,1,0,0,43,13.431395348837206,13.366666666666667,13.616666666666667
+2008889,5123000,El Camino Del Mar,27th Ave  -  28th Ave,L,South,Monday,Mon,13,15,1,0,0,0,0,0,0,0,1,0,1,0,0,27,13.420987654320985,13.366666666666667,13.5
+2019791,11729000,Seacliff Ave,El Camino Del Mar  -  End: 301-499 Block,R,NorthWest,Monday,Mon,9,11,1,0,0,0,0,0,0,0,1,0,1,0,0,53,9.828930817610061,9.616666666666667,10.033333333333333
+2019792,5128000,Seacliff Ave,Seacliff Ave  -  El Camino Del Mar,L,East,Monday,Mon,9,11,1,0,0,0,0,0,0,0,1,0,1,0,0,53,9.828930817610061,9.616666666666667,10.033333333333333
+2019790,11728000,Seacliff Ave,27th Ave  -  El Camino Del Mar,R,North,Monday,Mon,9,11,1,0,0,0,0,0,0,0,1,0,1,0,0,47,9.821631205673759,9.6,10.016666666666667
+2019784,11725000,Seacliff Ave,25th Ave  -  25th North Ave,R,North,Monday,Mon,9,11,1,0,0,0,0,0,0,0,1,0,1,0,0,7,9.788095238095238,9.633333333333333,9.95
+2019786,11726000,Seacliff Ave,25th North Ave  -  26th Ave,R,North,Monday,Mon,9,11,1,0,0,0,0,0,0,0,1,0,1,0,0,13,9.806410256410258,9.6,9.95
+2019788,11727000,Seacliff Ave,26th Ave  -  27th Ave,R,North,Monday,Mon,9,11,1,0,0,0,0,0,0,0,1,0,1,0,0,19,9.82017543859649,9.6,10.016666666666667
+2022552,13574000,West Clay St,22nd Ave  -  24th Ave,R,North,Monday,Mon,9,11,1,0,0,0,0,0,0,0,1,0,1,0,0,41,9.72479674796748,9.5,10.016666666666667
+2005034,2800201,Bay Shore Blvd,Oakdale Ave  -  Cosgrove St,R,NorthWest,Monday/Wednesday/Thursday/Friday,Mon/Wed/Thu/Fri,0,6,1,0,1,1,1,0,0,1,1,1,1,1,0,14,1.0547619047619048,0.48333333333333334,2.8
+2004997,2800202,Bay Shore Blvd,Cosgrove St  -  Cortland Ave,R,West,Monday/Wednesday/Thursday/Friday,Mon/Wed/Thu/Fri,0,6,1,0,1,1,1,0,0,1,1,1,1,1,0,14,1.0547619047619048,0.48333333333333334,2.8
+2013789,8116000,Lapu-lapu St,Harrison St  -  Rizal St,R,NorthEast,Monday,Mon,0,2,1,0,0,0,0,0,0,1,1,1,1,1,0,50,0.244,0.13333333333333333,0.4166666666666667
+2013791,8117000,Lapu-lapu St,Rizal St  -  Bonifacio St,R,NorthEast,Monday,Mon,0,2,1,0,0,0,0,0,0,1,1,1,1,1,0,50,0.244,0.13333333333333333,0.4166666666666667
+2016599,9727000,O'Farrell St,Taylor St  -  Shannon St,L,South,Tuesday/Thursday/Sunday,Tues/Thu/Sun,6,8,0,1,0,1,0,0,1,1,1,1,1,1,0,33,6.876767676767676,6.666666666666667,7.066666666666666
+2016600,9727000,O'Farrell St,Taylor St  -  Shannon St,R,North,Monday/Wednesday/Friday/Saturday/Sunday,Mon/Wed/Fri/Sat/Sun,6,8,1,0,1,0,1,1,1,1,1,1,1,1,1,55,6.880909090909091,6.716666666666667,7.066666666666666
+2016596,9728000,O'Farrell St,Shannon St  -  Jones St,R,North,Monday/Wednesday/Friday/Saturday/Sunday,Mon/Wed/Fri/Sat/Sun,6,8,1,0,1,0,1,1,1,1,1,1,1,1,1,120,6.8701388888888895,6.2,7.083333333333333
+2016572,9729000,O'Farrell St,Jones St  -  Leavenworth St,R,North,Monday/Wednesday/Friday/Saturday/Sunday,Mon/Wed/Fri/Sat/Sun,6,8,1,0,1,0,1,1,1,1,1,1,1,1,1,193,6.865889464594127,6.2,7.083333333333333
+2016576,9730000,O'Farrell St,Leavenworth St  -  Harlem Aly,R,North,Monday/Wednesday/Friday/Saturday/Sunday,Mon/Wed/Fri/Sat/Sun,6,8,1,0,1,0,1,1,1,1,1,1,1,1,1,246,6.8565040650406495,6.2,7.083333333333333
+2016566,9731000,O'Farrell St,Harlem Aly  -  Ada Ct,R,North,Monday/Wednesday/Friday/Saturday/Sunday,Mon/Wed/Fri/Sat/Sun,6,8,1,0,1,0,1,1,1,1,1,1,1,1,1,278,6.851978417266187,6.65,7.066666666666666
+2016550,9732000,O'Farrell St,Ada Ct  -  Hyde St,R,North,Monday/Wednesday/Friday/Saturday/Sunday,Mon/Wed/Fri/Sat/Sun,6,8,1,0,1,0,1,1,1,1,1,1,1,1,1,278,6.851978417266187,6.65,7.066666666666666
+2016574,9734000,O'Farrell St,Larkin St  -  Polk St,R,North,Monday/Wednesday/Friday/Saturday/Sunday,Mon/Wed/Fri/Sat/Sun,6,8,1,0,1,0,1,1,1,1,1,1,1,1,1,334,6.840868263473053,6.65,7.1
+2016586,9735000,O'Farrell St,Polk St  -  Van Ness Ave,R,North,Monday/Wednesday/Friday/Saturday/Sunday,Mon/Wed/Fri/Sat/Sun,6,8,1,0,1,0,1,1,1,1,1,1,1,1,1,192,6.826909722222221,6.666666666666667,7.1
+2016570,9733000,O'Farrell St,Hyde St  -  Larkin St,R,North,Monday/Wednesday/Friday/Saturday/Sunday,Mon/Wed/Fri/Sat/Sun,6,8,1,0,1,0,1,1,1,1,1,1,1,1,1,316,6.84931434599156,6.65,7.1
+2016588,9723000,O'Farrell St,Powell St  -  Cyril Magnin St,R,North,Monday/Wednesday/Friday/Saturday,Mon/Wed/Fri/Sat,2,6,1,0,1,0,1,1,0,1,1,1,1,1,0,217,2.234562211981567,2.0833333333333335,2.5
+2016558,9724000,O'Farrell St,Cyril Magnin St  -  Elwood St,R,North,Monday/Wednesday/Friday/Saturday,Mon/Wed/Fri/Sat,2,6,1,0,1,0,1,1,0,1,1,1,1,1,0,217,2.234562211981567,2.0833333333333335,2.5
+2021088,12554201,The Embarcadero,Washington St  -  Broadway,R,NorthEast,Saturday/Sunday,Sat/Sun,1,3,0,0,0,0,0,1,1,1,1,1,1,1,1,14,1.2523809523809522,1.1166666666666667,1.45
+2021085,12554101,The Embarcadero,Washington St  -  Broadway,L,SouthWest,Saturday/Sunday,Sat/Sun,1,3,0,0,0,0,0,1,1,1,1,1,1,1,1,14,1.2523809523809522,1.1166666666666667,1.45
+2013430,7923000,La Playa,Irving St  -  Judah St,L,East,Tuesday/Friday,Tues/Fri,12,14,0,1,0,0,1,0,0,1,0,1,0,1,0,156,12.979914529914526,12.7,13.183333333333334
+2013431,7923000,La Playa,Irving St  -  Judah St,R,West,Friday,Fri,12,14,0,0,0,0,1,0,0,1,0,1,0,1,0,90,12.978333333333333,12.833333333333334,13.183333333333334
+2013434,7922000,La Playa,Lincoln Way  -  Irving St,L,East,Tuesday/Friday,Tues/Fri,12,14,0,1,0,0,1,0,0,1,0,1,0,1,0,40,12.961249999999998,12.75,13.1
+2013435,7922000,La Playa,Lincoln Way  -  Irving St,R,West,Friday,Fri,12,14,0,0,0,0,1,0,0,1,0,1,0,1,0,29,12.947126436781609,12.833333333333334,13.083333333333334
+2016517,9701000,North Point St,Scott St  -  Divisadero St,L,South,Friday,Fri,11,13,0,0,0,0,1,0,0,1,0,1,0,0,0,39,11.970512820512822,11.85,12.116666666666667
+2016497,9702000,North Point St,Divisadero St  -  Broderick St,L,South,Friday,Fri,11,13,0,0,0,0,1,0,0,1,0,1,0,0,0,105,11.961746031746031,11.816666666666666,12.116666666666667
+2016491,9703000,North Point St,Broderick St  -  Baker St,L,South,Friday,Fri,11,13,0,0,0,0,1,0,0,1,0,1,0,0,0,121,11.95895316804408,11.816666666666666,12.116666666666667
+2020253,12009101,South Park,South Park  -  Jack London Aly,R,NorthWest,Monday/Friday,Mon/Fri,0,2,1,0,0,0,1,0,0,1,1,1,1,1,0,103,0.10566343042071197,0.016666666666666666,0.38333333333333336
+2020249,12009102,South Park,Jack London Aly  -  South Park,R,NorthWest,Monday/Friday,Mon/Fri,0,2,1,0,0,0,1,0,0,1,1,1,1,1,0,136,0.10306372549019607,0.016666666666666666,0.38333333333333336
+2005981,3363000,Buena Vista Ave East,Waller St  -  Duboce Ave,L,NorthEast,Wednesday,Wed,12,14,0,0,1,0,0,0,0,1,1,1,1,1,0,44,12.500757575757575,12.35,12.65
+2005975,3362000,Buena Vista Ave East,Baker St  -  Waller St,L,NorthEast,Wednesday,Wed,12,14,0,0,1,0,0,0,0,1,1,1,1,1,0,35,12.50952380952381,12.35,12.65
+2022564,13581000,West View Ave,Cambridge St  -  End: 01-99 Block,L,North,Wednesday,Wed,10,12,0,0,1,0,0,0,0,1,1,1,1,1,0,8,10.1125,10.066666666666666,10.15
+2022565,13581000,West View Ave,Cambridge St  -  End: 01-99 Block,R,South,Wednesday,Wed,10,12,0,0,1,0,0,0,0,1,1,1,1,1,0,8,10.1125,10.066666666666666,10.15
+2022674,13649000,Willard St North,Golden Gate Ave  -  McAllister St,L,East,Wednesday,Wed,9,11,0,0,1,0,0,0,0,1,1,1,1,1,0,61,9.613387978142075,9.183333333333334,10.05
+2022676,13650000,Willard St North,McAllister St  -  Fulton St,L,East,Wednesday,Wed,9,11,0,0,1,0,0,0,0,1,1,1,1,1,0,45,9.610740740740741,9.183333333333334,10.05
+2020283,12031000,South Van Ness Ave,24th St  -  25th St,R,West,Monday/Wednesday/Friday,Mon/Wed/Fri,9,11,1,0,1,0,1,0,0,1,1,1,1,1,0,151,9.202207505518764,9.133333333333333,9.433333333333334
+2020243,12003000,South Hill Blvd,Rolph St  -  Chicago Way,R,SouthWest,Tuesday,Tues,12,14,0,1,0,0,0,0,0,1,1,1,1,1,0,22,12.212121212121211,12.133333333333333,12.3
+2020241,12002000,South Hill Blvd,Prague St  -  Rolph St,R,SouthWest,Tuesday,Tues,12,14,0,1,0,0,0,0,0,1,1,1,1,1,0,16,12.196875,12.15,12.3
+2020235,12004000,South Hill Blvd,Chicago Way  -  Baltimore Way,R,SouthWest,Tuesday,Tues,12,14,0,1,0,0,0,0,0,1,1,1,1,1,0,27,12.210493827160496,12.066666666666666,12.333333333333334
+2020231,12005000,South Hill Blvd,Baltimore Way  -  Toyon Ln,R,SouthWest,Tuesday,Tues,12,14,0,1,0,0,0,0,0,1,1,1,1,1,0,27,12.210493827160496,12.066666666666666,12.333333333333334
+2016492,9703000,North Point St,Broderick St  -  Baker St,R,North,Tuesday,Tues,11,13,0,1,0,0,0,0,0,1,0,1,0,0,0,94,11.983333333333334,11.883333333333333,12.15
+2016498,9702000,North Point St,Divisadero St  -  Broderick St,R,North,Tuesday,Tues,11,13,0,1,0,0,0,0,0,1,0,1,0,0,0,67,11.971393034825873,11.85,12.033333333333333
+2016518,9701000,North Point St,Scott St  -  Divisadero St,R,North,Tuesday,Tues,11,13,0,1,0,0,0,0,0,1,0,1,0,0,0,20,11.9475,11.85,12.016666666666667
+2016551,9746000,O'Farrell St,Anzavista Ave  -  Anza St,L,South,Tuesday,Tues,9,11,0,1,0,0,0,0,0,1,1,1,1,1,0,52,10.067628205128205,9.8,10.283333333333333
+2020272,12026000,South Van Ness Ave,19th St  -  20th St,L,East,Tuesday/Thursday,Tues/Thu,9,11,0,1,0,1,0,0,0,1,1,1,1,1,0,22,9.715151515151517,9.516666666666667,9.966666666666667
+2016568,9737000,O'Farrell St,Hollis St  -  Webster St,R,North,Tuesday,Tues,9,11,0,1,0,0,0,0,0,1,1,1,1,1,0,22,9.459090909090909,9.083333333333334,10.066666666666666
+2005983,3367000,Buena Vista Ave West,Buena Vista Ave East  -  Java St,L,SouthWest,Tuesday,Tues,8,10,0,1,0,0,0,0,0,1,1,1,1,1,0,119,8.38263305322129,8.3,8.516666666666667
+2005989,3368000,Buena Vista Ave West,Java St  -  Frederick St,L,West,Tuesday,Tues,8,10,0,1,0,0,0,0,0,1,1,1,1,1,0,115,8.363478260869567,8.283333333333333,8.483333333333333
+2005987,3369000,Buena Vista Ave West,Frederick St  -  Central Ave,L,West,Tuesday,Tues,8,10,0,1,0,0,0,0,0,1,1,1,1,1,0,107,8.361370716510905,8.283333333333333,8.483333333333333
+2005065,2823201,Bay Shore Blvd,Tunnel Ave  -  San Bruno Ave,R,NorthWest,Tuesday,Tues,7,8,0,1,0,0,0,0,0,1,1,1,1,1,0,4,7.25,7.15,7.3
+2005075,2815000,Bay Shore Blvd,Wheat St  -  Hwy 101 S On Ramp,L,East,Tuesday/Thursday/Saturday/Sunday,Tues/Thu/Sat/Sun,7,8,0,1,0,1,0,1,1,1,1,1,1,1,0,23,7.104347826086957,7.083333333333333,7.166666666666667
+2020264,12021000,South Van Ness Ave,15th St  -  Adair St,L,East,Tuesday/Thursday,Tues/Thu,6,8,0,1,0,1,0,0,0,1,1,1,1,1,0,133,6.700125313283208,6.4,7.066666666666666
+2020288,12022000,South Van Ness Ave,Adair St  -  16th St,L,East,Tuesday/Thursday,Tues/Thu,6,8,0,1,0,1,0,0,0,1,1,1,1,1,0,165,6.674343434343435,6.316666666666666,7.066666666666666
+2020266,12023000,South Van Ness Ave,16th St  -  17th St,L,East,Tuesday/Thursday,Tues/Thu,6,8,0,1,0,1,0,0,0,1,1,1,1,1,0,165,6.674343434343435,6.316666666666666,7.066666666666666
+2016552,9746000,O'Farrell St,Anzavista Ave  -  Anza St,R,North,Tuesday,Tues,6,8,0,1,0,0,0,0,0,1,1,1,1,0,0,18,6.6462962962962955,6.5,6.833333333333333
+2020286,12033000,South Van Ness Ave,26th St  -  Cesar Chavez St,L,East,Tuesday/Thursday,Tues/Thu,6,8,0,1,0,1,0,0,0,1,1,1,1,1,0,30,6.315,6.066666666666666,6.766666666666667
+2016523,9686000,North Point St,The Embarcadero  -  Grant Ave,L,South,Tuesday/Thursday,Tues/Thu,2,6,0,1,0,1,0,0,0,1,1,1,1,1,0,4,2.7333333333333334,2.6666666666666665,2.85
+2016499,9687000,North Point St,Grant Ave  -  Stockton St,L,South,Tuesday/Thursday,Tues/Thu,2,6,0,1,0,1,0,0,0,1,1,1,1,1,0,9,2.7981481481481483,2.6666666666666665,3.0
+2016525,9700000,North Point St,Webster St  -  Fillmore St,L,South,Monday,Mon,12,14,1,0,0,0,0,0,0,1,0,1,0,0,0,48,12.412847222222224,12.3,12.6
+2016505,9698000,North Point St,Laguna St  -  Buchanan St,L,South,Monday,Mon,9,11,1,0,0,0,0,0,0,1,0,1,0,0,0,54,9.27006172839506,9.2,9.35
+2016493,9699000,North Point St,Buchanan St  -  Webster St,L,South,Monday,Mon,9,11,1,0,0,0,0,0,0,1,0,1,0,0,0,81,9.263168724279835,9.183333333333334,9.35
+2020281,12030000,South Van Ness Ave,23rd St  -  24th St,R,West,Monday/Wednesday/Friday,Mon/Wed/Fri,9,11,1,0,1,0,1,0,0,1,1,1,1,1,0,164,9.191666666666666,9.116666666666667,9.433333333333334
+2022557,13580101,West Portal Ave,15th Ave  -  Sloat Blvd,L,SouthEast,Monday/Tuesday/Wednesday/Thursday/Friday,Mon/Tues/Wed/Thu/Fri,5,7,1,1,1,1,1,0,0,1,1,1,1,1,1,32,5.069791666666666,5.0,5.25
+2022558,13580201,West Portal Ave,15th Ave  -  Sloat Blvd,R,NorthWest,Monday/Tuesday/Wednesday/Friday,Mon/Tues/Wed/Fri,5,7,1,1,1,0,1,0,0,1,1,1,1,1,1,19,5.086842105263157,5.0,5.25
+2022556,13579201,West Portal Ave,14th Ave  -  15th Ave,R,NorthWest,Monday/Tuesday/Wednesday/Thursday/Friday/Saturday,Mon/Tues/Wed/Thu/Fri/Sat,5,7,1,1,1,1,1,1,0,1,1,1,1,1,1,63,5.076190476190475,5.0,5.266666666666667
+2022555,13579101,West Portal Ave,14th Ave  -  15th Ave,L,SouthEast,Monday/Tuesday/Wednesday/Thursday/Friday/Sunday,Mon/Tues/Wed/Thu/Fri/Sun,5,7,1,1,1,1,1,0,1,1,1,1,1,1,1,88,5.10189393939394,5.0,5.566666666666666
+2020251,12010000,South Park,South Park  -  03rd St,R,NorthWest,Monday,Mon,0,2,1,0,0,0,0,0,0,1,1,1,1,1,0,25,0.07,0.016666666666666666,0.2
+2021030,12555202,The Embarcadero,Broadway  -  Green St,R,NorthEast,Saturday/Sunday,Sat/Sun,1,3,0,0,0,0,0,1,1,1,1,1,1,1,1,60,1.2344444444444447,1.0833333333333333,1.4833333333333334
+2021027,12555102,The Embarcadero,Broadway  -  Green St,L,SouthWest,Saturday/Sunday,Sat/Sun,1,3,0,0,0,0,0,1,1,1,1,1,1,1,1,60,1.2344444444444447,1.0833333333333333,1.4833333333333334
+2021028,12555102,The Embarcadero,Broadway  -  Green St,L,SouthWest,Sunday,Sun,1,6,0,0,0,0,0,0,1,1,1,1,1,1,1,32,1.2135416666666665,1.0833333333333333,1.4
+2021031,12555202,The Embarcadero,Broadway  -  Green St,R,NorthEast,Sunday,Sun,1,6,0,0,0,0,0,0,1,1,1,1,1,1,1,32,1.2135416666666665,1.0833333333333333,1.4
+2014968,8782000,Marsily St,Bosworth St  -  End: 100-199 Block,R,West,Friday,Fri,8,10,0,0,0,0,1,0,0,0,1,0,1,0,0,20,8.311666666666666,8.166666666666666,8.416666666666666
+2014970,8781000,Marsily St,Saint Mary's Ave  -  Bosworth St,R,West,Friday,Fri,8,10,0,0,0,0,1,0,0,0,1,0,1,0,0,20,8.311666666666666,8.166666666666666,8.416666666666666
+2020287,12033000,South Van Ness Ave,26th St  -  Cesar Chavez St,R,West,Monday/Wednesday/Friday,Mon/Wed/Fri,6,8,1,0,1,0,1,0,0,1,1,1,1,1,0,50,6.4430000000000005,6.316666666666666,6.733333333333333
+2016516,9689000,North Point St,Powell St  -  Mason St,R,North,Monday/Wednesday/Friday,Mon/Wed/Fri,2,6,1,0,1,0,1,0,0,1,1,1,1,1,0,85,2.8445098039215684,2.3,3.3
+2020232,12007000,South Hill Blvd,Canyon Dr  -  County Line,L,SouthEast,Thursday,Thu,12,14,0,0,0,1,0,0,0,1,1,1,1,1,0,13,12.202564102564102,12.033333333333333,12.516666666666667
+2020244,12006000,South Hill Blvd,Toyon Ln  -  Canyon Dr,L,East,Thursday,Thu,12,14,0,0,0,1,0,0,0,1,1,1,1,1,0,16,12.222916666666666,12.033333333333333,12.516666666666667
+2016567,9737000,O'Farrell St,Hollis St  -  Webster St,L,South,Thursday,Thu,12,14,0,0,0,1,0,0,0,1,1,1,1,1,0,18,12.418518518518518,12.033333333333333,12.633333333333333
+2016602,9736000,O'Farrell St,Van Ness Ave  -  Franklin St,R,North,Thursday,Thu,6,8,0,0,0,1,0,0,0,1,1,1,1,1,0,30,6.888333333333333,6.133333333333334,7.2
+2021084,12554101,The Embarcadero,Washington St  -  Broadway,L,SouthWest,Monday/Tuesday/Wednesday/Thursday/Friday,Mon/Tues/Wed/Thu/Fri,0,2,1,1,1,1,1,0,0,1,1,1,1,1,1,36,0.32268518518518513,0.15,1.3333333333333333
+2021087,12554101,The Embarcadero,Washington St  -  Broadway,R,NorthEast,Monday/Tuesday/Wednesday/Thursday/Friday,Mon/Tues/Wed/Thu/Fri,0,2,1,1,1,1,1,0,0,1,1,1,1,1,1,36,0.32268518518518513,0.15,1.3333333333333333
+2005289,2946000,Bernal Heights Blvd,Carver St  -  Bradford St,R,South,Wednesday,Wed,12,14,0,0,1,0,0,0,0,1,1,1,1,1,0,10,12.495,12.1,12.6
+2005293,2945000,Bernal Heights Blvd,Rosenkranz St  -  Carver St,R,South,Wednesday,Wed,12,14,0,0,1,0,0,0,0,1,1,1,1,1,0,10,12.495,12.1,12.6
+2005291,2944000,Bernal Heights Blvd,Powhattan Ave  -  Rosenkranz St,R,SouthEast,Wednesday,Wed,12,14,0,0,1,0,0,0,0,1,1,1,1,1,0,10,12.495,12.1,12.6
+2008890,5123000,El Camino Del Mar,27th Ave  -  28th Ave,R,North,Wednesday,Wed,9,11,0,0,1,0,0,0,0,0,1,0,1,0,0,43,9.829069767441862,9.633333333333333,10.016666666666667
+2008892,5124000,El Camino Del Mar,28th Ave  -  El Camino Del Mar,R,North,Wednesday,Wed,9,11,0,0,1,0,0,0,0,0,1,0,1,0,0,43,9.829069767441862,9.633333333333333,10.016666666666667
+2022551,13574000,West Clay St,22nd Ave  -  24th Ave,L,South,Wednesday,Wed,9,11,0,0,1,0,0,0,0,0,1,0,1,0,0,43,9.853488372093024,9.583333333333334,10.283333333333333
+2019779,11734000,Sea View Ter,30th Ave  -  31st Ave,L,South,Tuesday,Tues,9,11,0,1,0,0,0,0,0,0,1,0,1,0,0,10,10.021666666666667,9.966666666666667,10.066666666666666
+2016507,9696000,North Point St,Larkin St  -  Polk St,L,South,Tuesday,Tues,8,10,0,1,0,0,0,0,0,1,1,1,1,0,0,56,8.327380952380953,8.05,8.716666666666667
+2020260,12019201,South Van Ness Ave,13th St  -  14th St,R,West,Monday/Wednesday/Friday,Mon/Wed/Fri,6,8,1,0,1,0,1,0,0,1,1,1,1,1,0,22,6.667424242424243,6.45,6.916666666666667
+2021044,12551102,The Embarcadero,Folsom St  -  Howard St,L,SouthWest,Monday/Tuesday/Wednesday/Thursday/Friday,Mon/Tues/Wed/Thu/Fri,0,2,1,1,1,1,1,0,0,1,1,1,1,1,1,21,0.3436507936507936,0.05,1.3833333333333333
+2021047,12551102,The Embarcadero,Folsom St  -  Howard St,R,NorthEast,Monday/Tuesday/Wednesday/Thursday/Friday,Mon/Tues/Wed/Thu/Fri,0,2,1,1,1,1,1,0,0,1,1,1,1,1,1,21,0.3436507936507936,0.05,1.3833333333333333
+2016526,9700000,North Point St,Webster St  -  Fillmore St,R,North,Thursday,Thu,12,14,0,0,0,1,0,0,0,1,0,1,0,0,0,45,12.578888888888887,12.466666666666667,12.766666666666667
+2005029,2825201,Bay Shore Blvd,Leland Ave  -  Visitacion Ave,R,NorthWest,Monday/Wednesday/Friday,Mon/Wed/Fri,7,8,1,0,1,0,1,0,0,1,1,1,1,1,0,8,7.510416666666666,7.116666666666666,7.966666666666667
+2005047,2824202,Bay Shore Blvd,Raymond Ave  -  Leland Ave,R,NorthWest,Monday/Wednesday/Friday,Mon/Wed/Fri,7,8,1,0,1,0,1,0,0,1,1,1,1,1,0,6,7.436111111111113,7.116666666666666,7.616666666666667
+2005068,2826201,Bay Shore Blvd,Visitacion Ave  -  Sunnydale Ave,R,NorthWest,Monday/Wednesday/Friday,Mon/Wed/Fri,7,8,1,0,1,0,1,0,0,1,1,1,1,1,0,3,7.527777777777778,7.116666666666666,7.966666666666667
+2005053,2824201,Bay Shore Blvd,San Bruno Ave  -  Raymond Ave,R,NorthWest,Monday/Wednesday/Friday,Mon/Wed/Fri,7,8,1,0,1,0,1,0,0,1,1,1,1,1,0,6,7.436111111111113,7.116666666666666,7.616666666666667
+2022563,13578201,West Portal Ave,Vicente St  -  14th Ave,R,NorthWest,Monday/Tuesday/Wednesday/Thursday/Friday/Saturday,Mon/Tues/Wed/Thu/Fri/Sat,5,7,1,1,1,1,1,1,0,1,1,1,1,1,1,49,5.077551020408164,5.0,5.266666666666667
+2022562,13578101,West Portal Ave,Vicente St  -  14th Ave,L,SouthEast,Monday/Tuesday/Wednesday/Thursday/Friday/Sunday,Mon/Tues/Wed/Thu/Fri/Sun,5,7,1,1,1,1,1,0,1,1,1,1,1,1,1,55,5.108181818181818,5.0,5.333333333333333
+2020233,12007000,South Hill Blvd,Canyon Dr  -  County Line,R,NorthWest,Tuesday,Tues,12,14,0,1,0,0,0,0,0,1,1,1,1,1,0,15,12.207777777777777,12.066666666666666,12.333333333333334
+2020245,12006000,South Hill Blvd,Toyon Ln  -  Canyon Dr,R,West,Tuesday,Tues,12,14,0,1,0,0,0,0,0,1,1,1,1,1,0,22,12.218939393939394,12.066666666666666,12.333333333333334
+2016554,9741000,O'Farrell St,Beideman St  -  Divisadero St,R,North,Tuesday,Tues,9,11,0,1,0,0,0,0,0,1,1,1,1,1,0,38,10.08201754385965,9.766666666666667,10.316666666666666
+2016592,9740000,O'Farrell St,Scott St  -  Beideman St,R,North,Tuesday,Tues,9,11,0,1,0,0,0,0,0,1,1,1,1,1,0,38,10.08201754385965,9.766666666666667,10.316666666666666
+2016601,9736000,O'Farrell St,Van Ness Ave  -  Franklin St,L,South,Tuesday,Tues,6,8,0,1,0,0,0,0,0,1,1,1,1,1,0,32,6.8609375,6.1,7.083333333333333
+2005353,2996000,Blythdale Ave,Santos St  -  Brookdale Ave,R,North,Monday,Mon,8,11,1,0,0,0,0,0,0,1,1,1,1,1,0,21,10.092857142857142,9.133333333333333,10.45
+2021086,12554101,The Embarcadero,Washington St  -  Broadway,L,SouthWest,Sunday,Sun,1,6,0,0,0,0,0,0,1,1,1,1,1,1,1,6,1.2249999999999999,1.1166666666666667,1.3166666666666667
+2021089,12554201,The Embarcadero,Washington St  -  Broadway,R,NorthEast,Sunday,Sun,1,6,0,0,0,0,0,0,1,1,1,1,1,1,1,6,1.2249999999999999,1.1166666666666667,1.3166666666666667
+2021063,12552101,The Embarcadero,Howard St  -  Mission St,L,SouthWest,Saturday/Sunday,Sat/Sun,1,3,0,0,0,0,0,1,1,1,1,1,1,1,1,48,1.2680555555555555,1.1,1.5
+2021066,12552201,The Embarcadero,Howard St  -  Mission St,R,NorthEast,Saturday/Sunday,Sat/Sun,1,3,0,0,0,0,0,1,1,1,1,1,1,1,1,48,1.2680555555555555,1.1,1.5
+2021076,12553201,The Embarcadero,Mission St  -  Washington St,R,NorthEast,Saturday/Sunday,Sat/Sun,1,3,0,0,0,0,0,1,1,1,1,1,1,1,1,11,1.3196969696969696,1.1333333333333333,1.4833333333333334
+2005976,3362000,Buena Vista Ave East,Baker St  -  Waller St,R,SouthWest,Friday,Fri,12,14,0,0,0,0,1,0,0,1,1,1,1,1,0,127,12.568372703412075,12.383333333333333,12.816666666666666
+2005982,3363000,Buena Vista Ave East,Waller St  -  Duboce Ave,R,SouthWest,Friday,Fri,12,14,0,0,0,0,1,0,0,1,1,1,1,1,0,128,12.568489583333333,12.383333333333333,12.816666666666666
+2016584,9739000,O'Farrell St,Pierce St  -  Scott St,R,North,Friday,Fri,6,8,0,0,0,0,1,0,0,1,1,1,1,0,0,22,6.472727272727273,6.35,6.983333333333333
+2020257,12017201,South Van Ness Ave,12th St  -  Plum St,R,West,Monday/Wednesday/Friday,Mon/Wed/Fri,0,2,1,0,1,0,1,0,0,1,1,1,1,1,0,8,0.7104166666666667,0.4666666666666667,1.05
+2020254,12017101,South Van Ness Ave,12th St  -  Howard St,L,East,Monday/Wednesday/Friday,Mon/Wed/Fri,0,2,1,0,1,0,1,0,0,1,1,1,1,1,0,8,0.7104166666666667,0.4666666666666667,1.05
+2004998,2808000,Bay Shore Blvd,Donner Ave  -  Bacon St,L,East,Tuesday/Thursday/Saturday/Sunday,Tues/Thu/Sat/Sun,7,8,0,1,0,1,0,1,1,1,1,1,1,1,0,34,7.175490196078432,7.1,7.333333333333333
+2005043,2807000,Bay Shore Blvd,Quint St  -  Donner Ave,L,East,Tuesday/Thursday/Saturday/Sunday,Tues/Thu/Sat/Sun,7,8,0,1,0,1,0,1,1,1,1,1,1,1,0,71,7.186150234741785,7.1,7.35
+2004978,2809000,Bay Shore Blvd,Bacon St  -  Phelps St,L,East,Tuesday/Thursday/Saturday/Sunday,Tues/Thu/Sat/Sun,7,8,0,1,0,1,0,1,1,1,1,1,1,1,0,37,7.1770270270270276,7.1,7.333333333333333
+2021074,12553201,The Embarcadero,Mission St  -  Washington St,L,SouthWest,Monday/Tuesday/Wednesday/Thursday/Friday,Mon/Tues/Wed/Thu/Fri,0,2,1,1,1,1,1,0,0,1,1,1,1,1,1,20,0.3808333333333333,0.05,1.2666666666666666
+2021075,12553201,The Embarcadero,Mission St  -  Washington St,R,NorthEast,Monday/Tuesday/Wednesday/Thursday/Friday,Mon/Tues/Wed/Thu/Fri,0,2,1,1,1,1,1,0,0,1,1,1,1,1,1,20,0.3808333333333333,0.05,1.2666666666666666
+2019787,11727000,Seacliff Ave,26th Ave  -  27th Ave,L,South,Wednesday,Wed,9,11,0,0,1,0,0,0,0,0,1,0,1,0,0,9,9.938888888888888,9.8,10.233333333333333
+2022561,13577201,West Portal Ave,Ulloa St  -  Vicente St,R,NorthWest,Monday/Tuesday/Wednesday/Thursday/Friday/Saturday,Mon/Tues/Wed/Thu/Fri/Sat,5,7,1,1,1,1,1,1,0,1,1,1,1,1,1,22,5.070454545454546,5.0,5.2
+2022560,13577101,West Portal Ave,Ulloa St  -  Vicente St,L,SouthEast,Monday/Tuesday/Wednesday/Thursday/Friday/Sunday,Mon/Tues/Wed/Thu/Fri/Sun,5,7,1,1,1,1,1,0,1,1,1,1,1,1,1,26,5.116666666666666,5.0,5.333333333333333
+2020293,12015101,South Van Ness Ave,Market St  -  Mission St,L,East,Monday/Wednesday/Friday,Mon/Wed/Fri,0,2,1,0,1,0,1,0,0,1,1,1,1,1,0,10,0.6233333333333333,0.3333333333333333,0.7666666666666667
+2020296,12015201,South Van Ness Ave,Market St  -  Mission St,R,West,Monday/Wednesday/Friday,Mon/Wed/Fri,0,2,1,0,1,0,1,0,0,1,1,1,1,1,0,10,0.6233333333333333,0.3333333333333333,0.7666666666666667
+2021032,12549101,The Embarcadero,Bryant St  -  Harrison St,L,West,Monday/Tuesday/Wednesday/Thursday/Friday,Mon/Tues/Wed/Thu/Fri,0,2,1,1,1,1,1,0,0,1,1,1,1,1,1,12,0.26805555555555555,0.1,0.38333333333333336
+2021035,12549101,The Embarcadero,Bryant St  -  Harrison St,R,East,Monday/Tuesday/Wednesday/Thursday/Friday,Mon/Tues/Wed/Thu/Fri,0,2,1,1,1,1,1,0,0,1,1,1,1,1,1,12,0.26805555555555555,0.1,0.38333333333333336
+2002607,1464000,25th Ave North,25th Ave North  -  End: 21-46 Block,L,NorthWest,Tuesday,Tues,9,11,0,1,0,0,0,0,0,0,1,0,1,0,0,16,9.889583333333334,9.8,10.066666666666666
+2002609,1463000,25th Ave North,Seacliff Ave  -  25th Ave North,L,SouthWest,Tuesday,Tues,9,11,0,1,0,0,0,0,0,0,1,0,1,0,0,16,9.889583333333334,9.8,10.066666666666666
+2002597,1370000,25th Ave,Seacliff Ave  -  Scenic Way,R,NorthWest,Tuesday,Tues,9,11,0,1,0,0,0,0,0,0,1,0,1,0,0,16,9.889583333333334,9.8,10.066666666666666
+2002595,1371000,25th Ave,Scenic Way  -  El Camino Del Mar,R,West,Tuesday,Tues,9,11,0,1,0,0,0,0,0,0,1,0,1,0,0,16,9.889583333333334,9.8,10.066666666666666
+2019783,11725000,Seacliff Ave,25th Ave  -  25th North Ave,L,South,Tuesday,Tues,9,11,0,1,0,0,0,0,0,0,1,0,1,0,0,14,9.920238095238096,9.7,10.283333333333333
+2019785,11726000,Seacliff Ave,25th North Ave  -  26th Ave,L,South,Tuesday,Tues,9,11,0,1,0,0,0,0,0,0,1,0,1,0,0,21,9.90952380952381,9.7,10.283333333333333
+2021033,12549101,The Embarcadero,Bryant St  -  Harrison St,L,West,Saturday/Sunday,Sat/Sun,1,3,0,0,0,0,0,1,1,1,1,1,1,1,1,20,1.235,1.0833333333333333,1.4666666666666668
+2021036,12549201,The Embarcadero,Bryant St  -  Harrison St,R,East,Saturday/Sunday,Sat/Sun,1,3,0,0,0,0,0,1,1,1,1,1,1,1,1,20,1.235,1.0833333333333333,1.4666666666666668
+2020230,12005000,South Hill Blvd,Baltimore Way  -  Toyon Ln,L,NorthEast,Thursday,Thu,12,14,0,0,0,1,0,0,0,1,1,1,1,1,0,8,12.222916666666666,12.116666666666667,12.433333333333334
+2020234,12004000,South Hill Blvd,Chicago Way  -  Baltimore Way,L,NorthEast,Thursday,Thu,12,14,0,0,0,1,0,0,0,1,1,1,1,1,0,8,12.222916666666666,12.116666666666667,12.433333333333334
+2022677,13650000,Willard St North,McAllister St  -  Fulton St,R,West,Thursday,Thu,9,11,0,0,0,1,0,0,0,1,1,1,1,1,0,52,9.429487179487179,9.266666666666667,9.55
+2005978,3364000,Buena Vista Ave East,Duboce Ave  -  Park Hill Ave,R,NorthWest,Thursday,Thu,9,11,0,0,0,1,0,0,0,1,1,1,1,1,0,6,9.105555555555556,9.083333333333334,9.166666666666666
+2016579,9720000,O'Farrell St,Market St  -  Security Pacific Pl,L,South,Tuesday/Thursday/Sunday,Tues/Thu/Sun,2,6,0,1,0,1,0,0,1,1,1,1,1,1,0,4,2.183333333333333,2.1333333333333333,2.25
+2016593,9721000,O'Farrell St,Security Pacific Pl  -  Stockton St,L,South,Tuesday/Thursday/Sunday,Tues/Thu/Sun,2,6,0,1,0,1,0,0,1,1,1,1,1,1,0,4,2.183333333333333,2.1333333333333333,2.25
+2016597,9722000,O'Farrell St,Stockton St  -  Powell St,L,South,Tuesday/Thursday/Sunday,Tues/Thu/Sun,2,6,0,1,0,1,0,0,1,1,1,1,1,1,0,5,2.173333333333333,2.1333333333333333,2.25
+2021020,12548101,The Embarcadero,Brannan St  -  Bryant St,L,West,Monday/Tuesday/Wednesday/Thursday/Friday,Mon/Tues/Wed/Thu/Fri,0,2,1,1,1,1,1,0,0,1,1,1,1,1,1,10,0.22833333333333333,0.1,0.35
+2021023,12548101,The Embarcadero,Brannan St  -  Bryant St,R,East,Monday/Tuesday/Wednesday/Thursday/Friday,Mon/Tues/Wed/Thu/Fri,0,2,1,1,1,1,1,0,0,1,1,1,1,1,1,10,0.22833333333333333,0.1,0.35
+2020250,12010000,South Park,South Park  -  03rd St,L,SouthEast,Wednesday,Wed,0,2,0,0,1,0,0,0,0,1,1,1,1,1,0,14,0.05357142857142857,0.016666666666666666,0.18333333333333332
+2013432,7924000,La Playa,Judah St  -  Kirkham St,L,East,Tuesday,Tues,12,14,0,1,0,0,0,0,0,1,0,1,0,1,0,48,12.988541666666668,12.7,13.133333333333333
+2020268,12024000,South Van Ness Ave,17th St  -  18th St,L,East,Tuesday/Thursday,Tues/Thu,6,8,0,1,0,1,0,0,0,1,1,1,1,1,0,127,6.658267716535434,6.316666666666666,7.033333333333333
+2016555,9743000,O'Farrell St,Broderick St  -  Saint Joseph's Ave,L,South,Monday,Mon,6,8,1,0,0,0,0,0,0,1,1,1,1,0,0,35,6.733809523809525,6.483333333333333,7.15
+2016559,9742000,O'Farrell St,Divisadero St  -  Broderick St,L,South,Monday,Mon,6,8,1,0,0,0,0,0,0,1,1,1,1,0,0,25,6.740666666666666,6.483333333333333,7.15
+2021064,12552101,The Embarcadero,Howard St  -  Mission St,L,SouthWest,Sunday,Sun,1,6,0,0,0,0,0,0,1,1,1,1,1,1,1,25,1.2479999999999998,1.1,1.4666666666666668
+2021067,12552201,The Embarcadero,Howard St  -  Mission St,R,NorthEast,Sunday,Sun,1,6,0,0,0,0,0,0,1,1,1,1,1,1,1,25,1.2479999999999998,1.1,1.4666666666666668
+2021077,12553201,The Embarcadero,Mission St  -  Washington St,R,NorthEast,Sunday,Sun,1,6,0,0,0,0,0,0,1,1,1,1,1,1,1,7,1.3261904761904761,1.1333333333333333,1.4666666666666668
+2013433,7924000,La Playa,Judah St  -  Kirkham St,R,West,Friday,Fri,13,15,0,0,0,0,1,0,0,1,0,1,0,1,0,20,13.0725,13.0,13.183333333333334
+2020240,12002000,South Hill Blvd,Prague St  -  Rolph St,L,NorthEast,Thursday,Thu,12,14,0,0,0,1,0,0,0,1,1,1,1,1,0,6,12.225000000000001,12.083333333333334,12.366666666666667
+2020238,12001000,South Hill Blvd,Munich St  -  Prague St,L,NorthEast,Thursday,Thu,12,14,0,0,0,1,0,0,0,1,1,1,1,1,0,6,12.225000000000001,12.083333333333334,12.366666666666667
+2020242,12003000,South Hill Blvd,Rolph St  -  Chicago Way,L,NorthEast,Thursday,Thu,12,14,0,0,0,1,0,0,0,1,1,1,1,1,0,9,12.253703703703703,12.083333333333334,12.433333333333334
+2020236,12000000,South Hill Blvd,Geneva Ave  -  Munich St,L,NorthEast,Thursday,Thu,12,14,0,0,0,1,0,0,0,1,1,1,1,1,0,6,12.225000000000001,12.083333333333334,12.366666666666667
+2016494,9699000,North Point St,Buchanan St  -  Webster St,R,North,Thursday,Thu,9,11,0,0,0,1,0,0,0,1,0,1,0,0,0,102,9.27156862745098,9.066666666666666,9.733333333333333
+2016506,9698000,North Point St,Laguna St  -  Buchanan St,R,North,Thursday,Thu,9,11,0,0,0,1,0,0,0,1,0,1,0,0,0,71,9.278873239436619,9.066666666666666,9.733333333333333
+2015644,9090000,Mission St,Shaw Aly  -  Anthony St,L,SouthEast,Monday/Tuesday/Wednesday/Thursday/Friday/Saturday/Sunday,Mon/Tues/Wed/Thu/Fri/Sat/Sun,2,6,1,1,1,1,1,1,1,1,1,1,1,1,1,45,2.580740740740741,2.15,3.1333333333333333
+2015645,9090000,Mission St,Shaw Aly  -  Anthony St,R,NorthWest,Monday/Tuesday/Wednesday/Thursday/Friday/Saturday/Sunday,Mon/Tues/Wed/Thu/Fri/Sat/Sun,2,6,1,1,1,1,1,1,1,1,1,1,1,1,1,45,2.580740740740741,2.15,3.1333333333333333
+2015473,9089000,Mission St,Ecker St  -  Shaw Aly,L,SouthEast,Monday/Tuesday/Wednesday/Thursday/Friday/Saturday/Sunday,Mon/Tues/Wed/Thu/Fri/Sat/Sun,2,6,1,1,1,1,1,1,1,1,1,1,1,1,1,45,2.580740740740741,2.15,3.1333333333333333
+2015474,9089000,Mission St,Ecker St  -  Shaw Aly,R,NorthWest,Monday/Tuesday/Wednesday/Thursday/Friday/Saturday/Sunday,Mon/Tues/Wed/Thu/Fri/Sat/Sun,2,6,1,1,1,1,1,1,1,1,1,1,1,1,1,45,2.580740740740741,2.15,3.1333333333333333
+2015374,9088000,Mission St,01st St  -  Ecker St,L,SouthEast,Monday/Tuesday/Wednesday/Thursday/Friday/Saturday/Sunday,Mon/Tues/Wed/Thu/Fri/Sat/Sun,2,6,1,1,1,1,1,1,1,1,1,1,1,1,1,30,2.534444444444445,2.15,3.1166666666666667
+2015375,9088000,Mission St,01st St  -  Ecker St,R,NorthWest,Monday/Tuesday/Wednesday/Thursday/Friday/Saturday/Sunday,Mon/Tues/Wed/Thu/Fri/Sat/Sun,2,6,1,1,1,1,1,1,1,1,1,1,1,1,1,30,2.534444444444445,2.15,3.1166666666666667
+2015435,9091000,Mission St,Anthony St  -  02nd St,L,SouthEast,Monday/Tuesday/Wednesday/Thursday/Friday/Saturday/Sunday,Mon/Tues/Wed/Thu/Fri/Sat/Sun,2,6,1,1,1,1,1,1,1,1,1,1,1,1,1,40,2.6054166666666667,2.15,3.1333333333333333
+2015436,9091000,Mission St,Anthony St  -  02nd St,R,NorthWest,Monday/Tuesday/Wednesday/Thursday/Friday/Saturday/Sunday,Mon/Tues/Wed/Thu/Fri/Sat/Sun,2,6,1,1,1,1,1,1,1,1,1,1,1,1,1,40,2.6054166666666667,2.15,3.1333333333333333
+2015376,9092000,Mission St,02nd St  -  New Montgomery St,L,SouthEast,Monday/Tuesday/Wednesday/Thursday/Friday/Saturday/Sunday,Mon/Tues/Wed/Thu/Fri/Sat/Sun,2,6,1,1,1,1,1,1,1,1,1,1,1,1,1,21,2.6015873015873012,2.1666666666666665,3.1333333333333333
+2015377,9092000,Mission St,02nd St  -  New Montgomery St,R,NorthWest,Monday/Tuesday/Wednesday/Thursday/Friday/Saturday/Sunday,Mon/Tues/Wed/Thu/Fri/Sat/Sun,2,6,1,1,1,1,1,1,1,1,1,1,1,1,1,21,2.6015873015873012,2.1666666666666665,3.1333333333333333
+2015503,9087000,Mission St,Fremont St  -  01st St,L,SouthEast,Monday/Tuesday/Wednesday/Thursday/Friday/Saturday/Sunday,Mon/Tues/Wed/Thu/Fri/Sat/Sun,2,6,1,1,1,1,1,1,1,1,1,1,1,1,1,24,2.5625,2.15,3.1166666666666667
+2015504,9087000,Mission St,Fremont St  -  01st St,R,NorthWest,Monday/Tuesday/Wednesday/Thursday/Friday/Saturday/Sunday,Mon/Tues/Wed/Thu/Fri/Sat/Sun,2,6,1,1,1,1,1,1,1,1,1,1,1,1,1,24,2.5625,2.15,3.1166666666666667
+2016496,9693000,North Point St,Columbus Ave  -  Leavenworth St,R,North,Wednesday,Wed,8,10,0,0,1,0,0,0,0,1,1,1,1,0,0,18,8.28888888888889,8.066666666666666,8.616666666666667
+2016510,9694000,North Point St,Leavenworth St  -  Hyde St,R,North,Wednesday,Wed,8,10,0,0,1,0,0,0,0,1,1,1,1,0,0,18,8.28888888888889,8.066666666666666,8.616666666666667
+2007634,4285000,Columbia Square St,Folsom St  -  Harrison St,L,NorthEast,Tuesday,Tues,0,2,0,1,0,0,0,0,0,1,1,1,1,1,0,12,0.5861111111111111,0.38333333333333336,0.7166666666666667
+2021051,12556102,The Embarcadero,Green St  -  Lombard St,L,SouthWest,Saturday/Sunday,Sat/Sun,1,3,0,0,0,0,0,1,1,1,1,1,1,1,1,9,1.2944444444444445,1.1333333333333333,1.4
+2021052,12556102,The Embarcadero,Green St  -  Lombard St,L,SouthWest,Sunday,Sun,1,6,0,0,0,0,0,0,1,1,1,1,1,1,1,5,1.3033333333333332,1.1333333333333333,1.4
+2021054,12556202,The Embarcadero,Green St  -  Lombard St,R,NorthEast,Saturday/Sunday,Sat/Sun,1,3,0,0,0,0,0,1,1,1,1,1,1,1,1,9,1.2944444444444445,1.1333333333333333,1.4
+2021055,12556202,The Embarcadero,Green St  -  Lombard St,R,NorthEast,Sunday,Sun,1,6,0,0,0,0,0,0,1,1,1,1,1,1,1,5,1.3033333333333332,1.1333333333333333,1.4
+2021079,12547101,The Embarcadero,Townsend St  -  Brannan St,L,West,Saturday/Sunday,Sat/Sun,1,3,0,0,0,0,0,1,1,1,1,1,1,1,1,21,1.224603174603175,1.05,1.4333333333333333
+2021080,12547101,The Embarcadero,Townsend St  -  Brannan St,L,West,Sunday,Sun,1,6,0,0,0,0,0,0,1,1,1,1,1,1,1,4,1.175,1.0833333333333333,1.3
+2021082,12547201,The Embarcadero,Townsend St  -  Brannan St,R,East,Saturday/Sunday,Sat/Sun,1,3,0,0,0,0,0,1,1,1,1,1,1,1,1,21,1.224603174603175,1.05,1.4333333333333333
+2021083,12547201,The Embarcadero,Townsend St  -  Brannan St,R,East,Sunday,Sun,1,6,0,0,0,0,0,0,1,1,1,1,1,1,1,4,1.175,1.0833333333333333,1.3
+2005059,2806000,Bay Shore Blvd,Thornton Ave  -  Quint St,L,East,Tuesday/Thursday/Saturday/Sunday,Tues/Thu/Sat/Sun,7,8,0,1,0,1,0,1,1,1,1,1,1,1,0,47,7.195744680851062,7.1,7.35
+2007635,4285000,Columbia Square St,Folsom St  -  Harrison St,R,SouthWest,Thursday,Thu,0,2,0,0,0,1,0,0,0,1,1,1,1,1,0,6,0.7166666666666667,0.5,1.0
+2020247,12008000,South Park,02nd St  -  South Park,R,NorthWest,Monday,Mon,0,2,1,0,0,0,0,0,0,1,1,1,1,1,0,17,0.05980392156862746,0.016666666666666666,0.16666666666666666
+2008905,5130000,El Plazuela Way,Start: 01-99 Block  -  Junipero Serra Blvd,L,SouthEast,Thursday,Thu,8,10,0,0,0,1,0,0,0,1,0,1,0,0,0,10,9.0,8.866666666666667,9.25
+2008906,5130000,El Plazuela Way,Start: 01-99 Block  -  Junipero Serra Blvd,R,NorthWest,Thursday,Thu,8,10,0,0,0,1,0,0,0,1,0,1,0,0,0,10,9.0,8.866666666666667,9.25
+2016560,9742000,O'Farrell St,Divisadero St  -  Broderick St,R,North,Tuesday,Tues,6,8,0,1,0,0,0,0,0,1,1,1,1,0,0,13,6.5,6.383333333333334,6.683333333333334
+2020305,12017202,South Van Ness Ave,Plum St  -  Howard St,R,SouthWest,Monday/Wednesday/Friday,Mon/Wed/Fri,0,2,1,0,1,0,1,0,0,1,1,1,1,1,0,8,0.7104166666666667,0.4666666666666667,1.05
+2005352,2996000,Blythdale Ave,Santos St  -  Brookdale Ave,L,South,Wednesday,Wed,8,11,0,0,1,0,0,0,0,1,1,1,1,1,0,18,9.862962962962962,9.316666666666666,10.216666666666667
+2020294,12015101,South Van Ness Ave,Market St  -  Mission St,L,East,Tuesday/Thursday,Tues/Thu,0,6,0,1,0,1,0,0,0,1,1,1,1,1,0,5,0.5733333333333334,0.4,0.7333333333333333
+2020297,12015201,South Van Ness Ave,Market St  -  Mission St,R,West,Tuesday/Thursday,Tues/Thu,0,6,0,1,0,1,0,0,0,1,1,1,1,1,0,5,0.5733333333333334,0.4,0.7333333333333333
+2021050,12556102,The Embarcadero,Green St  -  Lombard St,L,SouthWest,Monday/Tuesday/Wednesday/Thursday/Friday,Mon/Tues/Wed/Thu/Fri,0,2,1,1,1,1,1,0,0,1,1,1,1,1,1,7,0.2785714285714286,0.15,0.43333333333333335
+2021053,12556102,The Embarcadero,Green St  -  Lombard St,R,NorthEast,Monday/Tuesday/Wednesday/Thursday/Friday,Mon/Tues/Wed/Thu/Fri,0,2,1,1,1,1,1,0,0,1,1,1,1,1,1,7,0.2785714285714286,0.15,0.43333333333333335
+2020239,12001000,South Hill Blvd,Munich St  -  Prague St,R,SouthWest,Tuesday,Tues,12,14,0,1,0,0,0,0,0,1,1,1,1,1,0,4,12.208333333333334,12.15,12.3
+2020237,12000000,South Hill Blvd,Geneva Ave  -  Munich St,R,SouthWest,Tuesday,Tues,12,14,0,1,0,0,0,0,0,1,1,1,1,1,0,4,12.208333333333334,12.15,12.3
+2005001,2811000,Bay Shore Blvd,Fitzgerald Ave  -  Wayland St,L,East,Tuesday/Thursday/Saturday/Sunday,Tues/Thu/Sat/Sun,7,8,0,1,0,1,0,1,1,1,1,1,1,1,0,8,7.154166666666667,7.1,7.233333333333333
+2005072,2812000,Bay Shore Blvd,Wayland St  -  Woolsey St,L,East,Tuesday/Thursday/Saturday/Sunday,Tues/Thu/Sat/Sun,7,8,0,1,0,1,0,1,1,1,1,1,1,1,0,8,7.154166666666667,7.1,7.233333333333333
+2005040,2810000,Bay Shore Blvd,Phelps St  -  Fitzgerald Ave,L,East,Tuesday/Thursday/Saturday/Sunday,Tues/Thu/Sat/Sun,7,8,0,1,0,1,0,1,1,1,1,1,1,1,0,12,7.17638888888889,7.1,7.333333333333333
+2005078,2813000,Bay Shore Blvd,Woolsey St  -  Paul Ave,L,East,Tuesday/Thursday/Saturday/Sunday,Tues/Thu/Sat/Sun,7,8,0,1,0,1,0,1,1,1,1,1,1,1,0,13,7.126923076923078,7.1,7.166666666666667
+2002608,1465000,25th Ave North,25th Ave North  -  End: 22-99 Block,R,NorthWest,Monday,Mon,9,11,1,0,0,0,0,0,0,0,1,0,1,0,0,15,9.75888888888889,9.616666666666667,9.95
+2002610,1463000,25th Ave North,Seacliff Ave  -  25th Ave North,R,NorthEast,Monday,Mon,9,11,1,0,0,0,0,0,0,0,1,0,1,0,0,15,9.75888888888889,9.616666666666667,9.95
+2002600,1369000,25th Ave,Start: 01-24 Block  -  Seacliff Ave,L,East,Monday,Mon,9,11,1,0,0,0,0,0,0,0,1,0,1,0,0,15,9.75888888888889,9.616666666666667,9.95
+2002596,1370000,25th Ave,Seacliff Ave  -  Scenic Way,L,SouthEast,Monday,Mon,9,11,1,0,0,0,0,0,0,0,1,0,1,0,0,15,9.75888888888889,9.616666666666667,9.95
+2021045,12551102,The Embarcadero,Folsom St  -  Howard St,L,SouthWest,Saturday/Sunday,Sat/Sun,1,3,0,0,0,0,0,1,1,1,1,1,1,1,1,15,1.2288888888888887,1.1166666666666667,1.5
+2021048,12551202,The Embarcadero,Folsom St  -  Howard St,R,NorthEast,Saturday/Sunday,Sat/Sun,1,3,0,0,0,0,0,1,1,1,1,1,1,1,1,15,1.2288888888888887,1.1166666666666667,1.5
+2005037,2814000,Bay Shore Blvd,Paul Ave  -  Wheat St,L,East,Tuesday/Thursday/Saturday/Sunday,Tues/Thu/Sat/Sun,7,8,0,1,0,1,0,1,1,1,1,1,1,1,0,12,7.129166666666666,7.1,7.166666666666667
+2020258,12017201,South Van Ness Ave,12th St  -  Plum St,R,West,Tuesday/Thursday,Tues/Thu,0,6,0,1,0,1,0,0,0,1,1,1,1,1,0,8,0.6,0.43333333333333335,0.7333333333333333
+2020255,12017101,South Van Ness Ave,12th St  -  Howard St,L,East,Tuesday/Thursday,Tues/Thu,0,6,0,1,0,1,0,0,0,1,1,1,1,1,0,8,0.6,0.43333333333333335,0.7333333333333333
+2020306,12017202,South Van Ness Ave,Plum St  -  Howard St,R,SouthWest,Tuesday/Thursday,Tues/Thu,0,6,0,1,0,1,0,0,0,1,1,1,1,1,0,7,0.580952380952381,0.43333333333333335,0.7166666666666667
+2021021,12548101,The Embarcadero,Brannan St  -  Bryant St,L,West,Saturday/Sunday,Sat/Sun,1,3,0,0,0,0,0,1,1,1,1,1,1,1,1,23,1.328985507246377,1.0833333333333333,1.4666666666666668
+2021024,12548201,The Embarcadero,Brannan St  -  Bryant St,R,East,Saturday/Sunday,Sat/Sun,1,3,0,0,0,0,0,1,1,1,1,1,1,1,1,23,1.328985507246377,1.0833333333333333,1.4666666666666668
+2013790,8117000,Lapu-lapu St,Rizal St  -  Bonifacio St,L,SouthWest,Wednesday,Wed,0,2,0,0,1,0,0,0,0,1,1,1,1,1,0,4,0.3708333333333333,0.21666666666666667,0.5833333333333334
+2013788,8116000,Lapu-lapu St,Harrison St  -  Rizal St,L,SouthWest,Wednesday,Wed,0,2,0,0,1,0,0,0,0,1,1,1,1,1,0,4,0.3708333333333333,0.21666666666666667,0.5833333333333334
+2021046,12551102,The Embarcadero,Folsom St  -  Howard St,L,SouthWest,Sunday,Sun,1,6,0,0,0,0,0,0,1,1,1,1,1,1,1,9,1.1962962962962964,1.1166666666666667,1.2833333333333332
+2021049,12551202,The Embarcadero,Folsom St  -  Howard St,R,NorthEast,Sunday,Sun,1,6,0,0,0,0,0,0,1,1,1,1,1,1,1,9,1.1962962962962964,1.1166666666666667,1.2833333333333332
+2020976,12480000,Temescal Ter,Turk Blvd  -  Golden Gate Ave,R,West,Wednesday,Wed,8,10,0,0,1,0,0,0,0,1,1,1,1,1,0,5,9.006666666666666,8.85,9.066666666666666
+2005054,2805000,Bay Shore Blvd,Silver Ave  -  Thornton Ave,L,NorthEast,Tuesday/Thursday/Saturday/Sunday,Tues/Thu/Sat/Sun,7,8,0,1,0,1,0,1,1,1,1,1,1,1,0,4,7.195833333333334,7.15,7.25
+2015576,9093000,Mission St,New Montgomery St  -  Annie St,L,SouthEast,Monday/Tuesday/Wednesday/Thursday/Friday/Saturday/Sunday,Mon/Tues/Wed/Thu/Fri/Sat/Sun,2,6,1,1,1,1,1,1,1,1,1,1,1,1,1,11,2.757575757575758,2.5166666666666666,3.1333333333333333
+2015577,9093000,Mission St,New Montgomery St  -  Annie St,R,NorthWest,Monday/Tuesday/Wednesday/Thursday/Friday/Saturday/Sunday,Mon/Tues/Wed/Thu/Fri/Sat/Sun,2,6,1,1,1,1,1,1,1,1,1,1,1,1,1,11,2.757575757575758,2.5166666666666666,3.1333333333333333
+2021025,12548201,The Embarcadero,Brannan St  -  Bryant St,R,East,Sunday,Sun,1,6,0,0,0,0,0,0,1,1,1,1,1,1,1,3,1.222222222222222,1.15,1.2666666666666666
+2021022,12548101,The Embarcadero,Brannan St  -  Bryant St,L,West,Sunday,Sun,1,6,0,0,0,0,0,0,1,1,1,1,1,1,1,3,1.222222222222222,1.15,1.2666666666666666
+2021034,12549101,The Embarcadero,Bryant St  -  Harrison St,L,West,Sunday,Sun,1,6,0,0,0,0,0,0,1,1,1,1,1,1,1,6,1.1916666666666667,1.1333333333333333,1.2666666666666666
+2021037,12549201,The Embarcadero,Bryant St  -  Harrison St,R,East,Sunday,Sun,1,6,0,0,0,0,0,0,1,1,1,1,1,1,1,6,1.1916666666666667,1.1333333333333333,1.2666666666666666
+2019061,11308000,Saint Joseph's Ave,Ellis St  -  O'Farrell St,R,East,Wednesday,Wed,9,11,0,0,1,0,0,0,0,1,1,1,1,1,0,19,9.865789473684211,9.55,10.216666666666667
+2019059,11307000,Saint Joseph's Ave,Eddy St  -  Ellis St,R,East,Wednesday,Wed,9,11,0,0,1,0,0,0,0,1,1,1,1,1,0,22,9.887878787878789,9.55,10.216666666666667
+2016578,9745000,O'Farrell St,Lyon St  -  Anzavista Ave,R,North,Tuesday,Tues,6,8,0,1,0,0,0,0,0,1,1,1,1,0,0,13,6.637179487179487,6.5,6.716666666666667
+2009211,5358000,Ewing Ter,Jean Way  -  Ewing Ter,L,NorthEast,Friday,Fri,9,11,0,0,0,0,1,0,0,1,1,1,1,1,0,4,9.5625,9.466666666666667,9.75
+2009209,5357000,Ewing Ter,Ewing Ter  -  Jean Way,L,SouthWest,Friday,Fri,9,11,0,0,0,0,1,0,0,1,1,1,1,1,0,4,9.5625,9.466666666666667,9.75
+2020300,12016101,South Van Ness Ave,Mission St  -  12th St,L,East,Tuesday/Thursday,Tues/Thu,0,6,0,1,0,1,0,0,0,1,1,1,1,1,0,3,0.6055555555555556,0.5333333333333333,0.7333333333333333
+2020303,12016201,South Van Ness Ave,Mission St  -  12th St,R,West,Tuesday/Thursday,Tues/Thu,0,6,0,1,0,1,0,0,0,1,1,1,1,1,0,3,0.6055555555555556,0.5333333333333333,0.7333333333333333
+2000849,481000,10th St,Stevenson St  -  Jessie St,R,SouthWest,Monday/Wednesday/Friday,Mon/Wed/Fri,0,6,1,0,1,0,1,0,0,1,1,1,1,1,0,3,0.8722222222222222,0.7666666666666667,1.0666666666666667
+2000821,482000,10th St,Jessie St  -  Jessie St,R,SouthWest,Monday/Wednesday/Friday,Mon/Wed/Fri,0,6,1,0,1,0,1,0,0,1,1,1,1,1,0,3,0.8722222222222222,0.7666666666666667,1.0666666666666667
+2000825,483000,10th St,Jessie St  -  Mission St,R,SouthWest,Monday/Wednesday/Friday,Mon/Wed/Fri,0,6,1,0,1,0,1,0,0,1,1,1,1,1,0,3,0.8722222222222222,0.7666666666666667,1.0666666666666667
+2000837,484000,10th St,Mission St  -  Minna St,R,SouthWest,Monday/Wednesday/Friday,Mon/Wed/Fri,0,6,1,0,1,0,1,0,0,1,1,1,1,1,0,3,0.8722222222222222,0.7666666666666667,1.0666666666666667
+2009210,5357000,Ewing Ter,Ewing Ter  -  Jean Way,R,NorthEast,Wednesday,Wed,8,10,0,0,1,0,0,0,0,1,1,1,1,1,0,5,9.703333333333333,9.466666666666667,9.916666666666666
+2009213,5356000,Ewing Ter,Masonic Ave  -  Ewing Ter,R,North,Wednesday,Wed,8,10,0,0,1,0,0,0,0,1,1,1,1,1,0,3,9.572222222222223,9.466666666666667,9.633333333333333
+2019064,11306000,Saint Joseph's Ave,Turk St  -  Eddy St,L,West,Friday,Fri,9,11,0,0,0,0,1,0,0,1,1,1,1,1,0,6,9.76388888888889,9.716666666666667,9.866666666666667
+2019058,11307000,Saint Joseph's Ave,Eddy St  -  Ellis St,L,West,Friday,Fri,9,11,0,0,0,0,1,0,0,1,1,1,1,1,0,9,9.738888888888889,9.683333333333334,9.866666666666667
+2007018,3878000,Chabot Ter,Turk Blvd  -  Golden Gate Ave,L,East,Wednesday,Wed,8,10,0,0,1,0,0,0,0,1,1,1,1,1,0,7,9.223809523809523,9.05,9.566666666666666
+2018841,11155000,Roselyn Ter,Turk Blvd  -  Golden Gate Ave,L,East,Wednesday,Wed,8,10,0,0,1,0,0,0,0,1,1,1,1,1,0,3,9.25,9.0,9.633333333333333
+2019065,11306000,Saint Joseph's Ave,Turk St  -  Eddy St,R,East,Wednesday,Wed,9,11,0,0,1,0,0,0,0,1,1,1,1,1,0,4,9.966666666666667,9.866666666666667,10.016666666666667
+2022559,13580201,West Portal Ave,15th Ave  -  Sloat Blvd,R,NorthWest,Thursday,Thu,8,10,0,0,0,1,0,0,0,0,1,0,1,0,0,3,8.5,8.5,8.5
+2005350,2995000,Blythdale Ave,Hahn St  -  Santos St,L,South,Wednesday,Wed,8,11,0,0,1,0,0,0,0,1,1,1,1,1,0,5,9.88,9.666666666666666,10.05
+2019060,11308000,Saint Joseph's Ave,Ellis St  -  O'Farrell St,L,West,Friday,Fri,9,11,0,0,0,0,1,0,0,1,1,1,1,1,0,3,9.688888888888888,9.683333333333334,9.7
+2002208,1204000,22nd St,Noe St  -  Castro St,L,South,Friday,Fri,12,14,0,0,0,0,1,0,0,0,1,0,1,0,0,3,12.299999999999999,12.283333333333333,12.316666666666666
+2022523,13525000,Webster St,Page St  -  Oak St,R,East,Friday,Fri,12,14,0,0,0,0,1,0,0,1,1,1,1,1,0,3,12.177777777777777,12.116666666666667,12.233333333333333
+2006085,3440000,Bush St,Jones St  -  Leavenworth St,R,North,Monday/Friday,Mon/Fri,7,9,1,0,0,0,1,0,0,1,1,1,1,1,0,3,8.011111111111111,7.983333333333333,8.033333333333333
+2008968,5176000,Ellis St,Cohen Pl  -  Hyde St,L,South,Monday/Tuesday/Wednesday/Thursday/Friday/Saturday/Sunday,Mon/Tues/Wed/Thu/Fri/Sat/Sun,6,8,1,1,1,1,1,1,1,1,1,1,1,1,1,4,6.945833333333334,6.916666666666667,7.0
+2008969,5176000,Ellis St,Cohen Pl  -  Hyde St,R,North,Monday/Tuesday/Wednesday/Thursday/Friday/Saturday/Sunday,Mon/Tues/Wed/Thu/Fri/Sat/Sun,6,8,1,1,1,1,1,1,1,1,1,1,1,1,1,4,6.945833333333334,6.916666666666667,7.0
+2008982,5177000,Ellis St,Hyde St  -  Larkin St,R,North,Monday/Wednesday/Friday/Saturday/Sunday,Mon/Wed/Fri/Sat/Sun,6,8,1,0,1,0,1,1,1,1,1,1,1,1,1,3,6.9444444444444455,6.916666666666667,7.0
+2008987,5175000,Ellis St,Leavenworth St  -  Cohen Pl,L,South,Monday/Tuesday/Wednesday/Thursday/Friday/Saturday/Sunday,Mon/Tues/Wed/Thu/Fri/Sat/Sun,6,8,1,1,1,1,1,1,1,1,1,1,1,1,1,3,6.927777777777778,6.916666666666667,6.95
+2008988,5175000,Ellis St,Leavenworth St  -  Cohen Pl,R,North,Monday/Tuesday/Wednesday/Thursday/Friday/Saturday/Sunday,Mon/Tues/Wed/Thu/Fri/Sat/Sun,6,8,1,1,1,1,1,1,1,1,1,1,1,1,1,3,6.927777777777778,6.916666666666667,6.95
+2018078,10636000,Post St,Leavenworth St  -  Hyde St,R,North,Monday/Wednesday/Friday,Mon/Wed/Fri,6,8,1,0,1,0,1,0,0,1,1,1,1,1,0,3,6.48888888888889,6.466666666666667,6.516666666666667
+2008817,5064000,Eddy St,Larkin St  -  Polk St,R,North,Monday/Wednesday/Friday/Saturday/Sunday,Mon/Wed/Fri/Sat/Sun,6,8,1,0,1,0,1,1,1,1,1,1,1,1,1,3,6.338888888888889,6.333333333333333,6.35
+2008825,5065000,Eddy St,Polk St  -  Van Ness Ave,R,North,Monday/Wednesday/Friday/Saturday/Sunday,Mon/Wed/Fri/Sat/Sun,6,8,1,0,1,0,1,1,1,1,1,1,1,1,1,3,6.338888888888889,6.333333333333333,6.35
+2001605,872000,18th St,Harrison St  -  Treat Ave,R,North,Friday,Fri,0,6,0,0,0,0,1,0,0,1,1,1,1,1,0,3,0.4166666666666667,0.4,0.43333333333333335
+2001660,873000,18th St,Treat Ave  -  Folsom St,R,North,Friday,Fri,0,6,0,0,0,0,1,0,0,1,1,1,1,1,0,3,0.4166666666666667,0.4,0.43333333333333335
+2018877,11186000,Russ St,Howard St  -  Folsom St,R,SouthWest,Monday/Wednesday/Friday,Mon/Wed/Fri,0,2,1,0,1,0,1,0,0,1,1,1,1,1,0,4,0.3416666666666666,0.3,0.38333333333333336

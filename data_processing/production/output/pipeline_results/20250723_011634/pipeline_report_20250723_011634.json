@@ -1,0 +1,40 @@
+{
+  "pipeline_execution": {
+    "timestamp": "20250723_011634",
+    "start_time": "2025-07-23T01:16:34.040776",
+    "end_time": "2025-07-23T03:06:00.803886",
+    "total_processing_time": "1:49:26.763110",
+    "days_processed": 365,
+    "workers_used": 50
+  },
+  "data_processing_summary": {
+    "schedule_data": {
+      "raw_records": 37878,
+      "cleaned_records": 34306,
+      "reduction_count": 3572,
+      "reduction_percentage": 9.4
+    },
+    "citation_data": {
+      "raw_citations": 493064,
+      "geocoded_citations": 466422,
+      "geocoding_success_rate": 94.6
+    },
+    "final_estimates": {
+      "schedules_with_estimates": 34284,
+      "coverage_percentage": 99.9
+    }
+  },
+  "output_files": {
+    "raw_schedule_data": "../output/pipeline_results/20250723_011634/schedule_raw_20250723_011634.csv",
+    "cleaned_schedule_data": "../output/pipeline_results/20250723_011634/schedule_cleaned_20250723_011634.csv",
+    "raw_citation_data": "../output/pipeline_results/20250723_011634/citations_raw_20250723_011634.csv",
+    "geocoded_citation_data": "../output/pipeline_results/20250723_011634/citations_geocoded_20250723_011634.csv",
+    "final_estimates": "../output/pipeline_results/20250723_011634/day_specific_sweeper_estimates_20250723_011634.csv",
+    "pipeline_report": "../output/pipeline_results/20250723_011634/pipeline_report_20250723_011634.json"
+  },
+  "performance_metrics": {
+    "citations_per_minute": 4505.1,
+    "total_api_calls": 997364,
+    "estimated_cost_savings": "$4664.22 vs manual processing"
+  }
+}

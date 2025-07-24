@@ -1,0 +1,39 @@
+2025-07-22 23:35:08,175 - INFO - 🚀 Starting Full SF Parking Citation Analysis Pipeline
+2025-07-22 23:35:08,175 - INFO - ================================================================================
+2025-07-22 23:35:08,175 - INFO -    Processing 365 days of data with 6 workers
+2025-07-22 23:35:08,175 - INFO -    Output directory: ../output/pipeline_results/20250722_233508
+2025-07-22 23:35:08,175 - INFO - ================================================================================
+2025-07-22 23:35:08,175 - INFO - 📅 Step 1: Fetching street sweeping schedule data from SF Open Data API
+2025-07-22 23:35:08,175 - INFO -    Fetching schedule batch at offset 0...
+2025-07-22 23:35:09,602 - INFO -    Fetched 37878 schedules (total: 37878)
+2025-07-22 23:35:09,602 - INFO - ✅ Fetched 37878 schedule records from API
+2025-07-22 23:35:09,800 - INFO - 💾 Saved raw schedule data to ../output/pipeline_results/20250722_233508/schedule_raw_20250722_233508.csv
+2025-07-22 23:35:09,805 - INFO - 🧹 Step 2: Cleaning and consolidating schedule data
+2025-07-22 23:35:13,797 - INFO - ✅ Schedule cleaning completed successfully
+2025-07-22 23:35:13,843 - INFO - 📊 Cleaned schedule: 37,878 → 34,306 records
+2025-07-22 23:35:13,843 - INFO - 🚗 Step 3: Fetching 365 days of street sweeping citations
+2025-07-22 23:35:13,843 - INFO -    Date range: 2024-07-22 to 2025-07-22
+2025-07-22 23:35:13,843 - INFO -    Fetching citation batch at offset 0...
+2025-07-22 23:35:15,144 - INFO -    Fetched 50000 citations (total: 50000)
+2025-07-22 23:35:16,649 - INFO -    Fetching citation batch at offset 50000...
+2025-07-22 23:35:18,194 - INFO -    Fetched 50000 citations (total: 100000)
+2025-07-22 23:35:19,699 - INFO -    Fetching citation batch at offset 100000...
+2025-07-22 23:35:25,944 - INFO -    Fetched 50000 citations (total: 150000)
+2025-07-22 23:35:27,449 - INFO -    Fetching citation batch at offset 150000...
+2025-07-22 23:35:29,569 - INFO -    Fetched 50000 citations (total: 200000)
+2025-07-22 23:35:31,074 - INFO -    Fetching citation batch at offset 200000...
+2025-07-22 23:35:33,081 - INFO -    Fetched 50000 citations (total: 250000)
+2025-07-22 23:35:34,586 - INFO -    Fetching citation batch at offset 250000...
+2025-07-22 23:35:36,636 - INFO -    Fetched 50000 citations (total: 300000)
+2025-07-22 23:35:38,141 - INFO -    Fetching citation batch at offset 300000...
+2025-07-22 23:35:40,142 - INFO -    Fetched 50000 citations (total: 350000)
+2025-07-22 23:35:41,647 - INFO -    Fetching citation batch at offset 350000...
+2025-07-22 23:35:43,915 - INFO -    Fetched 50000 citations (total: 400000)
+2025-07-22 23:35:45,420 - INFO -    Fetching citation batch at offset 400000...
+2025-07-22 23:35:47,710 - INFO -    Fetched 50000 citations (total: 450000)
+2025-07-22 23:35:49,216 - INFO -    Fetching citation batch at offset 450000...
+2025-07-22 23:35:51,519 - INFO -    Fetched 45020 citations (total: 495020)
+2025-07-22 23:35:51,519 - INFO - ✅ Fetched 495020 street sweeping citations from API
+2025-07-22 23:35:52,678 - INFO - 💾 Saved raw citation data to ../output/pipeline_results/20250722_233508/citations_raw_20250722_233508.csv
+2025-07-22 23:35:52,694 - INFO - 📍 Step 4: Geocoding all citations with parallel processing
+2025-07-22 23:35:53,023 - INFO -    Running: /Applications/Xcode.app/Contents/Developer/usr/bin/python3 production_citation_processor.py --input-file temp_citations_for_geocoding.csv --workers 6 --batch-size 200 --rate-limit 0.05 --min-confidence MEDIUM --output ../output/pipeline_results/20250722_233508/citations_geocoded_20250722_233508.csv --no-resume

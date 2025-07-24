@@ -1,0 +1,28 @@
+============================================================
+DAY-SPECIFIC SCHEDULE DATA CLEANING REPORT
+============================================================
+Generated: 2025-07-22 20:51:28
+
+PROCESSING SUMMARY:
+  Original records: 37,878
+  Day-specific records: 7
+
+DAY DISTRIBUTION:
+     Monday: 1 schedules (14.3%)
+    Tuesday: 1 schedules (14.3%)
+  Wednesday: 1 schedules (14.3%)
+   Thursday: 1 schedules (14.3%)
+     Friday: 1 schedules (14.3%)
+   Saturday: 1 schedules (14.3%)
+     Sunday: 1 schedules (14.3%)
+
+WEEK DISTRIBUTION:
+  Week 1: 7 schedules (100.0%)
+  Week 2: 7 schedules (100.0%)
+  Week 3: 7 schedules (100.0%)
+  Week 4: 7 schedules (100.0%)
+  Week 5: 7 schedules (100.0%)
+
+TIME DISTRIBUTION:
+  Top 10 time windows:
+    00:00-24:00: 7 schedules (100.0%)

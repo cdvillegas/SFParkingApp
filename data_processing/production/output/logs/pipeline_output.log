@@ -1,0 +1,7 @@
+🚀 SF Parking Citation Analysis - Full Production Pipeline
+==========================================================
+📅 Processing: 365 days of data
+⚙️  Workers: 6 parallel geocoding threads
+📁 Output: ../output/pipeline_results/20250721_214637
+==========================================================
+⚠️  WARNING: Processing 365 days may take 8-24 hours and process 50K-200K citations

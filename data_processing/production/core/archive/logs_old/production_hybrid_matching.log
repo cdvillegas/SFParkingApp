@@ -1,0 +1,67 @@
+/Users/zshor/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+2025-07-22 13:53:52,859 - INFO - 🚀 Starting Production Hybrid Citation-Schedule Matching
+2025-07-22 13:53:52,859 - INFO - ======================================================================
+2025-07-22 13:53:52,860 - INFO - Loading citation data from ../output/pipeline_results/20250721_223722/citations_geocoded_20250721_223722.csv
+2025-07-22 13:53:53,357 - INFO - Loaded 468,527 citations
+2025-07-22 13:53:53,357 - INFO - Loading schedule data from ../output/pipeline_results/20250721_223722/schedule_cleaned_20250721_223722.csv
+2025-07-22 13:53:53,399 - INFO - Loaded 22,909 schedules
+2025-07-22 13:53:53,399 - INFO - Building production hybrid index...
+2025-07-22 13:53:53,399 - INFO - Parsing coordinates and normalizing street names...
+2025-07-22 13:53:53,775 - INFO - Building spatial grid index...
+2025-07-22 13:53:54,123 - INFO - Production index built:
+2025-07-22 13:53:54,123 - INFO -   - 22892 schedules with coordinates
+2025-07-22 13:53:54,123 - INFO -   - 5143 grid cells
+2025-07-22 13:53:54,123 - INFO -   - Avg 4.5 schedules/cell
+2025-07-22 13:53:54,123 - INFO -   - Max 23 schedules/cell
+2025-07-22 13:53:54,125 - INFO - Processing 468527 citations with hybrid matching...
+2025-07-22 13:53:54,179 - INFO - Processing citation 0/468,527 (0.0/sec, 0.0min remaining)
+2025-07-22 13:54:19,220 - INFO - Processing citation 25,000/468,527 (996.2/sec, 7.4min remaining)
+2025-07-22 13:54:44,193 - INFO - Processing citation 50,000/468,527 (998.6/sec, 7.0min remaining)
+2025-07-22 13:55:09,934 - INFO - Processing citation 75,000/468,527 (989.3/sec, 6.6min remaining)
+2025-07-22 13:55:37,724 - INFO - Processing citation 100,000/468,527 (965.3/sec, 6.4min remaining)
+2025-07-22 13:56:03,186 - INFO - Processing citation 125,000/468,527 (968.5/sec, 5.9min remaining)
+2025-07-22 13:56:29,196 - INFO - Processing citation 150,000/468,527 (967.3/sec, 5.5min remaining)
+2025-07-22 13:56:56,925 - INFO - Processing citation 175,000/468,527 (957.3/sec, 5.1min remaining)
+2025-07-22 13:57:26,155 - INFO - Processing citation 200,000/468,527 (943.3/sec, 4.7min remaining)
+2025-07-22 13:57:54,576 - INFO - Processing citation 225,000/468,527 (935.7/sec, 4.3min remaining)
+2025-07-22 13:58:27,788 - INFO - Processing citation 250,000/468,527 (913.5/sec, 4.0min remaining)
+2025-07-22 13:59:03,158 - INFO - Processing citation 275,000/468,527 (889.9/sec, 3.6min remaining)
+2025-07-22 13:59:44,153 - INFO - Processing citation 300,000/468,527 (857.1/sec, 3.3min remaining)
+2025-07-22 14:00:23,215 - INFO - Processing citation 325,000/468,527 (835.3/sec, 2.9min remaining)
+2025-07-22 14:00:53,439 - INFO - Processing citation 350,000/468,527 (834.7/sec, 2.4min remaining)
+2025-07-22 14:01:19,906 - INFO - Processing citation 375,000/468,527 (841.2/sec, 1.9min remaining)
+2025-07-22 14:01:47,510 - INFO - Processing citation 400,000/468,527 (845.0/sec, 1.4min remaining)
+2025-07-22 14:02:15,396 - INFO - Processing citation 425,000/468,527 (847.8/sec, 0.9min remaining)
+2025-07-22 14:02:47,019 - INFO - Processing citation 450,000/468,527 (844.4/sec, 0.4min remaining)
+2025-07-22 14:03:08,119 - INFO - Found 1,204,780 citation-schedule matches
+2025-07-22 14:03:09,784 - INFO - Calculating schedule estimates from citation patterns...
+2025-07-22 14:03:28,188 - INFO - Generated estimates for 20322 schedules
+2025-07-22 14:03:30,587 - INFO - Exported 1,204,780 matches to ../output/pipeline_results/20250721_223722/final_hybrid_results_matches_20250722_140328.csv
+2025-07-22 14:03:30,653 - INFO - Exported 20322 schedule estimates to ../output/pipeline_results/20250721_223722/final_hybrid_results_estimates_20250722_140328.csv
+2025-07-22 14:03:30,653 - INFO - 🎉 Production processing completed!
+2025-07-22 14:03:30,653 - INFO - ⏱️  Total processing time: 9.6 minutes
+2025-07-22 14:03:30,653 - INFO - 📊 Citations processed: 468,527
+2025-07-22 14:03:30,653 - INFO - 🎯 Matches found: 1,204,780 (257.1% of citations)
+2025-07-22 14:03:30,653 - INFO - 📈 Schedules with estimates: 20322
+2025-07-22 14:03:30,653 - INFO - 📁 Results saved to: ../output/pipeline_results/20250721_223722/final_hybrid_results_matches_20250722_140328.csv, ../output/pipeline_results/20250721_223722/final_hybrid_results_estimates_20250722_140328.csv
+2025-07-22 16:27:37,569 - INFO - 🚀 Starting Production Hybrid Citation-Schedule Matching
+2025-07-22 16:27:37,569 - INFO - ======================================================================
+2025-07-22 16:27:37,569 - INFO - Loading citation data from ../output/pipeline_results/20250721_223722/citations_geocoded_20250721_223722.csv
+2025-07-22 16:27:37,933 - INFO - Loaded 468,527 citations
+2025-07-22 16:27:37,933 - INFO - Loading schedule data from ../output/pipeline_results/20250721_223722/schedule_cleaned_20250721_223722.csv
+2025-07-22 16:27:37,971 - INFO - Loaded 22,909 schedules
+2025-07-22 16:27:37,971 - INFO - Building production hybrid index...
+2025-07-22 16:27:37,971 - INFO - Parsing coordinates and normalizing street names...
+2025-07-22 16:27:38,315 - INFO - Building spatial grid index...
+2025-07-22 16:27:38,596 - INFO - Production index built:
+2025-07-22 16:27:38,596 - INFO -   - 22892 schedules with coordinates
+2025-07-22 16:27:38,596 - INFO -   - 5143 grid cells
+2025-07-22 16:27:38,596 - INFO -   - Avg 4.5 schedules/cell
+2025-07-22 16:27:38,596 - INFO -   - Max 23 schedules/cell
+2025-07-22 16:27:38,598 - INFO - Processing 468527 citations with hybrid matching...
+2025-07-22 16:27:38,648 - INFO - Processing citation 0/468,527 (0.0/sec, 0.0min remaining)
+2025-07-22 16:28:03,650 - INFO - Processing citation 25,000/468,527 (997.9/sec, 7.4min remaining)
+2025-07-22 16:28:28,680 - INFO - Processing citation 50,000/468,527 (998.4/sec, 7.0min remaining)
+2025-07-22 16:28:54,286 - INFO - Processing citation 75,000/468,527 (990.9/sec, 6.6min remaining)
+2025-07-22 16:29:18,965 - INFO - Processing citation 100,000/468,527 (996.3/sec, 6.2min remaining)

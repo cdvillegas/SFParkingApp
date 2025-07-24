@@ -1,0 +1,24 @@
+2025-07-22 23:58:56,805 - INFO - 🚀 Starting Full SF Parking Citation Analysis Pipeline
+2025-07-22 23:58:56,806 - INFO - ================================================================================
+2025-07-22 23:58:56,806 - INFO -    Processing 1 days of data with 2 workers
+2025-07-22 23:58:56,806 - INFO -    Output directory: ../output/pipeline_results/20250722_235856
+2025-07-22 23:58:56,806 - INFO - ================================================================================
+2025-07-22 23:58:56,806 - INFO - 📅 Step 1: Fetching street sweeping schedule data from SF Open Data API
+2025-07-22 23:58:56,806 - INFO -    Fetching schedule batch at offset 0...
+2025-07-22 23:58:58,165 - INFO -    Fetched 37878 schedules (total: 37878)
+2025-07-22 23:58:58,166 - INFO - ✅ Fetched 37878 schedule records from API
+2025-07-22 23:58:58,370 - INFO - 💾 Saved raw schedule data to ../output/pipeline_results/20250722_235856/schedule_raw_20250722_235856.csv
+2025-07-22 23:58:58,374 - INFO - 🧹 Step 2: Cleaning and consolidating schedule data
+2025-07-22 23:59:02,472 - INFO - ✅ Schedule cleaning completed successfully
+2025-07-22 23:59:02,519 - INFO - 📊 Cleaned schedule: 37,878 → 34,306 records
+2025-07-22 23:59:02,519 - INFO - 🚗 Step 3: Fetching 1 days of street sweeping citations
+2025-07-22 23:59:02,519 - INFO -    Date range: 2025-07-21 to 2025-07-22
+2025-07-22 23:59:02,519 - INFO -    Fetching citation batch at offset 0...
+2025-07-22 23:59:02,973 - INFO - ✅ Fetched 0 street sweeping citations from API
+2025-07-22 23:59:02,974 - INFO - 💾 Saved raw citation data to ../output/pipeline_results/20250722_235856/citations_raw_20250722_235856.csv
+2025-07-22 23:59:02,975 - INFO - 📍 Step 4: Geocoding all citations with parallel processing
+2025-07-22 23:59:02,975 - INFO -    ⚡ --skip-geocoding flag used: Loading existing geocoded data
+2025-07-22 23:59:02,975 - INFO -    📁 Using data from: ../output/pipeline_results/20250721_223722/citations_geocoded_20250721_223722.csv
+2025-07-22 23:59:04,438 - INFO -    ✅ Loaded 468,527 pre-geocoded citations
+2025-07-22 23:59:04,438 - INFO - 🔄 Step 5: Calculating estimated sweeper arrival times
+2025-07-22 23:59:04,438 - INFO -    Running: /Applications/Xcode.app/Contents/Developer/usr/bin/python3 production_hybrid_matcher_day_specific.py --citation-file ../output/pipeline_results/20250722_235856/citations_geocoded_20250722_235856.csv --schedule-file ../output/pipeline_results/20250722_235856/schedule_cleaned_20250722_235856.csv --max-distance 200 --output-prefix ../output/pipeline_results/20250722_235856/final_analysis_20250722_235856 --output-dir ../output/pipeline_results/20250722_235856

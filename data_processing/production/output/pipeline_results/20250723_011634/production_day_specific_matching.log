@@ -1,0 +1,45 @@
+2025-07-23 02:56:02,684 - INFO - 🚀 Starting Day-Specific Production Citation-Schedule Matching
+2025-07-23 02:56:02,684 - INFO - ======================================================================
+2025-07-23 02:56:02,684 - INFO - Loading citation data from ../output/pipeline_results/20250723_011634/citations_geocoded_20250723_011634.csv
+2025-07-23 02:56:03,902 - INFO - Loaded 466,422 citations
+2025-07-23 02:56:03,902 - INFO - Loading day-specific schedule data from ../output/pipeline_results/20250723_011634/schedule_cleaned_20250723_011634.csv
+2025-07-23 02:56:04,062 - INFO - Loaded 34,306 day-specific schedules
+2025-07-23 02:56:04,062 - INFO - Building day-specific hybrid index...
+2025-07-23 02:56:04,062 - INFO - Parsing coordinates and normalizing street names...
+2025-07-23 02:56:05,161 - INFO - Building spatial grid index...
+2025-07-23 02:56:06,045 - INFO - Day-specific hybrid index built:
+2025-07-23 02:56:06,045 - INFO -   - 34284 day-specific schedules with coordinates
+2025-07-23 02:56:06,045 - INFO -   - 5225 grid cells
+2025-07-23 02:56:06,045 - INFO -   - Avg 6.6 schedules/cell
+2025-07-23 02:56:06,045 - INFO -   - Max 88 schedules/cell
+2025-07-23 02:56:06,048 - INFO - Processing 466422 citations with day-specific hybrid matching...
+2025-07-23 02:56:06,096 - INFO - Processing citation 0/466,422 (0.0/sec, 0.0min remaining)
+2025-07-23 02:56:37,284 - INFO - Processing citation 25,000/466,422 (800.4/sec, 9.2min remaining)
+2025-07-23 02:57:08,987 - INFO - Processing citation 50,000/466,422 (794.4/sec, 8.7min remaining)
+2025-07-23 02:57:40,330 - INFO - Processing citation 75,000/466,422 (795.5/sec, 8.2min remaining)
+2025-07-23 02:58:11,208 - INFO - Processing citation 100,000/466,422 (799.0/sec, 7.6min remaining)
+2025-07-23 02:58:42,498 - INFO - Processing citation 125,000/466,422 (799.0/sec, 7.1min remaining)
+2025-07-23 02:59:14,035 - INFO - Processing citation 150,000/466,422 (797.9/sec, 6.6min remaining)
+2025-07-23 02:59:44,559 - INFO - Processing citation 175,000/466,422 (800.9/sec, 6.1min remaining)
+2025-07-23 03:00:16,478 - INFO - Processing citation 200,000/466,422 (798.6/sec, 5.6min remaining)
+2025-07-23 03:00:46,787 - INFO - Processing citation 225,000/466,422 (801.5/sec, 5.0min remaining)
+2025-07-23 03:01:16,428 - INFO - Processing citation 250,000/466,422 (805.5/sec, 4.5min remaining)
+2025-07-23 03:01:46,731 - INFO - Processing citation 275,000/466,422 (807.2/sec, 4.0min remaining)
+2025-07-23 03:02:18,335 - INFO - Processing citation 300,000/466,422 (805.8/sec, 3.4min remaining)
+2025-07-23 03:02:50,123 - INFO - Processing citation 325,000/466,422 (804.3/sec, 2.9min remaining)
+2025-07-23 03:03:22,145 - INFO - Processing citation 350,000/466,422 (802.6/sec, 2.4min remaining)
+2025-07-23 03:03:54,155 - INFO - Processing citation 375,000/466,422 (801.1/sec, 1.9min remaining)
+2025-07-23 03:04:24,770 - INFO - Processing citation 400,000/466,422 (802.0/sec, 1.4min remaining)
+2025-07-23 03:04:57,512 - INFO - Processing citation 425,000/466,422 (799.7/sec, 0.9min remaining)
+2025-07-23 03:05:30,821 - INFO - Processing citation 450,000/466,422 (796.8/sec, 0.3min remaining)
+2025-07-23 03:05:53,839 - INFO - Found 1,126,800 citation-schedule matches
+2025-07-23 03:05:55,277 - INFO - Generating day-specific schedule estimates...
+2025-07-23 03:05:57,619 - INFO - Generated 34284 day-specific schedule estimates
+2025-07-23 03:06:00,132 - INFO - Exported 1,126,800 matches to ../output/pipeline_results/20250723_011634/final_analysis_20250723_011634_matches_20250723_030557.csv
+2025-07-23 03:06:00,264 - INFO - Exported 34284 day-specific schedule estimates to ../output/pipeline_results/20250723_011634/final_analysis_20250723_011634_schedules_20250723_030557.csv
+2025-07-23 03:06:00,292 - INFO - 🎉 Day-specific production processing completed!
+2025-07-23 03:06:00,292 - INFO - ⏱️  Total processing time: 10.0 minutes
+2025-07-23 03:06:00,292 - INFO - 📊 Citations processed: 466,422
+2025-07-23 03:06:00,292 - INFO - 🎯 Valid matches found: 1,126,800 from 436,973 citations
+2025-07-23 03:06:00,292 - INFO - 📈 Day-specific schedule estimates: 34,284
+2025-07-23 03:06:00,292 - INFO - 📁 Results: ../output/pipeline_results/20250723_011634/final_analysis_20250723_011634_matches_20250723_030557.csv, ../output/pipeline_results/20250723_011634/final_analysis_20250723_011634_schedules_20250723_030557.csv
