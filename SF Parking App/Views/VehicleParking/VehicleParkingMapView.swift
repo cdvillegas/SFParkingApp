@@ -10,6 +10,7 @@ struct VehicleParkingMapView: View {
     @State private var smartSelectionTimer: Timer?
     @State private var markerStillTimer: Timer?
     @State private var lastMapCenterCoordinate: CLLocationCoordinate2D?
+    @State private var isAppActive: Bool = true
     
     // Use ViewModel's published heading property
     private var currentHeading: CLLocationDirection {
@@ -17,7 +18,7 @@ struct VehicleParkingMapView: View {
     }
     
     var body: some View {
-        Map(position: $viewModel.mapPosition, interactionModes: .all) {
+        Map(position: $viewModel.mapPosition, interactionModes: isAppActive ? .all : []) {
             // User location annotation
             if viewModel.locationManager.authorizationStatus == .authorizedWhenInUse || viewModel.locationManager.authorizationStatus == .authorizedAlways {
                 userLocationAnnotation
@@ -36,12 +37,31 @@ struct VehicleParkingMapView: View {
         .overlay(enableLocationButton, alignment: .bottom)
         .mapStyle(.standard)
         .onMapCameraChange(frequency: .continuous) { context in
+            guard isAppActive else { return }
             currentMapHeading = context.camera.heading
             handleMapCameraChange(context)
         }
         .onAppear {
             // Initialize user location on view appear
             userLocation = viewModel.locationManager.userLocation
+        }
+        .onDisappear {
+            // Clean up timers to prevent retain cycles
+            smartSelectionTimer?.invalidate()
+            smartSelectionTimer = nil
+            markerStillTimer?.invalidate()
+            markerStillTimer = nil
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("AppWillResignActive"))) { _ in
+            // App going to background - prepare for Metal cleanup
+            isAppActive = false
+            // Invalidate timers that might cause Metal issues
+            smartSelectionTimer?.invalidate()
+            markerStillTimer?.invalidate()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("AppDidBecomeActive"))) { _ in
+            // App became active again
+            isAppActive = true
         }
         .onReceive(viewModel.locationManager.$userLocation) { newLocation in
             // Keep local state in sync with location manager

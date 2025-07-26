@@ -677,5 +677,6 @@ class VehicleParkingViewModel: ObservableObject {
         detectionDebounceTimer?.invalidate()
         autoResetTimer?.invalidate()
         cancellables.removeAll()
+        debouncedGeocoder.cancel()
     }
 }

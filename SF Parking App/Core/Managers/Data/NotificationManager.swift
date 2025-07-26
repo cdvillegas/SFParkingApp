@@ -493,7 +493,7 @@ class NotificationManager: NSObject, ObservableObject {
         
         // Log analytics
         let timingText = reminder.timing.displayText
-        let reminderType = "custom"
+        let reminderType = AnalyticsManager.shared.getReminderType(from: reminder.timing)
         AnalyticsManager.shared.logReminderCreated(reminderType: reminderType, timing: timingText)
         
         return .success
@@ -510,7 +510,7 @@ class NotificationManager: NSObject, ObservableObject {
         
         // Log analytics
         let timingText = reminder.timing.displayText
-        let reminderType = "custom"
+        let reminderType = AnalyticsManager.shared.getReminderType(from: reminder.timing)
         AnalyticsManager.shared.logReminderCreated(reminderType: reminderType, timing: timingText)
         
         return true

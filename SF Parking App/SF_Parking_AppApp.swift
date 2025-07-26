@@ -14,14 +14,18 @@ class AppDelegate: NSObject, UIApplicationDelegate {
                    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
     FirebaseApp.configure()
     print("🔥 Firebase configured successfully")
-    
-    // Test analytics event
-    Analytics.logEvent("app_open_test", parameters: [
-      "debug": "true" as NSObject
-    ])
-    print("📊 Test event logged")
 
     return true
+  }
+  
+  func applicationWillResignActive(_ application: UIApplication) {
+    // Help prevent Metal crashes during app transitions
+    NotificationCenter.default.post(name: NSNotification.Name("AppWillResignActive"), object: nil)
+  }
+  
+  func applicationDidBecomeActive(_ application: UIApplication) {
+    // App became active again
+    NotificationCenter.default.post(name: NSNotification.Name("AppDidBecomeActive"), object: nil)
   }
 }
 

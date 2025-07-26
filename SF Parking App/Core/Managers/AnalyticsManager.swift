@@ -110,6 +110,12 @@ class AnalyticsManager {
         Analytics.logEvent("find_my_car_tapped", parameters: nil)
     }
     
+    func logParkingLocationShared(method: String) {
+        Analytics.logEvent("parking_location_shared", parameters: [
+            "method": method as NSObject
+        ])
+    }
+    
     // MARK: - Map Interaction Events
     
     func logMapCenteredOnUser() {
@@ -141,6 +147,25 @@ class AnalyticsManager {
             "reminder_type": reminderType as NSObject,
             "timing": timing as NSObject
         ])
+    }
+    
+    // Helper function to determine reminder type from ReminderTiming
+    func getReminderType(from timing: ReminderTiming) -> String {
+        switch timing {
+        case .preset(let preset):
+            switch preset {
+            case .dayBefore:
+                return "Evening Before"
+            case .morningOf:
+                return "Morning Of"
+            case .thirtyMinutes:
+                return "30 Minutes Before"
+            default:
+                return "Custom"
+            }
+        case .custom:
+            return "Custom"
+        }
     }
     
     func logReminderEdited(reminderId: String) {
