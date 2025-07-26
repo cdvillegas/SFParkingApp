@@ -99,7 +99,7 @@ class VehicleManager: ObservableObject {
     func selectVehicle(_ vehicle: Vehicle) {
         selectedVehicle = vehicle
         saveSelectedVehicle()
-        
+        AnalyticsManager.shared.logVehicleSelected(vehicleId: vehicle.id.uuidString)
     }
     
     // MARK: - Parking Location Management
@@ -108,14 +108,14 @@ class VehicleManager: ObservableObject {
         var updatedVehicle = vehicle
         updatedVehicle.parkingLocation = location
         updateVehicle(updatedVehicle)
-        
+        AnalyticsManager.shared.logParkingLocationSet(method: "manual")
     }
     
     func clearParkingLocation(for vehicle: Vehicle) {
         var updatedVehicle = vehicle
         updatedVehicle.parkingLocation = nil
         updateVehicle(updatedVehicle)
-        
+        AnalyticsManager.shared.logParkingLocationCleared()
     }
     
     func setManualParkingLocation(for vehicle: Vehicle, coordinate: CLLocationCoordinate2D, address: String, selectedSchedule: PersistedSweepSchedule? = nil) {
@@ -129,6 +129,19 @@ class VehicleManager: ObservableObject {
         )
         
         setParkingLocation(for: vehicle, location: parkingLocation)
+        
+        // Log additional analytics for schedule selection
+        if let schedule = selectedSchedule {
+            AnalyticsManager.shared.logParkingScheduleSelected(
+                scheduleType: "street_cleaning",
+                duration: "\(schedule.weekday) \(schedule.startTime)-\(schedule.endTime)"
+            )
+        }
+        
+        AnalyticsManager.shared.logParkingConfirmed(
+            vehicleId: vehicle.id.uuidString,
+            hasSchedule: selectedSchedule != nil
+        )
     }
     
     // MARK: - Auto-Generated Names

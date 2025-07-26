@@ -4,6 +4,7 @@ struct OnboardingView: View {
     @State private var currentStep = 0
     @State private var showingOnboarding = true
     @State private var showingCompletion = false
+    @State private var hasLoggedStart = false
     
     let onboardingSteps = OnboardingStep.allSteps
     
@@ -39,6 +40,7 @@ struct OnboardingView: View {
                             step: onboardingSteps[currentStep],
                             isLastStep: currentStep == onboardingSteps.count - 1,
                             onNext: {
+                                AnalyticsManager.shared.logOnboardingStepCompleted(stepName: onboardingSteps[currentStep].title)
                                 if currentStep < onboardingSteps.count - 1 {
                                     withAnimation(.easeInOut(duration: 0.5)) {
                                         currentStep += 1
@@ -48,6 +50,7 @@ struct OnboardingView: View {
                                 }
                             },
                             onSkip: {
+                                AnalyticsManager.shared.logOnboardingSkipped()
                                 showCompletionView()
                             }
                         )
@@ -56,6 +59,12 @@ struct OnboardingView: View {
                             removal: .move(edge: .leading).combined(with: .opacity)
                         ))
                         .id(currentStep)
+                    }
+                }
+                .onAppear {
+                    if !hasLoggedStart {
+                        AnalyticsManager.shared.logOnboardingStarted()
+                        hasLoggedStart = true
                     }
                 }
                 .transition(.asymmetric(
@@ -73,6 +82,7 @@ struct OnboardingView: View {
     }
     
     private func completeOnboarding() {
+        AnalyticsManager.shared.logOnboardingCompleted()
         OnboardingManager.completeOnboarding()
         
         // Add a subtle pause before transitioning

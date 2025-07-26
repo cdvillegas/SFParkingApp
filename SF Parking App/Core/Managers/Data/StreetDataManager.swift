@@ -41,9 +41,13 @@ class StreetDataManager: ObservableObject {
         hasError = false
         nextUpcomingSchedule = nil
         
+        let startTime = Date()
+        
         StreetDataService.shared.getClosestSchedule(for: coordinate) { [weak self] result in
             DispatchQueue.main.async {
                 self?.isLoading = false
+                
+                let loadTime = Date().timeIntervalSince(startTime)
                 
                 switch result {
                 case .success(let schedule):
@@ -51,6 +55,12 @@ class StreetDataManager: ObservableObject {
                         self?.schedule = schedule
                         self?.processNextSchedule(for: schedule)
                         self?.hasError = false
+                        
+                        // Log successful data load
+                        AnalyticsManager.shared.logStreetDataLoaded(
+                            loadTime: loadTime,
+                            dataSize: 1 // Single schedule
+                        )
                     } else {
                         self?.hasError = false
                         self?.schedule = nil
@@ -61,6 +71,12 @@ class StreetDataManager: ObservableObject {
                     self?.hasError = true
                     self?.schedule = nil
                     self?.nextUpcomingSchedule = nil
+                    
+                    // Log error
+                    AnalyticsManager.shared.logErrorOccurred(
+                        errorType: "street_data_fetch_failed",
+                        screenName: "parking_location"
+                    )
                 }
             }
         }
