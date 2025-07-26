@@ -11,8 +11,10 @@ class LocationPermissionDelegate: NSObject, CLLocationManagerDelegate {
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         switch manager.authorizationStatus {
         case .authorizedWhenInUse, .authorizedAlways:
+            AnalyticsManager.shared.logPermissionGranted(permissionType: "location")
             completion(true)
         case .denied, .restricted:
+            AnalyticsManager.shared.logPermissionDenied(permissionType: "location")
             completion(false)
         case .notDetermined:
             // Still waiting for user decision

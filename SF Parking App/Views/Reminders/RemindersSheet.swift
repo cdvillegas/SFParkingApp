@@ -22,6 +22,7 @@ struct RemindersSheet: View {
     @State private var showingDuplicateAlert = false
     @State private var pendingReminder: CustomReminder?
     @StateObject private var notificationManager = NotificationManager.shared
+    @State private var hasLoggedOpen = false
     
     var body: some View {
         ZStack {
@@ -44,6 +45,12 @@ struct RemindersSheet: View {
                                 .fontWeight(.medium)
                                 .foregroundColor(.secondary)
                                 .padding(.horizontal, 20)
+                                .onAppear {
+                                    if !hasLoggedOpen {
+                                        AnalyticsManager.shared.logRemindersSheetOpened()
+                                        hasLoggedOpen = true
+                                    }
+                                }
                             
                             streetInfoCard
                                 .background(.clear)
@@ -372,6 +379,7 @@ struct RemindersSheet: View {
                 await MainActor.run {
                     
                     // Dismiss immediately when done
+                    AnalyticsManager.shared.logRemindersSheetClosed()
                     dismiss()
                 }
             } else {

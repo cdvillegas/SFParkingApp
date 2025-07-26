@@ -490,6 +490,12 @@ class NotificationManager: NSObject, ObservableObject {
         
         customReminders.append(reminder)
         saveCustomReminders()
+        
+        // Log analytics
+        let timingText = reminder.timing.displayText
+        let reminderType = AnalyticsManager.shared.getReminderType(from: reminder.timing)
+        AnalyticsManager.shared.logReminderCreated(reminderType: reminderType, timing: timingText)
+        
         return .success
     }
     
@@ -501,12 +507,20 @@ class NotificationManager: NSObject, ObservableObject {
         
         customReminders.append(reminder)
         saveCustomReminders()
+        
+        // Log analytics
+        let timingText = reminder.timing.displayText
+        let reminderType = AnalyticsManager.shared.getReminderType(from: reminder.timing)
+        AnalyticsManager.shared.logReminderCreated(reminderType: reminderType, timing: timingText)
+        
         return true
     }
     
     func removeCustomReminder(withId id: UUID) {
         customReminders.removeAll { $0.id == id }
         saveCustomReminders()
+        
+        AnalyticsManager.shared.logReminderDeleted(reminderId: id.uuidString)
         
         // Cancel any scheduled notifications for this reminder
         cancelCustomReminder(withId: id)
@@ -515,7 +529,10 @@ class NotificationManager: NSObject, ObservableObject {
     func toggleReminderActive(withId id: UUID) {
         if let index = customReminders.firstIndex(where: { $0.id == id }) {
             customReminders[index].isActive.toggle()
+            let isEnabled = customReminders[index].isActive
             saveCustomReminders()
+            
+            AnalyticsManager.shared.logReminderToggled(enabled: isEnabled)
             
             // Reschedule notifications if needed
             if let location = getCurrentParkingLocation() {
@@ -528,6 +545,8 @@ class NotificationManager: NSObject, ObservableObject {
         if let index = customReminders.firstIndex(where: { $0.id == reminder.id }) {
             customReminders[index] = reminder
             saveCustomReminders()
+            
+            AnalyticsManager.shared.logReminderEdited(reminderId: reminder.id.uuidString)
             
             // Reschedule notifications if needed
             if let location = getCurrentParkingLocation() {

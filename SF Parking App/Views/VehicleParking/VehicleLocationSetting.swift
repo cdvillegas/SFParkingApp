@@ -506,6 +506,9 @@ struct VehicleLocationSetting: View {
             applicationActivities: nil
         )
         
+        // Log analytics when share sheet is presented
+        AnalyticsManager.shared.logParkingLocationShared(method: "share_sheet")
+        
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
            let rootViewController = windowScene.windows.first?.rootViewController {
             if let presentedViewController = rootViewController.presentedViewController {

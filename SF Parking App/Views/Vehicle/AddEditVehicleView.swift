@@ -348,6 +348,7 @@ struct AddEditVehicleView: View {
             updatedVehicle.type = selectedType
             updatedVehicle.color = selectedColor
             vehicleManager.updateVehicle(updatedVehicle)
+            AnalyticsManager.shared.logVehicleEdited(vehicleId: editingVehicle.id.uuidString)
         } else {
             // Create new vehicle
             let newVehicle = Vehicle(
@@ -356,6 +357,7 @@ struct AddEditVehicleView: View {
                 color: selectedColor
             )
             vehicleManager.addVehicle(newVehicle)
+            AnalyticsManager.shared.logVehicleAdded(vehicleType: selectedType.rawValue, color: selectedColor.rawValue)
             
             // Notify parent that vehicle was created
             onVehicleCreated?(newVehicle)
