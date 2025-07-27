@@ -1,0 +1,48 @@
+2025-07-22 17:09:17,390 - INFO - 🚀 Starting Final Production Citation-Schedule Matching
+2025-07-22 17:09:17,390 - INFO - ======================================================================
+2025-07-22 17:09:17,390 - INFO - Loading citation data from ../output/pipeline_results/20250721_223722/citations_geocoded_20250721_223722.csv
+2025-07-22 17:09:17,764 - INFO - Loaded 468,527 citations
+2025-07-22 17:09:17,764 - INFO - Loading schedule data from ../output/pipeline_results/20250721_223722/schedule_cleaned_20250721_223722.csv
+2025-07-22 17:09:17,799 - INFO - Loaded 22,909 schedules
+2025-07-22 17:09:17,799 - INFO - Building final hybrid index...
+2025-07-22 17:09:17,799 - INFO - Parsing coordinates and normalizing street names...
+2025-07-22 17:09:18,133 - INFO - Building spatial grid index...
+2025-07-22 17:09:18,404 - INFO - Final hybrid index built:
+2025-07-22 17:09:18,404 - INFO -   - 22892 schedules with coordinates
+2025-07-22 17:09:18,404 - INFO -   - 5143 grid cells
+2025-07-22 17:09:18,404 - INFO -   - Avg 4.5 schedules/cell
+2025-07-22 17:09:18,404 - INFO -   - Max 23 schedules/cell
+2025-07-22 17:09:18,406 - INFO - Processing 468527 citations with final hybrid matching...
+2025-07-22 17:09:18,454 - INFO - Processing citation 0/468,527 (0.0/sec, 0.0min remaining)
+2025-07-22 17:09:42,067 - INFO - Processing citation 25,000/468,527 (1056.6/sec, 7.0min remaining)
+2025-07-22 17:10:05,517 - INFO - Processing citation 50,000/468,527 (1061.3/sec, 6.6min remaining)
+2025-07-22 17:10:29,200 - INFO - Processing citation 75,000/468,527 (1059.4/sec, 6.2min remaining)
+2025-07-22 17:10:52,230 - INFO - Processing citation 100,000/468,527 (1065.8/sec, 5.8min remaining)
+2025-07-22 17:11:15,436 - INFO - Processing citation 125,000/468,527 (1068.1/sec, 5.4min remaining)
+2025-07-22 17:11:41,901 - INFO - 🚀 Starting Final Production Citation-Schedule Matching
+2025-07-22 17:11:41,901 - INFO - ======================================================================
+2025-07-22 17:11:41,902 - INFO - Loading citation data from test_citations_10k.csv
+2025-07-22 17:11:41,914 - INFO - Loaded 10,000 citations
+2025-07-22 17:11:41,914 - INFO - Loading schedule data from ../output/pipeline_results/20250721_223722/schedule_cleaned_20250721_223722.csv
+2025-07-22 17:11:41,953 - INFO - Loaded 22,909 schedules
+2025-07-22 17:11:41,953 - INFO - Building final hybrid index...
+2025-07-22 17:11:41,953 - INFO - Parsing coordinates and normalizing street names...
+2025-07-22 17:11:42,305 - INFO - Building spatial grid index...
+2025-07-22 17:11:42,593 - INFO - Final hybrid index built:
+2025-07-22 17:11:42,593 - INFO -   - 22892 schedules with coordinates
+2025-07-22 17:11:42,593 - INFO -   - 5143 grid cells
+2025-07-22 17:11:42,593 - INFO -   - Avg 4.5 schedules/cell
+2025-07-22 17:11:42,593 - INFO -   - Max 23 schedules/cell
+2025-07-22 17:11:42,595 - INFO - Processing 10000 citations with final hybrid matching...
+2025-07-22 17:11:42,596 - INFO - Processing citation 0/10,000 (0.0/sec, 0.0min remaining)
+2025-07-22 17:11:52,534 - INFO - Found 20,516 citation-schedule matches
+2025-07-22 17:11:52,560 - INFO - Generating final schedule estimates with complete information...
+2025-07-22 17:11:52,956 - INFO - Generated 383 final schedule estimates
+2025-07-22 17:11:53,000 - INFO - Exported 20,516 matches to test_clean_pipeline_matches_20250722_171152.csv
+2025-07-22 17:11:53,002 - INFO - Exported 383 schedule estimates to test_clean_pipeline_schedules_20250722_171152.csv
+2025-07-22 17:11:53,004 - INFO - 🎉 Final production processing completed!
+2025-07-22 17:11:53,004 - INFO - ⏱️  Total processing time: 0.2 minutes
+2025-07-22 17:11:53,004 - INFO - 📊 Citations processed: 10,000
+2025-07-22 17:11:53,004 - INFO - 🎯 Valid matches found: 20,516 from 8,877 citations
+2025-07-22 17:11:53,004 - INFO - 📈 Schedules with estimates: 383 (1.7% coverage)
+2025-07-22 17:11:53,004 - INFO - 📁 Results: test_clean_pipeline_matches_20250722_171152.csv, test_clean_pipeline_schedules_20250722_171152.csv

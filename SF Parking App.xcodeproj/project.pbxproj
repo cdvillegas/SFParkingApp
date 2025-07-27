@@ -6,6 +6,12 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		51A7FD1B2E34988000D2274B /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 51A7FD1A2E34988000D2274B /* FirebaseAnalytics */; };
+		51A7FD1D2E34989400D2274B /* FirebaseAnalyticsCore in Frameworks */ = {isa = PBXBuildFile; productRef = 51A7FD1C2E34989400D2274B /* FirebaseAnalyticsCore */; };
+		51A7FD2B2E3498A200D2274B /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 51A7FD2A2E3498A200D2274B /* FirebaseCore */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		4128206B2E08BE0E0082050C /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -29,9 +35,30 @@
 		412820742E08BE0E0082050C /* SF Parking AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "SF Parking AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		514A36BF2E3494F0001A7EF4 /* Exceptions for "SF Parking App" folder in "SF Parking AppTests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"GoogleService-Info.plist",
+			);
+			target = 412820692E08BE0E0082050C /* SF Parking AppTests */;
+		};
+		514A36C02E3494F0001A7EF4 /* Exceptions for "SF Parking App" folder in "SF Parking AppUITests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"GoogleService-Info.plist",
+			);
+			target = 412820732E08BE0E0082050C /* SF Parking AppUITests */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		4128205D2E08BE0D0082050C /* SF Parking App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				514A36BF2E3494F0001A7EF4 /* Exceptions for "SF Parking App" folder in "SF Parking AppTests" target */,
+				514A36C02E3494F0001A7EF4 /* Exceptions for "SF Parking App" folder in "SF Parking AppUITests" target */,
+			);
 			path = "SF Parking App";
 			sourceTree = "<group>";
 		};
@@ -52,6 +79,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				51A7FD1B2E34988000D2274B /* FirebaseAnalytics in Frameworks */,
+				51A7FD1D2E34989400D2274B /* FirebaseAnalyticsCore in Frameworks */,
+				51A7FD2B2E3498A200D2274B /* FirebaseCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -78,6 +108,7 @@
 				4128205D2E08BE0D0082050C /* SF Parking App */,
 				4128206D2E08BE0E0082050C /* SF Parking AppTests */,
 				412820772E08BE0E0082050C /* SF Parking AppUITests */,
+				51A7FD192E34988000D2274B /* Frameworks */,
 				4128205C2E08BE0D0082050C /* Products */,
 			);
 			sourceTree = "<group>";
@@ -90,6 +121,13 @@
 				412820742E08BE0E0082050C /* SF Parking AppUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		51A7FD192E34988000D2274B /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -112,6 +150,9 @@
 			);
 			name = "SF Parking App";
 			packageProductDependencies = (
+				51A7FD1A2E34988000D2274B /* FirebaseAnalytics */,
+				51A7FD1C2E34989400D2274B /* FirebaseAnalyticsCore */,
+				51A7FD2A2E3498A200D2274B /* FirebaseCore */,
 			);
 			productName = "SF Parking App";
 			productReference = 4128205B2E08BE0D0082050C /* SF Parking App.app */;
@@ -195,6 +236,9 @@
 			);
 			mainGroup = 412820522E08BE0D0082050C;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				514A36C12E34956A001A7EF4 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 4128205C2E08BE0D0082050C /* Products */;
 			projectDirPath = "";
@@ -564,6 +608,35 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		514A36C12E34956A001A7EF4 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		51A7FD1A2E34988000D2274B /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 514A36C12E34956A001A7EF4 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		51A7FD1C2E34989400D2274B /* FirebaseAnalyticsCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 514A36C12E34956A001A7EF4 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalyticsCore;
+		};
+		51A7FD2A2E3498A200D2274B /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 514A36C12E34956A001A7EF4 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 412820532E08BE0D0082050C /* Project object */;
 }

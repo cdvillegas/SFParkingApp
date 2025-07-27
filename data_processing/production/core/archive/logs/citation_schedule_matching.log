@@ -1,0 +1,44 @@
+2025-07-22 12:32:39,421 - INFO - 🔍 Starting Citation-Schedule Matching Analysis (FLEXIBLE TIMING)
+2025-07-22 12:32:39,421 - INFO - ============================================================
+2025-07-22 12:32:39,421 - INFO - Loading citation data from ../output/pipeline_results/20250721_223722/citations_geocoded_20250721_223722.csv
+2025-07-22 12:32:40,038 - INFO - Loaded 468527 high/medium confidence citations
+2025-07-22 12:32:40,039 - INFO - Loading schedule data from ../output/pipeline_results/20250721_223722/schedule_cleaned_20250721_223722.csv
+2025-07-22 12:32:40,124 - INFO - Loaded 0 schedules with GPS coordinates
+2025-07-22 12:33:17,808 - INFO - 🔍 Starting Citation-Schedule Matching Analysis (FLEXIBLE TIMING)
+2025-07-22 12:33:17,808 - INFO - ============================================================
+2025-07-22 12:33:17,808 - INFO - Loading citation data from ../output/pipeline_results/20250721_223722/citations_geocoded_20250721_223722.csv
+2025-07-22 12:33:18,348 - INFO - Loaded 468527 high/medium confidence citations
+2025-07-22 12:33:18,348 - INFO - Loading schedule data from ../output/pipeline_results/20250721_223722/schedule_cleaned_20250721_223722.csv
+2025-07-22 12:33:18,686 - INFO - Loaded 22892 schedules with GPS coordinates
+2025-07-22 12:33:18,686 - INFO - Processing citation-schedule matches with flexible timing...
+2025-07-22 12:33:18,982 - INFO - Processing citation 0/468527
+2025-07-22 12:34:55,655 - INFO - Processing citation 100/468527
+2025-07-22 12:38:23,150 - INFO - 🔍 Starting Citation-Schedule Matching Analysis (FLEXIBLE TIMING)
+2025-07-22 12:38:23,151 - INFO - ============================================================
+2025-07-22 12:38:23,151 - INFO - Loading citation data from ../output/pipeline_results/20250721_223722/citations_geocoded_20250721_223722.csv
+2025-07-22 12:38:23,685 - INFO - Loaded 468527 high/medium confidence citations
+2025-07-22 12:38:23,685 - INFO - Loading schedule data from ../output/pipeline_results/20250721_223722/schedule_cleaned_20250721_223722.csv
+2025-07-22 12:38:24,017 - INFO - Loaded 22892 schedules with GPS coordinates
+2025-07-22 12:38:24,017 - INFO - Processing citation-schedule matches with flexible timing...
+2025-07-22 12:38:24,300 - INFO - Processing citation 0/468527
+2025-07-22 12:40:04,186 - INFO - Processing citation 100/468527
+2025-07-22 12:41:23,311 - INFO - 🔍 Starting Citation-Schedule Matching Analysis (FLEXIBLE TIMING)
+2025-07-22 12:41:23,311 - INFO - ============================================================
+2025-07-22 12:41:23,311 - INFO - Loading citation data from ../output/pipeline_results/20250721_223722/citations_geocoded_20250721_223722.csv
+2025-07-22 12:41:23,902 - INFO - Loaded 468527 high/medium confidence citations
+2025-07-22 12:41:23,903 - INFO - Loading schedule data from ../output/pipeline_results/20250721_223722/schedule_cleaned_20250721_223722.csv
+2025-07-22 12:41:24,246 - INFO - Loaded 22892 schedules with GPS coordinates
+2025-07-22 12:41:24,246 - INFO - Processing citation-schedule matches with flexible timing...
+2025-07-22 12:41:24,538 - INFO - Processing citation 0/468527
+2025-07-22 12:43:03,937 - INFO - Processing citation 100/468527
+2025-07-22 12:44:24,592 - INFO - 🔍 Starting Citation-Schedule Matching Analysis (FLEXIBLE TIMING)
+2025-07-22 12:44:24,593 - INFO - ============================================================
+2025-07-22 12:44:24,593 - INFO - Loading citation data from test_citations_small.csv
+2025-07-22 12:44:24,612 - INFO - Loaded 9999 high/medium confidence citations
+2025-07-22 12:44:24,612 - INFO - Loading schedule data from ../output/pipeline_results/20250721_223722/schedule_cleaned_20250721_223722.csv
+2025-07-22 12:44:24,971 - INFO - Loaded 22892 schedules with GPS coordinates
+2025-07-22 12:44:24,972 - INFO - Processing citation-schedule matches with flexible timing...
+2025-07-22 12:44:24,975 - INFO - Processing citation 0/9999
+2025-07-22 12:46:02,762 - INFO - Processing citation 100/9999
+2025-07-22 12:47:26,506 - INFO - Processing citation 200/9999
+2025-07-22 12:49:06,380 - INFO - Processing citation 300/9999

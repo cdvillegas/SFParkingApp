@@ -12,6 +12,44 @@ struct ScheduleSelectionCard: View {
         scheduleWithSide.schedule
     }
     
+    // Check if cleaning is today and hasn't ended yet
+    private var isCleaningActiveToday: Bool {
+        let calendar = Calendar.current
+        let now = Date()
+        let currentWeekday = calendar.component(.weekday, from: now) // 1 = Sunday, 7 = Saturday
+        let currentHour = calendar.component(.hour, from: now)
+        let currentMinute = calendar.component(.minute, from: now)
+        let currentTimeInMinutes = currentHour * 60 + currentMinute
+        
+        // Map weekday names to numbers (1 = Sunday, 7 = Saturday)
+        let weekdayMap: [String: Int] = [
+            "Sunday": 1, "Sun": 1,
+            "Monday": 2, "Mon": 2,
+            "Tuesday": 3, "Tues": 3, "Tue": 3,
+            "Wednesday": 4, "Wed": 4,
+            "Thursday": 5, "Thu": 5, "Thurs": 5,
+            "Friday": 6, "Fri": 6,
+            "Saturday": 7, "Sat": 7
+        ]
+        
+        // Check if the schedule is for today
+        if let scheduleWeekday = schedule.weekday,
+           let scheduleDayNumber = weekdayMap[scheduleWeekday],
+           scheduleDayNumber == currentWeekday {
+            
+            // Parse end time from tohour field
+            if let endHourString = schedule.tohour,
+               let endHour = Int(endHourString) {
+                let endTimeInMinutes = endHour * 60
+                
+                // Return true if current time is before the end time
+                return currentTimeInMinutes < endTimeInMinutes
+            }
+        }
+        
+        return false
+    }
+    
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: 12) {
@@ -23,7 +61,7 @@ struct ScheduleSelectionCard: View {
                     .padding(.vertical, 3)
                     .background(
                         Capsule()
-                            .fill(isSelected ? Color.blue : Color(.systemGray5))
+                            .fill(isSelected ? (isCleaningActiveToday ? Color.red : Color.blue) : Color(.systemGray5))
                     )
                 
                 // Right: Schedule details
@@ -48,9 +86,9 @@ struct ScheduleSelectionCard: View {
             .padding(.vertical, 16)
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(isSelected ? Color.blue.opacity(0.12) : (colorScheme == .dark ? Color(.systemBackground) : Color.white))
+                    .fill(isSelected ? (isCleaningActiveToday ? Color.red.opacity(0.12) : Color.blue.opacity(0.12)) : (colorScheme == .dark ? Color(.systemBackground) : Color.white))
                     .shadow(
-                        color: isSelected ? Color.blue.opacity(0.4) : Color.black.opacity(0.08),
+                        color: isSelected ? (isCleaningActiveToday ? Color.red.opacity(0.4) : Color.blue.opacity(0.4)) : Color.black.opacity(0.08),
                         radius: isSelected ? 16 : 6,
                         x: 0,
                         y: isSelected ? 8 : 3
@@ -58,7 +96,7 @@ struct ScheduleSelectionCard: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
-                    .stroke(isSelected ? Color.blue.opacity(0.8) : Color(.systemGray6), lineWidth: isSelected ? 3 : 1)
+                    .stroke(isSelected ? (isCleaningActiveToday ? Color.red.opacity(0.8) : Color.blue.opacity(0.8)) : Color(.systemGray6), lineWidth: isSelected ? 3 : 1)
             )
             .scaleEffect(isSelected ? 1.02 : 1.0)
             .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isSelected)

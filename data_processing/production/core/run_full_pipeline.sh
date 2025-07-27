@@ -16,9 +16,9 @@
 
 set -e  # Exit on any error
 
-# Default parameters
+# Default parameters - optimized for Census API
 DAYS=${1:-365}
-WORKERS=${2:-6}
+WORKERS=${2:-20}  # Census API can handle more workers
 OUTPUT_DIR="../output/pipeline_results/$(date +%Y%m%d_%H%M%S)"
 
 echo "🚀 SF Parking Citation Analysis - Full Production Pipeline"
@@ -68,8 +68,8 @@ python3 full_pipeline_processor.py \
     --days "$DAYS" \
     --workers "$WORKERS" \
     --output-dir "$OUTPUT_DIR" \
-    --rate-limit 0.3 \
-    --batch-size 200
+    --rate-limit 0.05 \
+    --batch-size 300
 
 # Calculate total time
 END_TIME=$(date +%s)

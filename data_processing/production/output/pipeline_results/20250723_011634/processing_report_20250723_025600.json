@@ -1,0 +1,24 @@
+{
+  "processing_summary": {
+    "total_processed": 493064,
+    "high_confidence": 456698,
+    "medium_confidence": 9724,
+    "low_confidence": 26642,
+    "success_rate": "94.6%",
+    "usable_results": 466422
+  },
+  "configuration": {
+    "max_workers": 50,
+    "batch_size": 5000,
+    "rate_limit_delay": 0.01,
+    "max_retries": 3,
+    "timeout": 10,
+    "min_confidence": "MEDIUM"
+  },
+  "timing": {
+    "start_time": "2025-07-23T01:17:25.544131",
+    "end_time": "2025-07-23T02:55:59.289880",
+    "processing_time": "1:38:33.745749",
+    "citations_per_minute": 5002.56
+  }
+}

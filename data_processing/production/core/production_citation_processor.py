@@ -20,7 +20,7 @@ python3 production_citation_processor.py --days 30 --workers 4 --batch-size 100
 
 import requests
 import pandas as pd
-from geopy.geocoders import Nominatim
+# Using Census API instead of geopy for better accuracy and rate limits
 import time
 import re
 import csv
@@ -38,12 +38,14 @@ import os
 
 class CitationGeocodingProcessor:
     def __init__(self, 
-                 max_workers: int = 4,
-                 batch_size: int = 100,
-                 rate_limit_delay: float = 0.5,
+                 max_workers: int = 20,  # Census API can handle more workers
+                 batch_size: int = 200,
+                 rate_limit_delay: float = 0.05,  # Much less restrictive with Census API
                  max_retries: int = 3,
                  timeout: int = 10,
-                 min_confidence: str = "MEDIUM"):
+                 min_confidence: str = "MEDIUM",
+                 output_dir: str = None,
+                 use_database: bool = True):
         
         self.max_workers = max_workers
         self.batch_size = batch_size
@@ -51,12 +53,20 @@ class CitationGeocodingProcessor:
         self.max_retries = max_retries
         self.timeout = timeout
         self.min_confidence = min_confidence
+        self.output_dir = Path(output_dir) if output_dir else Path('.')
+        self.use_database = use_database
+        
+        # Ensure output directory exists
+        self.output_dir.mkdir(parents=True, exist_ok=True)
         
         # Set up logging
         self.setup_logging()
         
-        # Initialize geocoder with custom user agent
-        self.geolocator = Nominatim(user_agent="sf_parking_citation_processor_v1.0")
+        # In-memory storage for no-database mode
+        self.memory_results = []
+        
+        # Initialize geocoder - using Census API instead of Nominatim for better US address accuracy
+        self.census_api_url = "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress"
         
         # Progress tracking
         self.processed_count = 0
@@ -69,18 +79,22 @@ class CitationGeocodingProcessor:
         self.last_request_time = 0
         self.rate_lock = threading.Lock()
         
-        # Resume capability
-        self.resume_db = "citation_processing_progress.db"
-        self.setup_progress_db()
+        # Resume capability (only if using database)
+        if self.use_database:
+            self.resume_db = self.output_dir / "citation_processing_progress.db"
+            self.setup_progress_db()
+        else:
+            self.resume_db = None
         
     def setup_logging(self):
         """Set up comprehensive logging"""
         log_format = '%(asctime)s - %(levelname)s - %(message)s'
+        log_file = self.output_dir / 'citation_processing.log'
         logging.basicConfig(
             level=logging.INFO,
             format=log_format,
             handlers=[
-                logging.FileHandler('citation_processing.log'),
+                logging.FileHandler(log_file),
                 logging.StreamHandler()
             ]
         )
@@ -131,30 +145,34 @@ class CitationGeocodingProcessor:
         return processed
         
     def save_citation_result(self, citation_id: str, result: Dict):
-        """Save individual citation result to database"""
-        conn = sqlite3.connect(self.resume_db)
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            INSERT OR REPLACE INTO processed_citations 
-            (citation_id, address, datetime, latitude, longitude, returned_address, 
-             confidence, confidence_score, geocoding_status, processed_timestamp)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (
-            citation_id,
-            result.get('address'),
-            result.get('datetime'),
-            result.get('latitude'),
-            result.get('longitude'),
-            result.get('returned_address'),
-            result.get('confidence'),
-            result.get('confidence_score'),
-            result.get('geocoding_status'),
-            datetime.now().isoformat()
-        ))
-        
-        conn.commit()
-        conn.close()
+        """Save individual citation result to database or memory"""
+        if self.use_database:
+            conn = sqlite3.connect(self.resume_db)
+            cursor = conn.cursor()
+            
+            cursor.execute('''
+                INSERT OR REPLACE INTO processed_citations 
+                (citation_id, address, datetime, latitude, longitude, returned_address, 
+                 confidence, confidence_score, geocoding_status, processed_timestamp)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                citation_id,
+                result.get('address'),
+                result.get('datetime'),
+                result.get('latitude'),
+                result.get('longitude'),
+                result.get('returned_address'),
+                result.get('confidence'),
+                result.get('confidence_score'),
+                result.get('geocoding_status'),
+                datetime.now().isoformat()
+            ))
+            
+            conn.commit()
+            conn.close()
+        else:
+            # Store in memory for maximum performance
+            self.memory_results.append(result)
         
     def load_citations_from_file(self, input_file: str) -> List[Dict]:
         """Load citations from CSV file for processing"""
@@ -297,10 +315,10 @@ class CitationGeocodingProcessor:
             
         return confidence_score, confidence
         
-    def rate_limited_geocode(self, address: str) -> Optional[object]:
-        """Perform rate-limited geocoding with retry logic"""
+    def rate_limited_geocode(self, address: str) -> Optional[Dict]:
+        """Perform rate-limited geocoding using Census API"""
         with self.rate_lock:
-            # Ensure we don't exceed rate limits
+            # Light rate limiting for Census API (much more lenient than Nominatim)
             elapsed = time.time() - self.last_request_time
             if elapsed < self.rate_limit_delay:
                 time.sleep(self.rate_limit_delay - elapsed)
@@ -310,8 +328,31 @@ class CitationGeocodingProcessor:
         
         for attempt in range(self.max_retries):
             try:
-                location = self.geolocator.geocode(full_address, timeout=self.timeout)
-                return location
+                params = {
+                    'address': full_address,
+                    'benchmark': 'Public_AR_Current',
+                    'format': 'json'
+                }
+                
+                response = requests.get(self.census_api_url, params=params, timeout=self.timeout)
+                response.raise_for_status()
+                
+                data = response.json()
+                
+                # Parse Census API response
+                if data.get('result') and data['result'].get('addressMatches'):
+                    match = data['result']['addressMatches'][0]
+                    coords = match['coordinates']
+                    
+                    # Create a location-like object for compatibility
+                    location = {
+                        'latitude': float(coords['y']),
+                        'longitude': float(coords['x']),
+                        'address': match['matchedAddress']
+                    }
+                    return location
+                else:
+                    return None
                 
             except Exception as e:
                 self.logger.warning(f"Geocoding attempt {attempt + 1} failed for '{address}': {e}")
@@ -343,14 +384,14 @@ class CitationGeocodingProcessor:
             
             if location:
                 result.update({
-                    'latitude': location.latitude,
-                    'longitude': location.longitude,
-                    'returned_address': location.address,
+                    'latitude': location['latitude'],
+                    'longitude': location['longitude'],
+                    'returned_address': location['address'],
                     'geocoding_status': 'SUCCESS'
                 })
                 
                 # Validate the result
-                score, confidence = self.validate_geocoding_result(address, location.address)
+                score, confidence = self.validate_geocoding_result(address, location['address'])
                 result.update({
                     'confidence': confidence,
                     'confidence_score': score
@@ -427,17 +468,34 @@ class CitationGeocodingProcessor:
         
         allowed_confidence = confidence_levels.get(min_confidence, ['HIGH', 'MEDIUM'])
         
-        conn = sqlite3.connect(self.resume_db)
-        query = f"""
-            SELECT citation_id, address, datetime, latitude, longitude, returned_address, 
-                   confidence, confidence_score, geocoding_status
-            FROM processed_citations 
-            WHERE confidence IN ({','.join(['?' for _ in allowed_confidence])})
-            ORDER BY confidence DESC, confidence_score DESC
-        """
-        
-        df = pd.read_sql_query(query, conn, params=allowed_confidence)
-        conn.close()
+        if self.use_database:
+            conn = sqlite3.connect(self.resume_db)
+            query = f"""
+                SELECT citation_id, address, datetime, latitude, longitude, returned_address, 
+                       confidence, confidence_score, geocoding_status
+                FROM processed_citations 
+                WHERE confidence IN ({','.join(['?' for _ in allowed_confidence])})
+                ORDER BY confidence DESC, confidence_score DESC
+            """
+            
+            df = pd.read_sql_query(query, conn, params=allowed_confidence)
+            conn.close()
+        else:
+            # Export from memory
+            filtered_results = [
+                result for result in self.memory_results 
+                if result.get('confidence') in allowed_confidence
+            ]
+            
+            # Sort by confidence and score
+            filtered_results.sort(
+                key=lambda x: (
+                    ['HIGH', 'MEDIUM', 'LOW'].index(x.get('confidence', 'LOW')),
+                    -(x.get('confidence_score', 0))
+                )
+            )
+            
+            df = pd.DataFrame(filtered_results)
         
         df.to_csv(output_file, index=False)
         self.logger.info(f"Exported {len(df)} results to {output_file}")
@@ -556,6 +614,8 @@ def main():
     parser.add_argument('--output', type=str, 
                        default=f'processed_citations_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv',
                        help='Output CSV filename')
+    parser.add_argument('--output-dir', type=str, default=None,
+                       help='Output directory for all generated files (logs, database, etc.)')
     parser.add_argument('--no-resume', action='store_true',
                        help='Start fresh instead of resuming previous processing')
     
@@ -566,7 +626,9 @@ def main():
         max_workers=args.workers,
         batch_size=args.batch_size,
         rate_limit_delay=args.rate_limit,
-        min_confidence=args.min_confidence
+        min_confidence=args.min_confidence,
+        output_dir=args.output_dir,
+        use_database=not args.no_resume
     )
     
     try:
@@ -582,7 +644,7 @@ def main():
         exported_count = processor.export_results(args.output, args.min_confidence)
         
         # Save report
-        report_file = f"processing_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        report_file = processor.output_dir / f"processing_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         with open(report_file, 'w') as f:
             json.dump(report, f, indent=2)
             

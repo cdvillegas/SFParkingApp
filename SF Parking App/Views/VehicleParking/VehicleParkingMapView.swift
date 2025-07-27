@@ -10,6 +10,7 @@ struct VehicleParkingMapView: View {
     @State private var smartSelectionTimer: Timer?
     @State private var markerStillTimer: Timer?
     @State private var lastMapCenterCoordinate: CLLocationCoordinate2D?
+    @State private var isAppActive: Bool = true
     
     // Use ViewModel's published heading property
     private var currentHeading: CLLocationDirection {
@@ -17,7 +18,7 @@ struct VehicleParkingMapView: View {
     }
     
     var body: some View {
-        Map(position: $viewModel.mapPosition, interactionModes: .all) {
+        Map(position: $viewModel.mapPosition, interactionModes: isAppActive ? .all : []) {
             // User location annotation
             if viewModel.locationManager.authorizationStatus == .authorizedWhenInUse || viewModel.locationManager.authorizationStatus == .authorizedAlways {
                 userLocationAnnotation
@@ -36,12 +37,31 @@ struct VehicleParkingMapView: View {
         .overlay(enableLocationButton, alignment: .bottom)
         .mapStyle(.standard)
         .onMapCameraChange(frequency: .continuous) { context in
+            guard isAppActive else { return }
             currentMapHeading = context.camera.heading
             handleMapCameraChange(context)
         }
         .onAppear {
             // Initialize user location on view appear
             userLocation = viewModel.locationManager.userLocation
+        }
+        .onDisappear {
+            // Clean up timers to prevent retain cycles
+            smartSelectionTimer?.invalidate()
+            smartSelectionTimer = nil
+            markerStillTimer?.invalidate()
+            markerStillTimer = nil
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("AppWillResignActive"))) { _ in
+            // App going to background - prepare for Metal cleanup
+            isAppActive = false
+            // Invalidate timers that might cause Metal issues
+            smartSelectionTimer?.invalidate()
+            markerStillTimer?.invalidate()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("AppDidBecomeActive"))) { _ in
+            // App became active again
+            isAppActive = true
         }
         .onReceive(viewModel.locationManager.$userLocation) { newLocation in
             // Keep local state in sync with location manager
@@ -234,6 +254,47 @@ struct VehicleParkingMapView: View {
         }
     }
     
+    // Helper function to check if cleaning is today and hasn't ended yet
+    private func isCleaningActiveToday(schedule: SweepSchedule) -> Bool {
+        let calendar = Calendar.current
+        let now = Date()
+        let currentWeekday = calendar.component(.weekday, from: now) // 1 = Sunday, 7 = Saturday
+        let currentHour = calendar.component(.hour, from: now)
+        let currentMinute = calendar.component(.minute, from: now)
+        let currentTimeInMinutes = currentHour * 60 + currentMinute
+        
+        // Map weekday names to numbers (1 = Sunday, 7 = Saturday)
+        let weekdayMap: [String: Int] = [
+            "Sunday": 1, "Sun": 1,
+            "Monday": 2, "Mon": 2,
+            "Tuesday": 3, "Tues": 3, "Tue": 3,
+            "Wednesday": 4, "Wed": 4,
+            "Thursday": 5, "Thu": 5, "Thurs": 5,
+            "Friday": 6, "Fri": 6,
+            "Saturday": 7, "Sat": 7
+        ]
+        
+        // Check if the schedule is for today
+        if let scheduleWeekday = schedule.weekday,
+           let scheduleDayNumber = weekdayMap[scheduleWeekday],
+           scheduleDayNumber == currentWeekday {
+            
+            // Parse end time from tohour field (format: "11" for 11 AM, "14" for 2 PM)
+            if let endHourString = schedule.tohour,
+               let endHour = Int(endHourString) {
+                let endTimeInMinutes = endHour * 60
+                
+                // Debug print
+                print("🔴 Checking schedule: \(scheduleWeekday) \(schedule.fromhour ?? "")-\(endHourString), Current time: \(currentHour):\(currentMinute)")
+                
+                // Return true if current time is before the end time
+                return currentTimeInMinutes < endTimeInMinutes
+            }
+        }
+        
+        return false
+    }
+    
     @MapContentBuilder
     private var streetEdgeScheduleLines: some MapContent {
         ForEach(Array(viewModel.nearbySchedules.enumerated()), id: \.0) { index, scheduleWithSide in
@@ -252,7 +313,18 @@ struct VehicleParkingMapView: View {
                         // Main parking zone line - improved visibility
                         MapPolyline(coordinates: streetEdgeCoords)
                             .stroke(
-                                (index == viewModel.selectedScheduleIndex && viewModel.hasSelectedSchedule) ? Color.blue : Color.secondary.opacity(0.6),
+                                {
+                                    let isSelected = index == viewModel.selectedScheduleIndex && viewModel.hasSelectedSchedule
+                                    let isActiveToday = isCleaningActiveToday(schedule: scheduleWithSide.schedule)
+                                    
+                                    if isSelected && isActiveToday {
+                                        return Color.red
+                                    } else if isSelected {
+                                        return Color.blue
+                                    } else {
+                                        return Color.secondary.opacity(0.6)
+                                    }
+                                }(),
                                 style: StrokeStyle(
                                     lineWidth: (index == viewModel.selectedScheduleIndex && viewModel.hasSelectedSchedule) ? 10 : 7,
                                     lineCap: .round,
