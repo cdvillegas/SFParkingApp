@@ -13,9 +13,7 @@ struct OnboardingView: View {
                 .ignoresSafeArea()
             
             if showingCompletion {
-                OnboardingCompletionView {
-                    completeOnboarding()
-                }
+                OnboardingCompletionView(onComplete: completeOnboarding)
                 .transition(.asymmetric(
                     insertion: .move(edge: .bottom).combined(with: .opacity),
                     removal: .opacity.combined(with: .scale(scale: 1.1))

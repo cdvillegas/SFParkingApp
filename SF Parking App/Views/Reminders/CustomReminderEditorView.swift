@@ -9,7 +9,7 @@ import SwiftUI
 
 struct DayTiming: CaseIterable, Equatable, Hashable {
     static let morning = DayTiming(title: "Morning", hour: 8)
-    static let evening = DayTiming(title: "Evening", hour: 20)
+    static let evening = DayTiming(title: "Evening", hour: 17)
     
     let title: String
     let hour: Int

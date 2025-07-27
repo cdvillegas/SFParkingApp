@@ -9,6 +9,7 @@ import Foundation
 import CoreBluetooth
 import CoreLocation
 import Combine
+import UserNotifications
 
 class BluetoothManager: NSObject, ObservableObject {
     private var centralManager: CBCentralManager!
@@ -151,8 +152,66 @@ class BluetoothManager: NSObject, ObservableObject {
     
     private func setParkingLocation(coordinate: CLLocationCoordinate2D, address: String) {
         print("Auto-setting parking location via car disconnect: \(address)")
-        // TODO: Integrate with VehicleManager for auto-parking detection
-        // This feature could automatically set parking location when car Bluetooth disconnects
+        
+        // Send notification to user to confirm parking
+        sendParkingDetectionNotification(coordinate: coordinate, address: address)
+        
+        // Store pending parking data for user confirmation
+        storePendingParkingData(coordinate: coordinate, address: address, source: .carDisconnect)
+    }
+    
+    private func sendParkingDetectionNotification(coordinate: CLLocationCoordinate2D, address: String) {
+        let content = UNMutableNotificationContent()
+        content.title = "🚗 Car Disconnected"
+        content.body = "Confirm your parking location at \(address)"
+        content.sound = .default
+        content.categoryIdentifier = "PARKING_CONFIRMATION"
+        
+        // Add location data to notification
+        content.userInfo = [
+            "type": "parking_detection",
+            "latitude": coordinate.latitude,
+            "longitude": coordinate.longitude,
+            "address": address,
+            "source": "car_disconnect"
+        ]
+        
+        // Schedule immediate notification
+        let request = UNNotificationRequest(
+            identifier: "parking_detection_\(Date().timeIntervalSince1970)",
+            content: content,
+            trigger: nil // Immediate
+        )
+        
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("Failed to send parking detection notification: \(error)")
+            } else {
+                print("Parking detection notification sent successfully")
+            }
+        }
+    }
+    
+    private func storePendingParkingData(coordinate: CLLocationCoordinate2D, address: String, source: ParkingSource) {
+        let pendingParking = [
+            "coordinate": ["latitude": coordinate.latitude, "longitude": coordinate.longitude],
+            "address": address,
+            "source": source.rawValue,
+            "timestamp": Date().timeIntervalSince1970
+        ] as [String : Any]
+        
+        UserDefaults.standard.set(pendingParking, forKey: "pendingParkingLocation")
+        
+        // Post notification to app about pending parking
+        NotificationCenter.default.post(
+            name: .parkingDetected,
+            object: nil,
+            userInfo: [
+                "coordinate": coordinate,
+                "address": address,
+                "source": source
+            ]
+        )
     }
     
     private func formatAddress(from placemark: CLPlacemark) -> String {

@@ -395,11 +395,11 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = T97B2349CB;
+				DEVELOPMENT_TEAM = KKTVRZQNYU;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "SF-Parking-App-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "SF Parking";
+				INFOPLIST_KEY_CFBundleDisplayName = "Street Park SF";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.navigation";
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "This app uses Bluetooth to detect when you disconnect from your car and automatically set your parking location.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app needs location access to show your current position and help you find your parked car.";
@@ -429,11 +429,11 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = T97B2349CB;
+				DEVELOPMENT_TEAM = KKTVRZQNYU;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "SF-Parking-App-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "SF Parking";
+				INFOPLIST_KEY_CFBundleDisplayName = "Street Park SF";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.navigation";
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "This app uses Bluetooth to detect when you disconnect from your car and automatically set your parking location.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app needs location access to show your current position and help you find your parked car.";

@@ -9,6 +9,7 @@ import Foundation
 import CoreMotion
 import CoreLocation
 import Combine
+import UserNotifications
 
 class MotionActivityManager: ObservableObject {
     private let motionActivityManager = CMMotionActivityManager()
@@ -29,25 +30,33 @@ class MotionActivityManager: ObservableObject {
     
     private func setupMotionActivityMonitoring() {
         guard CMMotionActivityManager.isActivityAvailable() else {
-            print("Motion activity is not available on this device")
+            print("🚗 Motion activity is not available on this device")
             return
         }
         
+        print("🚗 Starting motion activity monitoring...")
         motionActivityManager.startActivityUpdates(to: OperationQueue.main) { [weak self] activity in
             guard let self = self, let activity = activity else { return }
+            
+            print("🚗 Motion activity update: automotive=\(activity.automotive), walking=\(activity.walking), stationary=\(activity.stationary), confidence=\(activity.confidence.rawValue)")
             
             self.currentActivity = activity
             self.handleActivityUpdate(activity)
         }
+        print("🚗 Motion activity monitoring started successfully")
     }
     
     private func handleActivityUpdate(_ activity: CMMotionActivity) {
         let currentlyDriving = activity.automotive
         
+        print("🚗 Was driving: \(wasRecentlyDriving), Now driving: \(currentlyDriving)")
+        
         // Detect transition from driving to not driving
         if wasRecentlyDriving && !currentlyDriving {
-            print("Detected end of driving activity")
+            print("🚗 ✅ Detected end of driving activity - starting parking detection")
             handleDrivingEnd()
+        } else if !wasRecentlyDriving && currentlyDriving {
+            print("🚗 🚙 Started driving")
         }
         
         // Update driving state
@@ -68,31 +77,42 @@ class MotionActivityManager: ObservableObject {
     private func handleDrivingEnd() {
         drivingEndTime = Date()
         
-        // Wait 2 minutes to ensure we're really done driving (not just stopped at a light)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 120) { [weak self] in
+        print("🚗 ⏰ Driving ended, waiting 10 seconds to confirm...")
+        // DEBUG: Reduce wait time for testing (normally 120 seconds)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 10) { [weak self] in
+            print("🚗 ⏰ 10 seconds elapsed, confirming driving end...")
             self?.confirmDrivingEnd()
         }
     }
     
     private func confirmDrivingEnd() {
+        print("🚗 🔍 Confirming driving end...")
+        
         // Check if we're still not driving after the delay
         guard let currentActivity = currentActivity, !currentActivity.automotive else {
-            print("False alarm - still driving")
+            print("🚗 ❌ False alarm - still driving (automotive=\(currentActivity?.automotive ?? false))")
             return
         }
         
+        print("🚗 ✅ Confirmed not driving")
+        
         // Make sure we have a recent location
         guard let drivingLocation = lastDrivingLocation else {
-            print("No driving location available")
+            print("🚗 ❌ No driving location available")
             return
         }
+        
+        print("🚗 📍 Have driving location: \(drivingLocation.coordinate.latitude), \(drivingLocation.coordinate.longitude)")
         
         // Check if location is recent enough (within last 5 minutes)
         let locationAge = Date().timeIntervalSince(drivingLocation.timestamp)
         guard locationAge < 300 else {
-            print("Driving location too old: \(locationAge) seconds")
+            print("🚗 ❌ Driving location too old: \(locationAge) seconds")
             return
         }
+        
+        print("🚗 ✅ Location is recent (\(locationAge) seconds old)")
+        print("🚗 🗺️ Starting reverse geocoding...")
         
         // Reverse geocode the location
         reverseGeocodeAndSetParkingLocation(drivingLocation)
@@ -126,9 +146,69 @@ class MotionActivityManager: ObservableObject {
     }
     
     private func setParkingLocation(coordinate: CLLocationCoordinate2D, address: String) {
-        print("Auto-setting parking location via motion detection: \(address)")
-        // TODO: Integrate with VehicleManager for auto-parking detection
-        // This feature could automatically set parking location when driving stops
+        print("🚗 🎯 Auto-setting parking location via motion detection: \(address)")
+        
+        // Send notification to user to confirm parking
+        print("🚗 📱 Sending parking detection notification...")
+        sendParkingDetectionNotification(coordinate: coordinate, address: address)
+        
+        // Store pending parking data for user confirmation
+        print("🚗 💾 Storing pending parking data...")
+        storePendingParkingData(coordinate: coordinate, address: address, source: .motionActivity)
+    }
+    
+    private func sendParkingDetectionNotification(coordinate: CLLocationCoordinate2D, address: String) {
+        let content = UNMutableNotificationContent()
+        content.title = "🚗 Parking Detected"
+        content.body = "Confirm your parking location at \(address)"
+        content.sound = .default
+        content.categoryIdentifier = "PARKING_CONFIRMATION"
+        
+        // Add location data to notification
+        content.userInfo = [
+            "type": "parking_detection",
+            "latitude": coordinate.latitude,
+            "longitude": coordinate.longitude,
+            "address": address,
+            "source": "motion_activity"
+        ]
+        
+        // Schedule immediate notification
+        let request = UNNotificationRequest(
+            identifier: "parking_detection_\(Date().timeIntervalSince1970)",
+            content: content,
+            trigger: nil // Immediate
+        )
+        
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("🚗 ❌ Failed to send parking detection notification: \(error)")
+            } else {
+                print("🚗 ✅ Parking detection notification sent successfully!")
+            }
+        }
+    }
+    
+    private func storePendingParkingData(coordinate: CLLocationCoordinate2D, address: String, source: ParkingSource) {
+        let pendingParking = [
+            "coordinate": ["latitude": coordinate.latitude, "longitude": coordinate.longitude],
+            "address": address,
+            "source": source.rawValue,
+            "timestamp": Date().timeIntervalSince1970
+        ] as [String : Any]
+        
+        UserDefaults.standard.set(pendingParking, forKey: "pendingParkingLocation")
+        
+        // Post notification to app about pending parking
+        NotificationCenter.default.post(
+            name: .parkingDetected,
+            object: nil,
+            userInfo: [
+                "coordinate": coordinate,
+                "address": address,
+                "source": source
+            ]
+        )
     }
     
     private func formatAddress(from placemark: CLPlacemark) -> String {
@@ -145,6 +225,7 @@ class MotionActivityManager: ObservableObject {
     }
     
     func requestMotionPermission() {
+        print("🚗 🔐 Requesting motion permission...")
         // CMMotionActivity doesn't have a specific permission request method
         // Permission is requested automatically when startActivityUpdates is called
         setupMotionActivityMonitoring()
@@ -153,4 +234,9 @@ class MotionActivityManager: ObservableObject {
     deinit {
         motionActivityManager.stopActivityUpdates()
     }
+}
+
+// MARK: - Notification Extensions
+extension Notification.Name {
+    static let parkingDetected = Notification.Name("parkingDetected")
 }

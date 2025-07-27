@@ -23,6 +23,11 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         locationManager.distanceFilter = 10
         locationManager.headingFilter = 2 // Update heading every 2 degrees for smoother updates
         
+        // Enable background location updates for auto parking detection
+        locationManager.allowsBackgroundLocationUpdates = true
+        locationManager.pausesLocationUpdatesAutomatically = false
+        locationManager.showsBackgroundLocationIndicator = false
+        
         authorizationStatus = locationManager.authorizationStatus
         print("LocationManager initialized with status: \(authorizationStatus.rawValue)")
         
@@ -74,6 +79,11 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         } else {
             print("Location access denied or restricted")
         }
+    }
+    
+    func requestAlwaysAuthorization() {
+        print("Requesting always location authorization for background updates")
+        locationManager.requestAlwaysAuthorization()
     }
     
     func requestLocation() {

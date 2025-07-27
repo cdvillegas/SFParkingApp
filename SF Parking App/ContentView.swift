@@ -10,11 +10,33 @@ import Combine
 
 struct ContentView: View {
     @State private var showingOnboarding = !OnboardingManager.hasCompletedOnboarding
+    @EnvironmentObject var parkingDetectionHandler: ParkingDetectionHandler
 
     var body: some View {
-        ZStack {
+        let shouldShowParking = parkingDetectionHandler.shouldShowParkingConfirmation
+        let pendingLocation = parkingDetectionHandler.pendingParkingLocation
+        let pendingAddress = parkingDetectionHandler.pendingParkingAddress
+        let pendingSource = parkingDetectionHandler.pendingParkingSource
+        
+        print("🎯 ContentView body re-evaluated - shouldShowParking: \(shouldShowParking)")
+        print("🎯 ContentView - pendingLocation: \(pendingLocation?.latitude ?? 0), \(pendingLocation?.longitude ?? 0)")
+        print("🎯 ContentView - pendingAddress: \(pendingAddress ?? "nil")")
+        print("🎯 ContentView - pendingSource: \(pendingSource?.rawValue ?? "nil")")
+        
+        if shouldShowParking {
+            print("🎯 ContentView - Passing auto parking data to VehicleParkingView")
+        }
+        
+        return ZStack {
             // Main app with beautiful slide-up transition
-            VehicleParkingView()
+            VehicleParkingView(
+                autoDetectedLocation: shouldShowParking ? pendingLocation : nil,
+                autoDetectedAddress: shouldShowParking ? pendingAddress : nil,
+                autoDetectedSource: shouldShowParking ? pendingSource : nil,
+                onAutoParkingHandled: {
+                    parkingDetectionHandler.clearPendingParking()
+                }
+            )
                 .opacity(showingOnboarding ? 0 : 1)
                 .scaleEffect(showingOnboarding ? 0.95 : 1.0)
                 .offset(y: showingOnboarding ? 50 : 0)
@@ -34,6 +56,13 @@ struct ContentView: View {
         .onAppear {
             // Check if onboarding should be shown
             showingOnboarding = !OnboardingManager.hasCompletedOnboarding
+            print("🎯 ContentView.onAppear - shouldShowParkingConfirmation: \(parkingDetectionHandler.shouldShowParkingConfirmation)")
+        }
+        .onChange(of: parkingDetectionHandler.shouldShowParkingConfirmation) { oldValue, newValue in
+            print("🎯 ContentView - shouldShowParkingConfirmation changed from \(oldValue) to \(newValue)")
+            if newValue {
+                print("🎯 ContentView - Auto parking data available: location=\(parkingDetectionHandler.pendingParkingLocation != nil), address=\(parkingDetectionHandler.pendingParkingAddress ?? "nil")")
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("OnboardingCompleted"))) { _ in
             // Hide onboarding when completed with a beautiful transition

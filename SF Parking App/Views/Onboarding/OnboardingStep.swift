@@ -12,6 +12,7 @@ struct OnboardingStep {
     enum PermissionType {
         case location
         case notifications
+        case motion
     }
     
     static let allSteps: [OnboardingStep] = [
@@ -38,6 +39,14 @@ struct OnboardingStep {
             color: .orange,
             permissionType: .notifications,
             buttonText: "Enable Notifications"
+        ),
+        OnboardingStep(
+            title: "Smart Parking Detection",
+            description: "We intelligently detect when you finish driving and automatically update your parking location. Street cleaning alerts set up automatically.",
+            systemImage: "car.fill",
+            color: .purple,
+            permissionType: .motion,
+            buttonText: "Enable Parking Detection"
         )
     ]
 }

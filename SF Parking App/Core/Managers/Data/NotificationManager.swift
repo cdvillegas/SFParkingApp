@@ -8,6 +8,7 @@
 import Foundation
 import UserNotifications
 import CoreLocation
+import UIKit
 
 // MARK: - Notification Manager
 class NotificationManager: NSObject, ObservableObject {
@@ -22,6 +23,7 @@ class NotificationManager: NSObject, ObservableObject {
     // Dependencies for accessing current app state
     private var vehicleManager: VehicleManager?
     private var streetDataManager: StreetDataManager?
+    private weak var parkingDetectionHandler: ParkingDetectionHandler?
     
     private override init() {
         super.init()
@@ -32,6 +34,10 @@ class NotificationManager: NSObject, ObservableObject {
         
         // Check permission status on init
         checkPermissionStatus()
+        
+        // Load existing reminders and create defaults if needed
+        loadCustomReminders()
+        createDefaultRemindersIfNeeded()
     }
     
     // MARK: - Dependency Injection
@@ -39,6 +45,10 @@ class NotificationManager: NSObject, ObservableObject {
     func configure(vehicleManager: VehicleManager, streetDataManager: StreetDataManager) {
         self.vehicleManager = vehicleManager
         self.streetDataManager = streetDataManager
+    }
+    
+    func setParkingDetectionHandler(_ handler: ParkingDetectionHandler) {
+        self.parkingDetectionHandler = handler
     }
 
     // MARK: - Enhanced Permission Management
@@ -97,14 +107,34 @@ class NotificationManager: NSObject, ObservableObject {
             options: []
         )
         
-        let category = UNNotificationCategory(
+        let streetCleaningCategory = UNNotificationCategory(
             identifier: "STREET_CLEANING",
             actions: [moveCarAction, openMapsAction, snoozeAction],
             intentIdentifiers: [],
             options: [.customDismissAction]
         )
         
-        center.setNotificationCategories([category])
+        // Parking confirmation category
+        let confirmParkingAction = UNNotificationAction(
+            identifier: "CONFIRM_PARKING",
+            title: "Confirm Location",
+            options: [.foreground]
+        )
+        
+        let dismissParkingAction = UNNotificationAction(
+            identifier: "DISMISS_PARKING",
+            title: "Not Parked",
+            options: [.destructive]
+        )
+        
+        let parkingConfirmationCategory = UNNotificationCategory(
+            identifier: "PARKING_CONFIRMATION",
+            actions: [confirmParkingAction, dismissParkingAction],
+            intentIdentifiers: [],
+            options: [.customDismissAction]
+        )
+        
+        center.setNotificationCategories([streetCleaningCategory, parkingConfirmationCategory])
     }
     
     // MARK: - Street Cleaning Notifications
@@ -205,7 +235,7 @@ class NotificationManager: NSObject, ObservableObject {
         if timeUntilCleaning > 12 * 3600 { // 12 hours
             if let nightBefore = calendar.date(byAdding: .day, value: -1, to: cleaningDate) {
                 var components = calendar.dateComponents([.year, .month, .day], from: nightBefore)
-                components.hour = 20
+                components.hour = 17
                 components.minute = 0
                 
                 if let notificationDate = calendar.date(from: components),
@@ -451,6 +481,58 @@ class NotificationManager: NSObject, ObservableObject {
     func saveCustomReminders() {
         if let encoded = try? JSONEncoder().encode(customReminders) {
             UserDefaults.standard.set(encoded, forKey: "customReminders")
+        }
+    }
+    
+    private func createDefaultRemindersIfNeeded() {
+        // Check if we've already created default reminders
+        let hasCreatedDefaults = UserDefaults.standard.bool(forKey: "hasCreatedDefaultReminders")
+        
+        if !hasCreatedDefaults && customReminders.isEmpty {
+            // Create default reminders
+            let defaultReminders = [
+                // Evening before at 5 PM
+                CustomReminder(
+                    title: "Evening Before",
+                    timing: .custom(CustomTiming(
+                        amount: 1,
+                        unit: .days,
+                        relativeTo: .beforeCleaning,
+                        specificTime: TimeOfDay(hour: 17, minute: 0)
+                    )),
+                    isActive: true
+                ),
+                // Morning of at 8 AM
+                CustomReminder(
+                    title: "Morning Of",
+                    timing: .custom(CustomTiming(
+                        amount: 0,
+                        unit: .days,
+                        relativeTo: .beforeCleaning,
+                        specificTime: TimeOfDay(hour: 8, minute: 0)
+                    )),
+                    isActive: true
+                ),
+                // 30 minutes before
+                CustomReminder(
+                    title: "30 Minutes Before",
+                    timing: .custom(CustomTiming(
+                        amount: 30,
+                        unit: .minutes,
+                        relativeTo: .beforeCleaning,
+                        specificTime: nil
+                    )),
+                    isActive: true
+                )
+            ]
+            
+            customReminders = defaultReminders
+            saveCustomReminders()
+            
+            // Mark that we've created default reminders
+            UserDefaults.standard.set(true, forKey: "hasCreatedDefaultReminders")
+            
+            print("Created default reminders: \(defaultReminders.count) reminders")
         }
     }
     
@@ -718,13 +800,47 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
     
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
         let userInfo = response.notification.request.content.userInfo
+        print("📱 Notification tapped - App state: \(UIApplication.shared.applicationState.rawValue)")
         
-        if let type = userInfo["type"] as? String, type == "street_cleaning" {
-            // Handle street cleaning notification tap
-            handleStreetCleaningNotificationTap(userInfo: userInfo)
+        if let type = userInfo["type"] as? String {
+            switch type {
+            case "street_cleaning":
+                handleStreetCleaningNotificationTap(userInfo: userInfo)
+            case "parking_detection":
+                print("📱 Handling parking detection notification tap")
+                // Store data for app launch handling - this works for both closed and open app states
+                storeParkingDataForAppLaunch(userInfo: userInfo)
+                
+                // Only handle immediately if app is already running (foreground/background)
+                if UIApplication.shared.applicationState != .inactive {
+                    print("📱 App is active/background - handling immediately")
+                    handleParkingDetectionNotificationTap(userInfo: userInfo)
+                } else {
+                    print("📱 App is launching - data stored for launch handling")
+                }
+            default:
+                break
+            }
         }
         
         completionHandler()
+    }
+    
+    private func storeParkingDataForAppLaunch(userInfo: [AnyHashable: Any]) {
+        // Store the parking data so it can be retrieved when app launches
+        guard let latitude = userInfo["latitude"] as? Double,
+              let longitude = userInfo["longitude"] as? Double,
+              let address = userInfo["address"] as? String else { return }
+        
+        let pendingData: [String: Any] = [
+            "coordinate": ["latitude": latitude, "longitude": longitude],
+            "address": address,
+            "source": "motion_activity",
+            "timestamp": Date().timeIntervalSince1970
+        ]
+        
+        UserDefaults.standard.set(pendingData, forKey: "pendingParkingLocation")
+        print("📱 Stored parking data for app launch: \(address)")
     }
     
     private func handleStreetCleaningNotificationTap(userInfo: [AnyHashable: Any]) {
@@ -734,6 +850,32 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
             object: nil,
             userInfo: userInfo
         )
+    }
+    
+    private func handleParkingDetectionNotificationTap(userInfo: [AnyHashable: Any]) {
+        // Extract parking location data from notification
+        guard let latitude = userInfo["latitude"] as? Double,
+              let longitude = userInfo["longitude"] as? Double,
+              let address = userInfo["address"] as? String,
+              let sourceString = userInfo["source"] as? String else {
+            print("Invalid parking detection notification data")
+            return
+        }
+        
+        let coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+        let source: ParkingSource = .motionActivity
+        
+        // Pass to the parking detection handler
+        DispatchQueue.main.async {
+            self.parkingDetectionHandler?.handleParkingDetection(
+                coordinate: coordinate,
+                address: address,
+                source: source
+            )
+        }
+        
+        // Don't clear stored data here - let the app launch flow handle it
+        print("📱 Parking detection handled for immediate processing")
     }
 }
 
