@@ -37,15 +37,18 @@ struct PersistedSweepSchedule: Codable, Equatable {
 
 enum ParkingSource: String, Codable {
     case manual = "manual"
-    case motionActivity = "motion_activity"
+    case bluetooth = "bluetooth"
+    case carplay = "carplay"
     case carDisconnect = "car_disconnect"
     
     var displayName: String {
         switch self {
         case .manual:
             return "Manually Set"
-        case .motionActivity:
-            return "Auto-detected via Motion"
+        case .bluetooth:
+            return "Auto-detected via Bluetooth"
+        case .carplay:
+            return "Auto-detected via CarPlay"
         case .carDisconnect:
             return "Set when Car Disconnected"
         }
@@ -181,7 +184,7 @@ struct ParkingLocation: Identifiable, Codable, Equatable {
         // Handle migration from old isManuallySet to new source
         if let legacyContainer = try? decoder.container(keyedBy: LegacyCodingKeys.self),
            let isManuallySet = try? legacyContainer.decode(Bool.self, forKey: .isManuallySet) {
-            self.source = isManuallySet ? .manual : .motionActivity
+            self.source = isManuallySet ? .manual : .carDisconnect
         } else {
             self.source = try container.decode(ParkingSource.self, forKey: .source)
         }

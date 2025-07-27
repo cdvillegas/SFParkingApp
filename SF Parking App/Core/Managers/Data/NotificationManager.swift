@@ -854,7 +854,7 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
         let pendingData: [String: Any] = [
             "coordinate": ["latitude": latitude, "longitude": longitude],
             "address": address,
-            "source": "motion_activity",
+            "source": "car_disconnect",
             "timestamp": Date().timeIntervalSince1970
         ]
         
@@ -882,7 +882,7 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
         }
         
         let coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
-        let source: ParkingSource = .motionActivity
+        let source: ParkingSource = ParkingSource(rawValue: sourceString) ?? .carDisconnect
         
         // Pass to the parking detection handler
         DispatchQueue.main.async {

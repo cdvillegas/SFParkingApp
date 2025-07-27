@@ -5,7 +5,9 @@ import CoreLocation
 struct VehicleParkingView: View {
     @StateObject private var viewModel = VehicleParkingViewModel()
     @State private var showingRemindersSheet = false
+    @State private var showingAutoParkingSettings = false
     @EnvironmentObject var parkingDetectionHandler: ParkingDetectionHandler
+    @StateObject private var bluetoothManager = BluetoothCarPlayManager.shared
     @State private var wasHandlingAutoParking = false
     
     // Optional parameters for auto-parking detection
@@ -21,9 +23,22 @@ struct VehicleParkingView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // Map section - clean with no overlays
-                VehicleParkingMapView(viewModel: viewModel)
-                    .frame(maxHeight: .infinity)
+                // Map section with auto parking toggle overlay
+                ZStack {
+                    VehicleParkingMapView(viewModel: viewModel)
+                        .frame(maxHeight: .infinity)
+                    
+                    // Auto parking toggle button in top-left
+                    VStack {
+                        HStack {
+                            autoParkingToggleButton
+                            Spacer()
+                        }
+                        Spacer()
+                    }
+                    .padding(.top, 8)
+                    .padding(.leading, 16)
+                }
                 
                 // Bottom interface
                 bottomInterface
@@ -110,6 +125,9 @@ struct VehicleParkingView: View {
                 schedule: schedule,
                 parkingLocation: viewModel.vehicleManager.currentVehicle?.parkingLocation
             )
+        }
+        .sheet(isPresented: $showingAutoParkingSettings) {
+            AutoParkingSettingsView()
         }
     }
     
@@ -240,7 +258,17 @@ struct VehicleParkingView: View {
         
         // Show a subtle notification that parking was detected
         if let source = autoDetectedSource {
-            let sourceText = source == .motionActivity ? "driving activity" : "car disconnection"
+            let sourceText: String
+            switch source {
+            case .bluetooth:
+                sourceText = "Bluetooth disconnection"
+            case .carplay:
+                sourceText = "CarPlay disconnection"
+            case .carDisconnect:
+                sourceText = "car disconnection"
+            case .manual:
+                sourceText = "manual input"
+            }
             print("Auto-detected parking via \(sourceText) at \(address)")
         }
         
@@ -249,6 +277,38 @@ struct VehicleParkingView: View {
         
         // Don't clear immediately - wait for user to confirm or cancel
         // parkingDetectionHandler will be cleared when user confirms the location
+    }
+    
+    // MARK: - Auto Parking Toggle Button
+    
+    private var autoParkingToggleButton: some View {
+        Button(action: {
+            showingAutoParkingSettings = true
+        }) {
+            HStack(spacing: 8) {
+                Image(systemName: bluetoothManager.isAutoParkingEnabled ? "car.fill" : "car")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(bluetoothManager.isAutoParkingEnabled ? .white : .primary)
+                
+                Text(bluetoothManager.isAutoParkingEnabled ? "Auto" : "Manual")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(bluetoothManager.isAutoParkingEnabled ? .white : .primary)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(bluetoothManager.isAutoParkingEnabled ? 
+                          AnyShapeStyle(Color.blue.gradient) : 
+                          AnyShapeStyle(Color(.systemBackground)))
+                    .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(Color(.systemGray4), lineWidth: bluetoothManager.isAutoParkingEnabled ? 0 : 1)
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
     }
 }
 

@@ -113,7 +113,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         }
     }
     
-    private func startLocationUpdates() {
+    func startLocationUpdates() {
         guard authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways else {
             print("Cannot start location updates - not authorized")
             return

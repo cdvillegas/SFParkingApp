@@ -37,8 +37,8 @@ struct SF_Parking_AppApp: App {
     @StateObject private var parkingDetectionHandler = ParkingDetectionHandler()
     
     init() {
-        // Initialize auto parking detection manager
-        _ = AutoParkingManager.shared
+        // Initialize Bluetooth/CarPlay auto parking detection manager
+        _ = BluetoothCarPlayManager.shared
     }
     var body: some Scene {
         WindowGroup {
@@ -90,7 +90,8 @@ struct SF_Parking_AppApp: App {
         }
         
         let coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
-        let source = ParkingSource.motionActivity
+        let sourceString = data["source"] as? String ?? "car_disconnect"
+        let source = ParkingSource(rawValue: sourceString) ?? .carDisconnect
         
         print("🚀 Parsed notification data - Lat: \(latitude), Lng: \(longitude), Address: \(address)")
         print("🚀 Triggering parking detection handler for: \(address)")

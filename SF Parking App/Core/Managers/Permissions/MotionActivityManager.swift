@@ -154,7 +154,7 @@ class MotionActivityManager: ObservableObject {
         
         // Store pending parking data for user confirmation
         print("🚗 💾 Storing pending parking data...")
-        storePendingParkingData(coordinate: coordinate, address: address, source: .motionActivity)
+        storePendingParkingData(coordinate: coordinate, address: address, source: .carDisconnect)
     }
     
     private func sendParkingDetectionNotification(coordinate: CLLocationCoordinate2D, address: String) {

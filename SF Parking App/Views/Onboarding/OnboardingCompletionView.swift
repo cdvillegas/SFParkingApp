@@ -5,8 +5,8 @@ struct OnboardingCompletionView: View {
     @State private var isAnimating = false
     
     var body: some View {
-        VStack(spacing: 32) {
-            Spacer(minLength: 100) // Push content higher
+        VStack(spacing: 40) {
+            Spacer(minLength: 60) // Reduced to move content higher
             
             // Icon or illustration
             Image(systemName: "checkmark.circle.fill")
@@ -26,6 +26,7 @@ struct OnboardingCompletionView: View {
                 .animation(.easeInOut(duration: 0.6).delay(0.5), value: isAnimating)
             
             Spacer()
+            Spacer() // Extra spacer to push content even higher
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(UIColor.systemBackground))

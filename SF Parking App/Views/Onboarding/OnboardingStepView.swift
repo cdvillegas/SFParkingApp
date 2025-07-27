@@ -1,7 +1,6 @@
 import SwiftUI
 import CoreLocation
 import UserNotifications
-import CoreMotion
 
 struct OnboardingStepView: View {
     let step: OnboardingStep
@@ -14,7 +13,6 @@ struct OnboardingStepView: View {
     @State private var permissionDeniedMessage = ""
     @State private var locationDelegate: LocationPermissionDelegate?
     @State private var locationManager: CLLocationManager?
-    @State private var motionActivityManager: CMMotionActivityManager?
     
     var body: some View {
         VStack(spacing: 0) {
@@ -119,10 +117,6 @@ struct OnboardingStepView: View {
                 triggerAnimation()
             }
             
-            // Check if we're waiting for motion permission and user returned from Settings
-            if step.permissionType == .motion && motionActivityManager != nil {
-                checkMotionPermissionAfterSettings()
-            }
         }
         .alert("Permission Required", isPresented: $showingPermissionDeniedAlert) {
             Button("Open Settings") {
@@ -159,8 +153,6 @@ struct OnboardingStepView: View {
             requestLocationPermission()
         case .notifications:
             requestNotificationPermission()
-        case .motion:
-            requestMotionPermission()
         }
     }
     
@@ -210,49 +202,6 @@ struct OnboardingStepView: View {
         }
     }
     
-    private func requestMotionPermission() {
-        // Check if motion activity is available
-        guard CMMotionActivityManager.isActivityAvailable() else {
-            showPermissionDeniedAlert(message: "Motion activity is not available on this device. You can still manually set your parking location.")
-            return
-        }
-        
-        // Create motion manager and start monitoring to trigger permission request
-        motionActivityManager = CMMotionActivityManager()
-        
-        // Start activity updates to trigger the permission dialog
-        motionActivityManager?.startActivityUpdates(to: OperationQueue.main) { activity in
-            // Permission was granted - we got activity data
-            DispatchQueue.main.async {
-                self.motionActivityManager?.stopActivityUpdates()
-                self.motionActivityManager = nil
-                
-                // Enable auto parking detection
-                UserDefaults.standard.set(true, forKey: "autoParkingDetectionEnabled")
-                
-                let successFeedback = UINotificationFeedbackGenerator()
-                successFeedback.notificationOccurred(.success)
-                self.onNext()
-            }
-        }
-    }
-    
-    private func checkMotionPermissionAfterSettings() {
-        // Try starting motion updates again to see if permission was granted
-        motionActivityManager?.startActivityUpdates(to: OperationQueue.main) { activity in
-            // Permission was granted
-            DispatchQueue.main.async {
-                self.motionActivityManager?.stopActivityUpdates()
-                self.motionActivityManager = nil
-                
-                UserDefaults.standard.set(true, forKey: "autoParkingDetectionEnabled")
-                
-                let successFeedback = UINotificationFeedbackGenerator()
-                successFeedback.notificationOccurred(.success)
-                self.onNext()
-            }
-        }
-    }
     
     private func showPermissionDeniedAlert(message: String) {
         permissionDeniedMessage = message
