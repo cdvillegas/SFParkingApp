@@ -7,7 +7,7 @@ struct VehicleParkingView: View {
     @State private var showingRemindersSheet = false
     @State private var showingAutoParkingSettings = false
     @EnvironmentObject var parkingDetectionHandler: ParkingDetectionHandler
-    @StateObject private var bluetoothManager = BluetoothCarPlayManager.shared
+    @StateObject private var parkingDetector = ParkingDetector.shared
     @State private var wasHandlingAutoParking = false
     
     // Optional parameters for auto-parking detection
@@ -127,7 +127,7 @@ struct VehicleParkingView: View {
             )
         }
         .sheet(isPresented: $showingAutoParkingSettings) {
-            AutoParkingSettingsView()
+            SmartParkingSettingsView()
         }
     }
     
@@ -286,26 +286,20 @@ struct VehicleParkingView: View {
             showingAutoParkingSettings = true
         }) {
             HStack(spacing: 8) {
-                Image(systemName: bluetoothManager.isAutoParkingEnabled ? "car.fill" : "car")
+                Image(systemName: "sparkles")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(bluetoothManager.isAutoParkingEnabled ? .white : .primary)
+                    .foregroundColor(parkingDetector.isMonitoring ? .white : .primary)
                 
-                Text(bluetoothManager.isAutoParkingEnabled ? "Auto" : "Manual")
+                Text(parkingDetector.isMonitoring ? "Enabled" : "Enable Smart Park")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(bluetoothManager.isAutoParkingEnabled ? .white : .primary)
+                    .foregroundColor(parkingDetector.isMonitoring ? .white : .primary)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             .background(
                 RoundedRectangle(cornerRadius: 20)
-                    .fill(bluetoothManager.isAutoParkingEnabled ? 
-                          AnyShapeStyle(Color.blue.gradient) : 
-                          AnyShapeStyle(Color(.systemBackground)))
+                    .fill(parkingDetector.isMonitoring ? Color.blue : Color(.systemGray6))
                     .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 20)
-                    .stroke(Color(.systemGray4), lineWidth: bluetoothManager.isAutoParkingEnabled ? 0 : 1)
             )
         }
         .buttonStyle(PlainButtonStyle())

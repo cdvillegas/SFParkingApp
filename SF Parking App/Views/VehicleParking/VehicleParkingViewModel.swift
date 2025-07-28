@@ -66,8 +66,6 @@ class VehicleParkingViewModel: ObservableObject {
     let debouncedGeocoder: DebouncedGeocodingHandler
     let notificationManager: NotificationManager
     
-    // Reference to the shared auto parking manager
-    private let autoParkingManager = AutoParkingManager.shared
     
     // MARK: - Initialization
     

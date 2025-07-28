@@ -4,15 +4,21 @@
 <dict>
 	<key>NSUserNotificationsUsageDescription</key>
 	<string>This app sends notifications to remind you about street cleaning times so you can move your car before getting a ticket.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>This app uses motion detection to confirm when you've parked and walked away from your car for automatic parking location detection.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>This app needs location access to automatically detect when you park and provide street cleaning alerts even when the app is closed.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>This app needs location access to show your current position and find street cleaning schedules.</string>
-	<key>NSMotionUsageDescription</key>
-	<string>This app uses motion detection to automatically identify when you've finished driving and parked your car.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
+		<string>external-accessory</string>
+		<string>audio</string>
+	</array>
+	<key>UISupportedExternalAccessoryProtocols</key>
+	<array>
+		<string>com.apple.carplay</string>
 	</array>
 </dict>
 </plist>

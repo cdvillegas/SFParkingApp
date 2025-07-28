@@ -9,6 +9,7 @@ import SwiftUI
 import CoreLocation
 import FirebaseCore
 import FirebaseAnalytics
+import CarPlay
 
 class AppDelegate: NSObject, UIApplicationDelegate {
   func application(_ application: UIApplication,
@@ -37,8 +38,8 @@ struct SF_Parking_AppApp: App {
     @StateObject private var parkingDetectionHandler = ParkingDetectionHandler()
     
     init() {
-        // Initialize Bluetooth/CarPlay auto parking detection manager
-        _ = BluetoothCarPlayManager.shared
+        // Initialize comprehensive parking detection system
+        _ = ParkingDetector.shared
     }
     var body: some Scene {
         WindowGroup {
@@ -57,6 +58,8 @@ struct SF_Parking_AppApp: App {
                     handleDeepLink(url)
                 }
         }
+        
+        // CarPlay scene - the delegate will be set automatically when CarPlay connects
     }
     
     private func checkForLaunchNotification() {
@@ -90,7 +93,7 @@ struct SF_Parking_AppApp: App {
         }
         
         let coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
-        let sourceString = data["source"] as? String ?? "car_disconnect"
+        let sourceString = data["source"] as? String ?? "caraudio"
         let source = ParkingSource(rawValue: sourceString) ?? .carDisconnect
         
         print("🚀 Parsed notification data - Lat: \(latitude), Lng: \(longitude), Address: \(address)")

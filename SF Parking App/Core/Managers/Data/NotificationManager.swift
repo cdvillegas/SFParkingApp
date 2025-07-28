@@ -947,6 +947,7 @@ enum NotificationTiming: String, CaseIterable, Codable {
 
 extension Notification.Name {
     static let streetCleaningNotificationTapped = Notification.Name("streetCleaningNotificationTapped")
+    static let parkingDetected = Notification.Name("parkingDetected")
 }
 
 // MARK: - Placeholder Models (assuming these exist in your app)
