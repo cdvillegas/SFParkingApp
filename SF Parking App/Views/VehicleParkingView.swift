@@ -18,22 +18,27 @@ struct VehicleParkingView: View {
     
     var body: some View {
         ZStack {
-            // Background color
-            Color(.systemBackground)
+            // Map extends to full screen
+            VehicleParkingMapView(viewModel: viewModel)
                 .ignoresSafeArea()
             
-            VStack(spacing: 0) {
-                // Map section with auto parking toggle overlay
-                ZStack {
-                    VehicleParkingMapView(viewModel: viewModel)
-                        .frame(maxHeight: .infinity)
-                    
+            // Floating interface with buttons above
+            VStack {
+                Spacer()
+                Spacer() // Extra spacer to push container down more
+                
+                // Map control buttons - positioned above content
+                HStack {
+                    Spacer()
+                    mapControlButtons
+                        .padding(.trailing, 12)
+                        .padding(.bottom, 16)
                 }
                 
-                // Bottom interface
                 bottomInterface
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 4)
             }
-            
         }
         .sheet(isPresented: $viewModel.showingAddVehicle) {
             AddEditVehicleView(
@@ -121,6 +126,79 @@ struct VehicleParkingView: View {
         }
     }
     
+    // MARK: - Map Control Buttons
+    
+    private var mapControlButtons: some View {
+        Group {
+            if !viewModel.isConfirmingSchedule || viewModel.isSettingLocation {
+                HStack(spacing: 12) {
+                    vehicleButton
+                    userLocationButton
+                }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var vehicleButton: some View {
+        if let currentVehicle = viewModel.vehicleManager.currentVehicle,
+           currentVehicle.parkingLocation != nil {
+            Button(action: {
+                let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                impactFeedback.impactOccurred()
+                centerOnVehicle()
+            }) {
+                Image(systemName: "car.fill")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.secondary)
+                    .frame(width: 44, height: 44)
+                    .background(
+                        Circle()
+                            .fill(.thinMaterial)
+                            .shadow(color: Color.black.opacity(0.2), radius: 15, x: 0, y: -5)
+                    )
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var userLocationButton: some View {
+        if viewModel.locationManager.userLocation != nil &&
+           (viewModel.locationManager.authorizationStatus == .authorizedWhenInUse || 
+            viewModel.locationManager.authorizationStatus == .authorizedAlways) {
+            Button(action: {
+                let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                impactFeedback.impactOccurred()
+                centerOnUser()
+            }) {
+                Image(systemName: "location.fill")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.secondary)
+                    .frame(width: 44, height: 44)
+                    .background(
+                        Circle()
+                            .fill(.thinMaterial)
+                            .shadow(color: Color.black.opacity(0.2), radius: 15, x: 0, y: -5)
+                    )
+            }
+        }
+    }
+    
+    // MARK: - Helper Functions
+    
+    private func centerOnVehicle() {
+        if let currentVehicle = viewModel.vehicleManager.currentVehicle,
+           let parkingLocation = currentVehicle.parkingLocation {
+            viewModel.centerMapOnLocation(parkingLocation.coordinate)
+        }
+    }
+    
+    private func centerOnUser() {
+        if let userLocation = viewModel.locationManager.userLocation {
+            viewModel.centerMapOnLocation(userLocation.coordinate)
+        }
+    }
+    
     // MARK: - Helper Functions
     
     private func moveToUserLocation() {
@@ -151,21 +229,6 @@ struct VehicleParkingView: View {
     
     private var bottomInterface: some View {
         VStack(spacing: 0) {
-            // Upcoming reminders (only when not setting location)
-            if !viewModel.isSettingLocation,
-               let currentVehicle = viewModel.vehicleManager.currentVehicle,
-               let parkingLocation = currentVehicle.parkingLocation,
-               !viewModel.vehicleManager.activeVehicles.isEmpty {
-                UpcomingRemindersSection(
-                    streetDataManager: viewModel.streetDataManager,
-                    parkingLocation: parkingLocation
-                )
-                .padding(.horizontal, 20)
-                
-                Divider()
-                    .padding(.horizontal, 20)
-            }
-            
             // Main interface
             VehicleLocationSetting(
                 viewModel: viewModel,
@@ -199,6 +262,9 @@ struct VehicleParkingView: View {
                 viewModel.streetDataManager.schedule = schedule
                 viewModel.streetDataManager.processNextSchedule(for: schedule)
             }
+            
+            // Always fetch fresh street data to ensure timing is current
+            viewModel.streetDataManager.fetchSchedules(for: parkingLocation.coordinate)
         } else if let userLocation = viewModel.locationManager.userLocation {
             viewModel.centerMapOnLocation(userLocation.coordinate)
         } else {

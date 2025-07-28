@@ -1,5 +1,6 @@
 import SwiftUI
 import CoreLocation
+import MapKit
 
 struct SwipeableVehicleSection: View {
     let vehicles: [Vehicle]
@@ -7,6 +8,9 @@ struct SwipeableVehicleSection: View {
     let onVehicleSelected: (Vehicle) -> Void
     let onVehicleTap: (Vehicle) -> Void
     let onShareLocation: ((ParkingLocation) -> Void)?
+    let streetDataManager: StreetDataManager?
+    let onShowReminders: (() -> Void)?
+    let onShowSmartParking: (() -> Void)?
     
     var body: some View {
         VStack(spacing: 0) {
@@ -20,10 +24,11 @@ struct SwipeableVehicleSection: View {
                             impactFeedback()
                             onVehicleTap(vehicle)
                         },
-                        onShare: onShareLocation
+                        onShare: onShareLocation,
+                        streetDataManager: streetDataManager,
+                        onShowReminders: onShowReminders,
+                        onShowSmartParking: onShowSmartParking
                     )
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 12)
                 }
             } else {
                 // Empty state
@@ -61,138 +66,189 @@ struct VehicleSwipeCard: View {
     let isSelected: Bool
     let onTap: () -> Void
     let onShare: ((ParkingLocation) -> Void)?
+    let streetDataManager: StreetDataManager?
+    let onShowReminders: (() -> Void)?
+    let onShowSmartParking: (() -> Void)?
     
     @State private var isPressed = false
+    @State private var isMenuPressed = false
     
     var body: some View {
         VStack(spacing: 12) {
             HStack(spacing: 12) {
-                // Vehicle icon with color
+                // Vehicle icon with urgency color - smaller
                 ZStack {
                     Circle()
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    vehicle.color.color,
-                                    vehicle.color.color.opacity(0.8)
+                                    getUrgencyColor(for: vehicle),
+                                    getUrgencyColor(for: vehicle).opacity(0.8)
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
-                        .frame(width: 40, height: 40)
+                        .frame(width: 28, height: 28)
                     
                     Image(systemName: vehicle.type.iconName)
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(.white)
                 }
-                .shadow(color: vehicle.color.color.opacity(0.3), radius: 4, x: 0, y: 2)
+                .shadow(color: getUrgencyColor(for: vehicle).opacity(0.3), radius: 3, x: 0, y: 1)
                 
                 // Vehicle info
                 VStack(alignment: .leading, spacing: 4) {
                     // Parking address
                     if let parkingLocation = vehicle.parkingLocation {
                         Text(parkingLocation.address.components(separatedBy: ",").prefix(2).joined(separator: ","))
-                            .font(.headline)
+                            .font(.title3)
                             .fontWeight(.semibold)
                             .foregroundColor(.primary)
                             .lineLimit(2)
                         
-                        Text("View In Maps")
-                            .font(.caption)
-                            .foregroundColor(.blue)
+                        Text(getMoveBeforeText(for: vehicle))
+                            .font(.callout)
+                            .foregroundColor(.secondary)
+                            .lineLimit(nil)
+                            .fixedSize(horizontal: false, vertical: true)
                     } else {
                         Text("No vehicle location set")
-                            .font(.headline)
+                            .font(.title3)
                             .fontWeight(.semibold)
                             .foregroundColor(.secondary)
                             .lineLimit(1)
                         
-                        Text("Tap to set location")
-                            .font(.caption)
-                            .foregroundColor(.blue)
+                        Text("Press \"Set Vehicle Location\"")
+                            .font(.callout)
+                            .foregroundColor(.secondary)
+                            .lineLimit(nil)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
                 
                 Spacer()
+                
+                // Menu button (always show)
+                Menu {
+                    // Location-based actions (only when parked)
+                    if vehicle.parkingLocation != nil {
+                        Button("View in Maps", systemImage: "map") {
+                            openVehicleInMaps(vehicle)
+                        }
+                        
+                        if let parkingLocation = vehicle.parkingLocation, let onShare = onShare {
+                            Button("Share Location", systemImage: "square.and.arrow.up") {
+                                onShare(parkingLocation)
+                            }
+                        }
+                        
+                        Divider()
+                    }
+                    
+                    // Settings actions (always available)
+                    if let onShowReminders = onShowReminders {
+                        Button("Reminders", systemImage: "bell.fill") {
+                            onShowReminders()
+                        }
+                    }
+                    
+                    if let onShowSmartParking = onShowSmartParking {
+                        Button("Smart Parking", systemImage: "sparkles") {
+                            onShowSmartParking()
+                        }
+                    }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.secondary)
+                        .frame(width: 30, height: 30)
+                        .background(
+                            Circle()
+                                .fill(.thinMaterial)
+                                .shadow(color: Color.black.opacity(0.1), radius: 3, x: 0, y: 1)
+                        )
+                }
             }
         }
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.systemBackground))
-                .shadow(
-                    color: vehicle.color.color.opacity(0.2), // Always show vehicle glow
-                    radius: 6,
-                    x: 0,
-                    y: 3
-                )
-        )
-        .padding(.horizontal, 4)
-        .padding(.vertical, 2)
         .scaleEffect(isPressed ? 0.98 : 1.0)
         .animation(.spring(response: 0.2, dampingFraction: 0.9), value: isPressed)
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { _ in
-                    if !isPressed {
-                        withAnimation(.spring(response: 0.2, dampingFraction: 0.9)) {
-                            isPressed = true
-                        }
-                    }
-                }
-                .onEnded { _ in
-                    withAnimation(.spring(response: 0.2, dampingFraction: 0.9)) {
-                        isPressed = false
-                    }
-                    
-                    // Enhanced haptic feedback
-                    let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                    impactFeedback.prepare()
-                    impactFeedback.impactOccurred()
-                    
-                    onTap()
-                }
-        )
-        .overlay(
-            // Share button overlay - completely outside the card layout
-            Group {
-                if let parkingLocation = vehicle.parkingLocation, let onShare = onShare {
-                    HStack {
-                        Spacer()
-                        VStack {
-                            Spacer()
-                            ZStack {
-                                // Visual button
-                                Image(systemName: "square.and.arrow.up")
-                                    .font(.system(size: 16, weight: .medium))
-                                    .foregroundColor(.secondary)
-                                    .offset(y: -1) // Slight upward offset to visually center the icon
-                                    .frame(width: 36, height: 36)
-                                    .background(
-                                        Circle()
-                                            .fill(Color(.systemGray6))
-                                    )
-                                
-                                // Invisible larger tap area overlay
-                                Button(action: {
-                                    let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-                                    impactFeedback.impactOccurred()
-                                    onShare(parkingLocation)
-                                }) {
-                                    Color.clear
-                                        .frame(width: 60, height: 60) // Larger tap area
-                                        .contentShape(Rectangle())
-                                }
-                            }
-                            Spacer()
-                        }
-                        .padding(.trailing, 20) // Match card padding
-                    }
-                }
-            },
-            alignment: .topTrailing
-        )
+    }
+    
+    // MARK: - Helper Functions
+    
+    private func getUrgencyColor(for vehicle: Vehicle) -> Color {
+        guard let streetDataManager = streetDataManager,
+              let nextSchedule = streetDataManager.nextUpcomingSchedule,
+              vehicle.parkingLocation != nil else {
+            return vehicle.color.color
+        }
+        
+        let urgencyLevel = getUrgencyLevel(for: nextSchedule.date)
+        switch urgencyLevel {
+        case .critical:
+            return .red
+        case .safe:
+            return .green
+        }
+    }
+    
+    private func getMoveBeforeText(for vehicle: Vehicle) -> String {
+        guard let streetDataManager = streetDataManager,
+              let nextSchedule = streetDataManager.nextUpcomingSchedule,
+              vehicle.parkingLocation != nil else {
+            return "No restrictions found"
+        }
+        
+        let formatter = DateFormatter()
+        let calendar = Calendar.current
+        
+        if calendar.isDateInToday(nextSchedule.date) {
+            return "Move by Today, \(nextSchedule.startTime)"
+        } else if calendar.isDateInTomorrow(nextSchedule.date) {
+            return "Move by Tomorrow, \(nextSchedule.startTime)"
+        } else {
+            formatter.dateFormat = "EEEE"
+            let dayString = formatter.string(from: nextSchedule.date)
+            return "Move by \(dayString), \(nextSchedule.startTime)"
+        }
+    }
+    
+    private enum UrgencyLevel {
+        case critical  // < 24 hours
+        case safe      // >= 24 hours
+    }
+    
+    private func getUrgencyLevel(for date: Date) -> UrgencyLevel {
+        let timeInterval = date.timeIntervalSinceNow
+        let hours = timeInterval / 3600
+        
+        if hours < 24 {
+            return .critical
+        } else {
+            return .safe
+        }
+    }
+    
+    private func openVehicleInMaps(_ vehicle: Vehicle) {
+        guard let parkingLocation = vehicle.parkingLocation else { return }
+        
+        let coordinate = parkingLocation.coordinate
+        let placemark = MKPlacemark(coordinate: coordinate)
+        let mapItem = MKMapItem(placemark: placemark)
+        mapItem.name = "Parking Location"
+        
+        mapItem.openInMaps(launchOptions: [:])
+    }
+}
+
+extension View {
+    @ViewBuilder func `if`<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
+        if condition {
+            transform(self)
+        } else {
+            self
+        }
     }
 }
 
