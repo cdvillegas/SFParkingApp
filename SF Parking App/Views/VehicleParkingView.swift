@@ -22,6 +22,7 @@ struct VehicleParkingView: View {
             VehicleParkingMapView(viewModel: viewModel)
                 .ignoresSafeArea()
             
+            
             // Floating interface with buttons above
             VStack {
                 Spacer()
@@ -328,6 +329,7 @@ struct VehicleParkingView: View {
         // Don't clear immediately - wait for user to confirm or cancel
         // parkingDetectionHandler will be cleared when user confirms the location
     }
+    
     
 }
 

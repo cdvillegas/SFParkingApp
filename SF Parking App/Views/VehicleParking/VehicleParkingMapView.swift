@@ -247,7 +247,6 @@ struct VehicleParkingMapView: View {
         if let userLocation = userLocation {
             Annotation("", coordinate: userLocation.coordinate) {
                 UserDirectionCone(heading: currentHeading, mapHeading: currentMapHeading)
-                    .animation(.easeInOut(duration: 0.2), value: currentHeading)
             }
         }
     }

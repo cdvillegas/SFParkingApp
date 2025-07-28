@@ -196,9 +196,10 @@ struct CustomReminderEditorView: View {
                 Spacer()
             }
             .padding(20)
-            .background(
+            .background(Color.clear)
+            .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(.ultraThinMaterial)
+                    .stroke(Color.secondary.opacity(0.2), lineWidth: 0.5)
             )
         }
     }
@@ -252,9 +253,10 @@ struct CustomReminderEditorView: View {
         .frame(height: 160)
         .frame(maxWidth: .infinity)
         .padding(20)
-        .background(
+        .background(Color.clear)
+        .overlay(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(.ultraThinMaterial)
+                .stroke(Color.secondary.opacity(0.2), lineWidth: 0.5)
         )
     }
     
@@ -278,9 +280,10 @@ struct CustomReminderEditorView: View {
                 }
             }
             .padding(4)
-            .background(
+            .background(Color.clear)
+            .overlay(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(.ultraThinMaterial)
+                    .stroke(Color.secondary.opacity(0.2), lineWidth: 0.5)
             )
         }
     }

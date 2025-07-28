@@ -17,9 +17,10 @@ struct SmartParkingSettingsView: View {
             VStack(spacing: 0) {
                 carPlayStatusCard
             }
-            .background(
+            .background(Color.clear)
+            .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(.ultraThinMaterial)
+                    .stroke(Color.secondary.opacity(0.2), lineWidth: 0.5)
             )
             .padding(.horizontal, 20)
             .padding(.bottom, 24)
@@ -35,9 +36,10 @@ struct SmartParkingSettingsView: View {
                 VStack(spacing: 0) {
                     howItWorksCard
                 }
-                .background(
+                .background(Color.clear)
+                .overlay(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(.ultraThinMaterial)
+                        .stroke(Color.secondary.opacity(0.2), lineWidth: 0.5)
                 )
                 .padding(.horizontal, 20)
             }

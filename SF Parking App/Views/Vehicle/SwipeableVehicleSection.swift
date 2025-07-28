@@ -72,6 +72,8 @@ struct VehicleSwipeCard: View {
     
     @State private var isPressed = false
     @State private var isMenuPressed = false
+    @State private var cachedMoveText: String = "No restrictions found"
+    @State private var lastScheduleDate: Date?
     
     var body: some View {
         VStack(spacing: 12) {
@@ -107,7 +109,7 @@ struct VehicleSwipeCard: View {
                             .foregroundColor(.primary)
                             .lineLimit(2)
                         
-                        Text(getMoveBeforeText(for: vehicle))
+                        Text(cachedMoveText)
                             .font(.callout)
                             .foregroundColor(.secondary)
                             .lineLimit(nil)
@@ -169,13 +171,30 @@ struct VehicleSwipeCard: View {
                                 .shadow(color: Color.black.opacity(0.1), radius: 3, x: 0, y: 1)
                         )
                 }
+                .onLongPressGesture(minimumDuration: 0) {
+                    let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                    impactFeedback.impactOccurred()
+                }
             }
         }
         .scaleEffect(isPressed ? 0.98 : 1.0)
         .animation(.spring(response: 0.2, dampingFraction: 0.9), value: isPressed)
+        .onAppear {
+            updateCachedMoveText()
+        }
+        .onChange(of: streetDataManager?.nextUpcomingSchedule?.date) { _, newDate in
+            if newDate != lastScheduleDate {
+                updateCachedMoveText()
+            }
+        }
     }
     
     // MARK: - Helper Functions
+    
+    private func updateCachedMoveText() {
+        cachedMoveText = getMoveBeforeText(for: vehicle)
+        lastScheduleDate = streetDataManager?.nextUpcomingSchedule?.date
+    }
     
     private func getUrgencyColor(for vehicle: Vehicle) -> Color {
         guard let streetDataManager = streetDataManager,
@@ -233,13 +252,6 @@ struct VehicleSwipeCard: View {
         let startOfScheduleDay = calendar.startOfDay(for: nextSchedule.date)
         let daysUntil = calendar.dateComponents([.day], from: startOfToday, to: startOfScheduleDay).day ?? 0
         
-        // Debug logging
-        let debugFormatter = DateFormatter()
-        debugFormatter.dateFormat = "EEE MMM d, yyyy h:mm a"
-        print("🚗 VehicleView DEBUG:")
-        print("  Today: \(debugFormatter.string(from: now))")
-        print("  Next cleaning: \(debugFormatter.string(from: nextSchedule.date))")
-        print("  Days until: \(daysUntil)")
         
         if daysUntil == 2 {
             return "Move in 2 Days, \(nextSchedule.startTime)"

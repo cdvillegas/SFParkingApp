@@ -52,9 +52,10 @@ struct RemindersSheet: View {
                             streetInfoCard
                                 .padding(20)
                         }
-                        .background(
+                        .background(Color.clear)
+                        .overlay(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(.ultraThinMaterial)
+                                .stroke(Color.secondary.opacity(0.2), lineWidth: 0.5)
                         )
                         .padding(.horizontal, 20)
                     }
@@ -70,60 +71,74 @@ struct RemindersSheet: View {
                         .padding(.horizontal, 20)
                         .padding(.bottom, 12)
                     
-                    // Scrollable content - unified for all states
-                    ScrollView {
-                        VStack(spacing: 0) {
-                            // Show unified empty state for both notifications disabled and no reminders
-                            if !notificationsEnabled || notificationManager.customReminders.isEmpty {
-                                UnifiedEmptyStateView(isNotificationsDisabled: !notificationsEnabled)
-                                    .frame(minHeight: 300)
-                                    .padding(20)
-                                    .background(
+                    // Content based on notification state
+                    if !notificationsEnabled {
+                        // Notifications disabled - floating empty state
+                        VStack {
+                            Spacer()
+                            UnifiedEmptyStateView(isNotificationsDisabled: true)
+                            Spacer()
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else {
+                        // Notifications enabled - scrollable content with background
+                        ScrollView {
+                            VStack(spacing: 0) {
+                                if notificationManager.customReminders.isEmpty {
+                                    // No reminders but notifications enabled
+                                    UnifiedEmptyStateView(isNotificationsDisabled: false)
+                                        .frame(minHeight: 300)
+                                        .padding(20)
+                                        .background(Color.clear)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                                .stroke(Color.secondary.opacity(0.2), lineWidth: 0.5)
+                                        )
+                                        .padding(.horizontal, 20)
+                                } else {
+                                    // Has reminders
+                                    VStack(spacing: 0) {
+                                        CustomRemindersListView(
+                                            showingCustomReminderEditor: $showingCustomReminderEditor,
+                                            customReminderToEdit: $customReminderToEdit,
+                                            nextCleaningDate: schedule?.date ?? Date()
+                                        )
+                                    }
+                                    .background(Color.clear)
+                                    .overlay(
                                         RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                            .fill(.ultraThinMaterial)
+                                            .stroke(Color.secondary.opacity(0.2), lineWidth: 0.5)
                                     )
                                     .padding(.horizontal, 20)
-                            } else {
-                                // Only custom reminders section
-                                VStack(spacing: 0) {
-                                    CustomRemindersListView(
-                                        showingCustomReminderEditor: $showingCustomReminderEditor,
-                                        customReminderToEdit: $customReminderToEdit,
-                                        nextCleaningDate: schedule?.date ?? Date()
-                                    )
                                 }
-                                .background(
-                                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                        .fill(.ultraThinMaterial)
-                                )
-                                .padding(.horizontal, 20)
                             }
+                            .padding(.top, 4)
+                            .padding(.bottom, 20)
                         }
-                        .padding(.bottom, 20)
+                        .mask(
+                            VStack(spacing: 0) {
+                                // Top fade - from transparent to opaque
+                                LinearGradient(
+                                    gradient: Gradient(colors: [Color.clear, Color.black]),
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                                .frame(height: 8)
+                                
+                                // Middle is fully visible
+                                Color.black
+                                
+                                // Bottom fade - from opaque to transparent
+                                LinearGradient(
+                                    gradient: Gradient(colors: [Color.black, Color.clear]),
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                                .frame(height: 40)
+                            }
+                        )
+                        .padding(.bottom, 96)
                     }
-                    .mask(
-                        VStack(spacing: 0) {
-                            // Top fade - from transparent to opaque
-                            LinearGradient(
-                                gradient: Gradient(colors: [Color.clear, Color.black]),
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                            .frame(height: 8)
-                            
-                            // Middle is fully visible
-                            Color.black
-                            
-                            // Bottom fade - from opaque to transparent
-                            LinearGradient(
-                                gradient: Gradient(colors: [Color.black, Color.clear]),
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                            .frame(height: 40)
-                        }
-                    )
-                    .padding(.bottom, 96)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
