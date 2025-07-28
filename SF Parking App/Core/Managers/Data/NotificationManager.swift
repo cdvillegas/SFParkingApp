@@ -986,6 +986,7 @@ extension Notification.Name {
     static let streetCleaningNotificationTapped = Notification.Name("streetCleaningNotificationTapped")
     static let parkingDetected = Notification.Name("parkingDetected")
     static let openParkingConfirmation = Notification.Name("openParkingConfirmation")
+    static let smartParkLocationSaved = Notification.Name("smartParkLocationSaved")
 }
 
 // MARK: - Placeholder Models (assuming these exist in your app)

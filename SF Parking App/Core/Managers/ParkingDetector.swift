@@ -552,11 +552,29 @@ class ParkingDetector: NSObject, ObservableObject {
             source: source
         )
         
-        // Save to vehicle manager
+        // Save to vehicle manager (without schedule - Smart Park doesn't detect schedules)
         if let vehicleManager = vehicleManager,
            let currentVehicle = vehicleManager.currentVehicle {
-            vehicleManager.setParkingLocation(for: currentVehicle, location: parkingLocation)
+            // Create location without schedule (Smart Park saves location only)
+            let locationWithoutSchedule = ParkingLocation(
+                coordinate: parkingLocation.coordinate,
+                address: parkingLocation.address,
+                timestamp: parkingLocation.timestamp,
+                source: parkingLocation.source,
+                selectedSchedule: nil  // No schedule for auto-detected locations
+            )
+            vehicleManager.setParkingLocation(for: currentVehicle, location: locationWithoutSchedule)
             print("🚗 Parking location saved to vehicle: \(pendingLocation.address)")
+            
+            // Post notification to clear old schedule data in the UI
+            NotificationCenter.default.post(
+                name: .smartParkLocationSaved,
+                object: nil,
+                userInfo: [
+                    "coordinate": parkingLocation.coordinate,
+                    "address": parkingLocation.address
+                ]
+            )
         } else {
             print("🚗 ⚠️ VehicleManager not available - location not saved to vehicle")
         }

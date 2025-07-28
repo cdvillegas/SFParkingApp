@@ -95,6 +95,42 @@ class VehicleParkingViewModel: ObservableObject {
             .receive(on: DispatchQueue.main)
             .assign(to: \.userHeading, on: self)
             .store(in: &cancellables)
+        
+        // Listen for Smart Park location saves to clear old schedule data
+        NotificationCenter.default.publisher(for: .smartParkLocationSaved)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.clearScheduleDataForSmartPark()
+            }
+            .store(in: &cancellables)
+    }
+    
+    private func clearScheduleDataForSmartPark() {
+        print("🚗 Smart Park location saved - clearing old schedule data and detecting new schedules")
+        
+        // Clear all schedule-related state
+        nearbySchedules = []
+        selectedScheduleIndex = 0
+        hasSelectedSchedule = false
+        detectedSchedule = nil
+        scheduleConfidence = 0.0
+        showingScheduleSelection = false
+        schedulesLoadedForCurrentLocation = false
+        
+        // Clear street data manager state
+        streetDataManager.schedule = nil
+        streetDataManager.nextUpcomingSchedule = nil
+        
+        // Get the new parking location and detect schedules for it
+        if let currentVehicle = vehicleManager.currentVehicle,
+           let parkingLocation = currentVehicle.parkingLocation {
+            print("🚗 Detecting schedules for Smart Park location: \(parkingLocation.address)")
+            
+            // Trigger schedule detection for the new location
+            autoDetectSchedule(for: parkingLocation.coordinate)
+        }
+        
+        print("🚗 Schedule data cleared and new schedule detection started")
     }
     
     
