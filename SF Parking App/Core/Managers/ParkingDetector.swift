@@ -68,7 +68,7 @@ class ParkingDetector: NSObject, ObservableObject {
     private let speedThreshold: Double = 10.0 // mph - lowered from 15 for better parking lot detection
     private let speedWindowDuration: TimeInterval = 600 // 10 minutes
     private let motionValidationDuration: TimeInterval = 600 // 10 minutes - extended from 20 seconds
-    private let reconnectionGracePeriod: TimeInterval = 30 // 30 seconds
+    private let reconnectionGracePeriod: TimeInterval = 600 // 10 minutes
     
     override init() {
         super.init()
@@ -240,11 +240,17 @@ class ParkingDetector: NSObject, ObservableObject {
                     }
                 }
                 
-                // Generic Bluetooth audio without car brand - Low Confidence
-                currentDetectionMethod = .bluetooth
-                currentConnectionConfidence = .low
-                print("🚗 Low confidence: Generic Bluetooth A2DP device - \(output.portName)")
-                return true
+                // Check for generic "car" in device name (Low Confidence)
+                if portName.contains("car") {
+                    currentDetectionMethod = .bluetooth
+                    currentConnectionConfidence = .low
+                    print("🚗 Low confidence: Bluetooth device with 'car' in name - \(output.portName)")
+                    return true
+                }
+                
+                // Skip other Bluetooth devices entirely
+                print("🚗 Ignoring non-car Bluetooth device - \(output.portName)")
+                return false
             }
             
             if portName.contains("car") {
@@ -486,6 +492,8 @@ class ParkingDetector: NSObject, ObservableObject {
         if walkingDetected {
             // Confirm the parking location and send notification
             confirmParkingLocation()
+            // Cancel reconnection grace period once walking is confirmed
+            lastDisconnectionTime = nil
         } else {
             print("🚗 No walking detected - parking not confirmed, discarding location")
             pendingParkingLocation = nil
