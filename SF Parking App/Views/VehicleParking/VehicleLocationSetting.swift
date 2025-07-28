@@ -7,6 +7,7 @@ struct VehicleLocationSetting: View {
     @Environment(\.colorScheme) private var colorScheme
     
     let onShowReminders: () -> Void
+    let onShowSmartParking: () -> Void
     
     var body: some View {
         VStack(spacing: 0) {
@@ -82,24 +83,31 @@ struct VehicleLocationSetting: View {
                         )
                     }
                 } else {
-                    // Reminders button when vehicle exists
-                    Button(action: {
-                        impactFeedbackLight.impactOccurred()
-                        showRemindersSheet()
-                    }) {
-                        HStack(spacing: 6) {
-                            Image(systemName: "bell.fill")
-                                .font(.system(size: 14, weight: .medium))
-                            Text("Reminders")
-                                .font(.system(size: 14, weight: .semibold))
+                    // Three dot menu button when vehicle exists
+                    Menu {
+                        Button(action: {
+                            impactFeedbackLight.impactOccurred()
+                            showRemindersSheet()
+                        }) {
+                            Label("Reminders", systemImage: "bell.fill")
                         }
-                        .foregroundColor(.secondary)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(
-                            RoundedRectangle(cornerRadius: 10)
+                        
+                        Button(action: {
+                            impactFeedbackLight.impactOccurred()
+                            onShowSmartParking()
+                        }) {
+                            Label("Smart Parking", systemImage: "sparkles")
+                        }
+                    } label: {
+                        ZStack {
+                            Circle()
                                 .fill(Color(.systemGray6))
-                        )
+                                .frame(width: 36, height: 36)
+                            
+                            Image(systemName: "ellipsis")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.secondary)
+                        }
                     }
                 }
             }

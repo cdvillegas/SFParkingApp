@@ -39,6 +39,9 @@ class ParkingDetector: NSObject, ObservableObject {
     private let motionManager = CMMotionActivityManager()
     private var backgroundTaskID: UIBackgroundTaskIdentifier = .invalid
     
+    // Visit monitoring for terminated app support
+    private var isVisitMonitoringEnabled = false
+    
     // Speed tracking
     private var speedReadings: [(speed: Double, timestamp: Date)] = []
     private var speedTimer: Timer?
@@ -53,12 +56,48 @@ class ParkingDetector: NSObject, ObservableObject {
     private var lastDisconnectionTime: Date?
     private var currentDetectionMethod: ParkingDetectionMethod?
     
+    
     // Settings
     private var isEnabled = false
-    private let speedThreshold: Double = 25.0 // mph
+    private let speedThreshold: Double = 15.0 // mph (reduced from 25)
     private let speedWindowDuration: TimeInterval = 600 // 10 minutes
     private let motionValidationDuration: TimeInterval = 20 // 20 seconds
     private let reconnectionGracePeriod: TimeInterval = 30 // 30 seconds
+    
+    // State persistence for background/terminated app recovery
+    private struct PersistentState: Codable {
+        let wasConnected: Bool
+        let maxSpeed: Double
+        let connectionTimestamp: Date?
+        let lastLocationLatitude: Double?
+        let lastLocationLongitude: Double?
+        let version: Int // For future migrations
+        let savedAt: Date // Track when state was saved
+        
+        var wasDriving: Bool {
+            return maxSpeed >= 15.0
+        }
+        
+        var lastLocation: CLLocation? {
+            guard let lat = lastLocationLatitude, let lng = lastLocationLongitude else { return nil }
+            return CLLocation(latitude: lat, longitude: lng)
+        }
+        
+        var isStale: Bool {
+            // Consider state stale after 2 hours
+            return Date().timeIntervalSince(savedAt) > 7200
+        }
+        
+        init(wasConnected: Bool, maxSpeed: Double, connectionTimestamp: Date?, lastLocation: CLLocation?) {
+            self.wasConnected = wasConnected
+            self.maxSpeed = maxSpeed
+            self.connectionTimestamp = connectionTimestamp
+            self.lastLocationLatitude = lastLocation?.coordinate.latitude
+            self.lastLocationLongitude = lastLocation?.coordinate.longitude
+            self.version = 1
+            self.savedAt = Date()
+        }
+    }
     
     override init() {
         super.init()
@@ -66,6 +105,9 @@ class ParkingDetector: NSObject, ObservableObject {
         setupAudioSession()
         setupNotifications()
         loadSettings()
+        
+        // Check for pending parking detection on startup
+        checkPendingParkingOnStartup()
     }
     
     // MARK: - Public API
@@ -77,8 +119,18 @@ class ParkingDetector: NSObject, ObservableObject {
         isEnabled = true
         isMonitoring = true
         
+        // Send debug notification
+        sendDebugNotification(
+            title: "🚗 Smart Park Enabled",
+            body: "Monitoring started - App state: \(UIApplication.shared.applicationState.rawValue == 0 ? "active" : "background/inactive")"
+        )
+        
+        // Start visit monitoring for terminated app support
+        startVisitMonitoring()
+        
         // Check initial car connection state
         checkInitialCarConnectionState()
+        
         
         saveSettings()
     }
@@ -92,6 +144,7 @@ class ParkingDetector: NSObject, ObservableObject {
         
         stopSpeedMonitoring()
         stopMotionValidation()
+        stopVisitMonitoring()
         updateState(.idle)
         
         saveSettings()
@@ -147,20 +200,6 @@ class ParkingDetector: NSObject, ObservableObject {
             object: nil
         )
         
-        // UIScreen notifications for CarPlay (foreground only)
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(screenDidConnect),
-            name: UIScreen.didConnectNotification,
-            object: nil
-        )
-        
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(screenDidDisconnect),
-            name: UIScreen.didDisconnectNotification,
-            object: nil
-        )
     }
     
     // MARK: - Car Connection Detection
@@ -200,13 +239,6 @@ class ParkingDetector: NSObject, ObservableObject {
             }
         }
         
-        // Check for CarPlay via UIScreen (when app is active)
-        let carPlayScreens = UIScreen.screens.filter { $0.traitCollection.userInterfaceIdiom == .carPlay }
-        if !carPlayScreens.isEmpty {
-            currentDetectionMethod = .carPlay
-            return true
-        }
-        
         return false
     }
     
@@ -216,6 +248,15 @@ class ParkingDetector: NSObject, ObservableObject {
         let isConnected = isCarAudioConnected()
         let wasConnected = (currentState == .connected || currentState == .driving)
         
+        // Debug notification for route change
+        let routeChangeReason = notification.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt ?? 0
+        let reasonString = getRouteChangeReasonString(reason: routeChangeReason)
+        
+        sendDebugNotification(
+            title: "🎵 Audio Route Changed",
+            body: "Reason: \(reasonString), Connected: \(isConnected), App: \(UIApplication.shared.applicationState.rawValue == 0 ? "active" : "background")"
+        )
+        
         if isConnected && !wasConnected {
             handleCarConnected()
         } else if !isConnected && wasConnected {
@@ -223,22 +264,27 @@ class ParkingDetector: NSObject, ObservableObject {
         }
     }
     
-    @objc private func screenDidConnect(notification: Notification) {
-        if let screen = notification.object as? UIScreen,
-           screen.traitCollection.userInterfaceIdiom == .carPlay {
-            print("🚗 CarPlay screen connected")
-            currentDetectionMethod = .carPlay
-            handleCarConnected()
+    private func getRouteChangeReasonString(reason: UInt) -> String {
+        switch reason {
+        case AVAudioSession.RouteChangeReason.newDeviceAvailable.rawValue:
+            return "New device available"
+        case AVAudioSession.RouteChangeReason.oldDeviceUnavailable.rawValue:
+            return "Old device unavailable"
+        case AVAudioSession.RouteChangeReason.categoryChange.rawValue:
+            return "Category change"
+        case AVAudioSession.RouteChangeReason.override.rawValue:
+            return "Override"
+        case AVAudioSession.RouteChangeReason.wakeFromSleep.rawValue:
+            return "Wake from sleep"
+        case AVAudioSession.RouteChangeReason.noSuitableRouteForCategory.rawValue:
+            return "No suitable route"
+        case AVAudioSession.RouteChangeReason.routeConfigurationChange.rawValue:
+            return "Route configuration change"
+        default:
+            return "Unknown (\(reason))"
         }
     }
     
-    @objc private func screenDidDisconnect(notification: Notification) {
-        if let screen = notification.object as? UIScreen,
-           screen.traitCollection.userInterfaceIdiom == .carPlay {
-            print("🚗 CarPlay screen disconnected")
-            handleCarDisconnected()
-        }
-    }
     
     @objc private func appDidBecomeActive() {
         if isMonitoring {
@@ -268,11 +314,18 @@ class ParkingDetector: NSObject, ObservableObject {
         
         print("🚗 ✅ Car connected via \(currentDetectionMethod?.description ?? "unknown")")
         
+        // Send debug notification for connection
+        sendDebugNotification(
+            title: "🚗 Car Connected",
+            body: "Connected via \(currentDetectionMethod?.description ?? "unknown") - App state: \(UIApplication.shared.applicationState.rawValue == 0 ? "active" : "background/inactive")"
+        )
+        
         // Check for quick reconnection (cancel parking)
         if let lastDisconnection = lastDisconnectionTime,
            Date().timeIntervalSince(lastDisconnection) < reconnectionGracePeriod {
             print("🚗 Quick reconnection detected - canceling parking detection")
             stopMotionValidation()
+            clearPersistentState() // Clear any pending parking state
             updateState(.connected)
             return
         }
@@ -280,6 +333,9 @@ class ParkingDetector: NSObject, ObservableObject {
         carConnectedTimestamp = Date()
         updateState(.connected)
         startSpeedMonitoring()
+        
+        // Save initial state for background recovery
+        savePersistentState()
         
         // Request location permission if needed
         requestLocationPermissionIfNeeded()
@@ -292,20 +348,65 @@ class ParkingDetector: NSObject, ObservableObject {
         print("🚗 ❌ Car disconnected")
         lastDisconnectionTime = Date()
         
+        // Send debug notification for disconnection
+        sendDebugNotification(
+            title: "🚗 Car Disconnected",
+            body: "Max speed: \(String(format: "%.1f", maxSpeedInWindow)) mph - App state: \(UIApplication.shared.applicationState.rawValue == 0 ? "active" : "background/inactive")"
+        )
+        
         stopSpeedMonitoring()
         
-        // Check if we were actually driving
-        if maxSpeedInWindow >= speedThreshold {
-            print("🚗 Driving detected (max speed: \(maxSpeedInWindow) mph) - starting parking validation")
+        // Confidence-based validation logic
+        let shouldValidateParking = shouldValidateParkingBasedOnConfidence()
+        
+        if shouldValidateParking {
+            let confidenceReason = getConfidenceReason()
+            print("🚗 \(confidenceReason) - starting parking validation")
+            sendDebugNotification(
+                title: "🚗 Parking Validation Started",
+                body: confidenceReason
+            )
             startParkingValidation()
         } else {
-            print("🚗 No significant driving detected (max speed: \(maxSpeedInWindow) mph) - ignoring")
+            print("🚗 Low confidence connection (max speed: \(maxSpeedInWindow) mph) - ignoring")
+            sendDebugNotification(
+                title: "🚗 Parking Ignored",
+                body: "Low confidence - Max speed: \(String(format: "%.1f", maxSpeedInWindow)) mph"
+            )
             updateState(.idle)
         }
         
         // Reset for next connection
         speedReadings.removeAll()
         maxSpeedInWindow = 0
+    }
+    
+    private func shouldValidateParkingBasedOnConfidence() -> Bool {
+        // High confidence: iOS explicitly identifies this as car audio
+        if currentDetectionMethod == .carAudio || currentDetectionMethod == .carPlay {
+            print("🚗 High confidence car detection - trusting iOS identification")
+            return true
+        }
+        
+        // Medium confidence: Generic connection but confirmed driving speed
+        if maxSpeedInWindow >= speedThreshold {
+            return true
+        }
+        
+        // Low confidence: Generic connection with low speed
+        return false
+    }
+    
+    private func getConfidenceReason() -> String {
+        if currentDetectionMethod == .carAudio {
+            return "iOS-confirmed car audio (confidence: high)"
+        } else if currentDetectionMethod == .carPlay {
+            return "iOS-confirmed CarPlay (confidence: high)"
+        } else if maxSpeedInWindow >= speedThreshold {
+            return "Driving speed confirmed: \(String(format: "%.1f", maxSpeedInWindow)) mph (confidence: medium)"
+        } else {
+            return "Unknown confidence level"
+        }
     }
     
     // MARK: - Speed Monitoring
@@ -349,6 +450,9 @@ class ParkingDetector: NSObject, ObservableObject {
         if maxSpeedInWindow >= speedThreshold && currentState == .connected {
             updateState(.driving)
         }
+        
+        // Save updated state for background recovery
+        savePersistentState()
     }
     
     // MARK: - Parking Validation
@@ -468,6 +572,27 @@ class ParkingDetector: NSObject, ObservableObject {
         }
     }
     
+    private func sendDebugNotification(title: String, body: String) {
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        content.sound = .default
+        
+        let request = UNNotificationRequest(
+            identifier: "parking_debug_\(Date().timeIntervalSince1970)",
+            content: content,
+            trigger: nil
+        )
+        
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("🚗 ❌ Failed to send debug notification: \(error)")
+            } else {
+                print("🚗 ✅ Debug notification sent: \(title)")
+            }
+        }
+    }
+    
     // MARK: - Background Task
     
     private func startBackgroundTask() {
@@ -500,6 +625,164 @@ class ParkingDetector: NSObject, ObservableObject {
         }
     }
     
+    // MARK: - Visit Monitoring (for terminated app support)
+    
+    private func startVisitMonitoring() {
+        guard locationManager.authorizationStatus == .authorizedAlways else {
+            print("🚗 ⚠️ Visit monitoring requires Always location permission")
+            return
+        }
+        
+        print("🚗 Starting visit monitoring for terminated app support")
+        locationManager.startMonitoringVisits()
+        isVisitMonitoringEnabled = true
+    }
+    
+    private func stopVisitMonitoring() {
+        guard isVisitMonitoringEnabled else { return }
+        
+        print("🚗 Stopping visit monitoring")
+        locationManager.stopMonitoringVisits()
+        isVisitMonitoringEnabled = false
+    }
+    
+    private func handleVisitEvent(_ visit: CLVisit) {
+        print("🚗 📍 Visit detected - Arrival: \(visit.arrivalDate), Departure: \(visit.departureDate)")
+        
+        // Only process visit if we have a recent driving session
+        guard let persistentState = loadPersistentState(),
+              !persistentState.isStale,
+              persistentState.wasDriving,
+              let connectionTime = persistentState.connectionTimestamp,
+              Date().timeIntervalSince(connectionTime) < 3600 else { // Within 1 hour
+            print("🚗 Visit ignored - no recent driving session or state is stale")
+            // Clean up stale state
+            if let state = loadPersistentState(), state.isStale {
+                clearPersistentState()
+            }
+            return
+        }
+        
+        // If this is a departure from where we were connected, likely parking
+        if visit.departureDate != Date.distantFuture {
+            print("🚗 🅿️ Visit departure detected - potential parking location")
+            validateParkingFromVisit(visit)
+        }
+    }
+    
+    private func validateParkingFromVisit(_ visit: CLVisit) {
+        startBackgroundTask()
+        
+        // Use visit location as parking location
+        let visitLocation = CLLocation(latitude: visit.coordinate.latitude, longitude: visit.coordinate.longitude)
+        
+        // Quick motion check - if we can detect walking, confirm parking
+        if CMMotionActivityManager.isActivityAvailable() {
+            motionManager.queryActivityStarting(from: Date().addingTimeInterval(-60), // Last minute
+                                              to: Date(),
+                                              to: .main) { activities, error in
+                
+                let hasWalking = activities?.contains { $0.walking && $0.confidence == .high } ?? false
+                
+                if hasWalking {
+                    print("🚗 ✅ Visit + walking detected - saving parking location")
+                    self.saveParkingLocationFromVisit(visitLocation)
+                } else {
+                    print("🚗 ❌ Visit detected but no walking - not confirming parking")
+                    // Still clear persistent state even if we don't save parking
+                    self.clearPersistentState()
+                }
+                
+                self.endBackgroundTask()
+            }
+        } else {
+            // No motion available, save parking based on visit alone
+            print("🚗 💾 Motion unavailable - saving parking based on visit")
+            saveParkingLocationFromVisit(visitLocation)
+            endBackgroundTask()
+        }
+    }
+    
+    private func saveParkingLocationFromVisit(_ location: CLLocation) {
+        // Clear persistent state since we've processed it
+        clearPersistentState()
+        
+        // Reverse geocode for address
+        let geocoder = CLGeocoder()
+        geocoder.reverseGeocodeLocation(location) { placemarks, error in
+            let address = placemarks?.first?.thoroughfare ?? "Unknown Location"
+            
+            let parkingLocation = DetectedParkingLocation(
+                coordinate: location.coordinate,
+                address: address,
+                timestamp: Date(),
+                confidence: 0.7, // Lower confidence for visit-based detection
+                detectionMethod: .carAudio
+            )
+            
+            DispatchQueue.main.async {
+                self.currentParkingLocation = parkingLocation
+                self.updateState(.parked)
+                self.sendParkingNotification(location: parkingLocation)
+            }
+        }
+    }
+    
+    // MARK: - State Persistence
+    
+    private func savePersistentState() {
+        let state = PersistentState(
+            wasConnected: (currentState == .connected || currentState == .driving),
+            maxSpeed: maxSpeedInWindow,
+            connectionTimestamp: carConnectedTimestamp,
+            lastLocation: locationManager.location
+        )
+        
+        let encoder = JSONEncoder()
+        if let data = try? encoder.encode(state) {
+            UserDefaults.standard.set(data, forKey: "parkingDetectorState")
+            print("🚗 💾 Persistent state saved - wasDriving: \(state.wasDriving), maxSpeed: \(state.maxSpeed)")
+        }
+    }
+    
+    private func loadPersistentState() -> PersistentState? {
+        guard let data = UserDefaults.standard.data(forKey: "parkingDetectorState") else { return nil }
+        
+        let decoder = JSONDecoder()
+        do {
+            let state = try decoder.decode(PersistentState.self, from: data)
+            print("🚗 📱 Loaded persistent state - wasDriving: \(state.wasDriving), maxSpeed: \(state.maxSpeed)")
+            return state
+        } catch {
+            print("🚗 ❌ Failed to decode persistent state: \(error)")
+            // Clear corrupted state
+            clearPersistentState()
+            return nil
+        }
+    }
+    
+    private func clearPersistentState() {
+        UserDefaults.standard.removeObject(forKey: "parkingDetectorState")
+        print("🚗 🧹 Persistent state cleared")
+    }
+    
+    private func checkPendingParkingOnStartup() {
+        // Check if we have persistent state indicating a potential parking event
+        guard let persistentState = loadPersistentState(),
+              !persistentState.isStale,
+              persistentState.wasDriving else {
+            return
+        }
+        
+        print("🚗 🔄 App startup detected pending parking state - monitoring visits")
+        
+        // If we have pending driving state on startup, we might have missed a parking event
+        // Start visit monitoring immediately if we have permission
+        if locationManager.authorizationStatus == .authorizedAlways {
+            startVisitMonitoring()
+        }
+    }
+    
     // MARK: - Settings
     
     private func loadSettings() {
@@ -510,6 +793,7 @@ class ParkingDetector: NSObject, ObservableObject {
     private func saveSettings() {
         UserDefaults.standard.set(isEnabled, forKey: "parkingDetectionEnabled")
     }
+    
     
     deinit {
         NotificationCenter.default.removeObserver(self)
@@ -526,10 +810,19 @@ extension ParkingDetector: CLLocationManagerDelegate {
         // Speed monitoring is handled in updateSpeedReading()
     }
     
+    func locationManager(_ manager: CLLocationManager, didVisit visit: CLVisit) {
+        print("🚗 📍 CLLocationManager visit received")
+        handleVisitEvent(visit)
+    }
+    
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
         switch status {
         case .authorizedAlways:
             locationManager.startUpdatingLocation()
+            // Start visit monitoring if we're already monitoring
+            if isMonitoring && !isVisitMonitoringEnabled {
+                startVisitMonitoring()
+            }
         case .authorizedWhenInUse:
             // Request always authorization for background detection
             locationManager.requestAlwaysAuthorization()

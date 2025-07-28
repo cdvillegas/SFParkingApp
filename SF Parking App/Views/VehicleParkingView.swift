@@ -28,16 +28,6 @@ struct VehicleParkingView: View {
                     VehicleParkingMapView(viewModel: viewModel)
                         .frame(maxHeight: .infinity)
                     
-                    // Auto parking toggle button in top-left
-                    VStack {
-                        HStack {
-                            autoParkingToggleButton
-                            Spacer()
-                        }
-                        Spacer()
-                    }
-                    .padding(.top, 8)
-                    .padding(.leading, 16)
                 }
                 
                 // Bottom interface
@@ -181,6 +171,9 @@ struct VehicleParkingView: View {
                 viewModel: viewModel,
                 onShowReminders: {
                     showingRemindersSheet = true
+                },
+                onShowSmartParking: {
+                    showingAutoParkingSettings = true
                 }
             )
         }
@@ -279,31 +272,6 @@ struct VehicleParkingView: View {
         // parkingDetectionHandler will be cleared when user confirms the location
     }
     
-    // MARK: - Auto Parking Toggle Button
-    
-    private var autoParkingToggleButton: some View {
-        Button(action: {
-            showingAutoParkingSettings = true
-        }) {
-            HStack(spacing: 8) {
-                Image(systemName: "sparkles")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(parkingDetector.isMonitoring ? .white : .primary)
-                
-                Text(parkingDetector.isMonitoring ? "Enabled" : "Enable Smart Park")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(parkingDetector.isMonitoring ? .white : .primary)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(parkingDetector.isMonitoring ? Color.blue : Color(.systemGray6))
-                    .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-            )
-        }
-        .buttonStyle(PlainButtonStyle())
-    }
 }
 
 #Preview("Light Mode") {
