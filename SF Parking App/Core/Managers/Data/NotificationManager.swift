@@ -134,7 +134,21 @@ class NotificationManager: NSObject, ObservableObject {
             options: [.customDismissAction]
         )
         
-        center.setNotificationCategories([streetCleaningCategory, parkingConfirmationCategory])
+        // Parking saved category - opens parking confirmation screen when tapped
+        let openParkingAction = UNNotificationAction(
+            identifier: "OPEN_PARKING_CONFIRMATION",
+            title: "View Location",
+            options: [.foreground]
+        )
+        
+        let parkingSavedCategory = UNNotificationCategory(
+            identifier: "PARKING_SAVED",
+            actions: [openParkingAction],
+            intentIdentifiers: [],
+            options: [.customDismissAction]
+        )
+        
+        center.setNotificationCategories([streetCleaningCategory, parkingConfirmationCategory, parkingSavedCategory])
     }
     
     // MARK: - Street Cleaning Notifications
@@ -837,6 +851,9 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
                 } else {
                     print("📱 App is launching - data stored for launch handling")
                 }
+            case "parking_location_update":
+                print("📱 Handling parking location update notification tap")
+                handleParkingLocationUpdateTap(userInfo: userInfo)
             default:
                 break
             }
@@ -896,6 +913,26 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
         // Don't clear stored data here - let the app launch flow handle it
         print("📱 Parking detection handled for immediate processing")
     }
+    
+    private func handleParkingLocationUpdateTap(userInfo: [AnyHashable: Any]) {
+        // Extract parking location data from notification
+        guard let action = userInfo["action"] as? String,
+              action == "open_parking_confirmation" else {
+            print("Invalid parking location update notification data")
+            return
+        }
+        
+        // Post notification to open parking confirmation screen
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(
+                name: .openParkingConfirmation,
+                object: nil,
+                userInfo: userInfo
+            )
+        }
+        
+        print("📱 Posted notification to open parking confirmation screen")
+    }
 }
 
 // MARK: - Data Models
@@ -948,6 +985,7 @@ enum NotificationTiming: String, CaseIterable, Codable {
 extension Notification.Name {
     static let streetCleaningNotificationTapped = Notification.Name("streetCleaningNotificationTapped")
     static let parkingDetected = Notification.Name("parkingDetected")
+    static let openParkingConfirmation = Notification.Name("openParkingConfirmation")
 }
 
 // MARK: - Placeholder Models (assuming these exist in your app)
