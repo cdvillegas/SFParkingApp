@@ -28,6 +28,10 @@ struct SmartParkingSettingsView: View {
                 
                 // How it works section (always visible)
                 howItWorksSection
+                    .padding(.bottom, 16)
+                
+                // Troubleshooting note
+                troubleshootingNote
                     .padding(.bottom, 20)
                 
                 Spacer()
@@ -210,6 +214,43 @@ struct SmartParkingSettingsView: View {
                 Spacer()
             }
             .padding(16)
+        }
+    }
+    
+    private var troubleshootingNote: some View {
+        Button(action: openBluetoothSettings) {
+            HStack(spacing: 12) {
+                Image(systemName: "questionmark.circle")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(Color.blue)
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Smart Park not working correctly?")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(.primary)
+                    
+                    Text("Set your car's Bluetooth device type to 'Car Stereo'")
+                        .font(.system(size: 13))
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.leading)
+                }
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.secondary)
+            }
+            .padding(16)
+        }
+        .background(Color(.systemGray6))
+        .cornerRadius(12)
+        .padding(.horizontal, 20)
+    }
+    
+    private func openBluetoothSettings() {
+        if let settingsUrl = URL(string: "App-Prefs:Bluetooth") {
+            UIApplication.shared.open(settingsUrl)
         }
     }
     
