@@ -229,7 +229,7 @@ struct SmartParkingSettingsView: View {
                         .font(.system(size: 15, weight: .medium))
                         .foregroundColor(.primary)
                     
-                    Text("Set your car's Bluetooth device type to 'Car Stereo'")
+                    Text("Ensure your car's make is in the Bluetooth device name (ex: Toyota)")
                         .font(.system(size: 13))
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.leading)

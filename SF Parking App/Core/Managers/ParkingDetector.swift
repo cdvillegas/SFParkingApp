@@ -44,6 +44,9 @@ class ParkingDetector: NSObject, ObservableObject {
     private let motionManager = CMMotionActivityManager()
     private var backgroundTaskID: UIBackgroundTaskIdentifier = .invalid
     
+    // Dependencies
+    private weak var vehicleManager: VehicleManager?
+    
     // Speed tracking
     private var speedReadings: [(speed: Double, timestamp: Date)] = []
     private var speedTimer: Timer?
@@ -62,7 +65,7 @@ class ParkingDetector: NSObject, ObservableObject {
     
     // Settings
     private var isEnabled = false
-    private let speedThreshold: Double = 15.0 // mph - lowered from 25
+    private let speedThreshold: Double = 10.0 // mph - lowered from 15 for better parking lot detection
     private let speedWindowDuration: TimeInterval = 600 // 10 minutes
     private let motionValidationDuration: TimeInterval = 600 // 10 minutes - extended from 20 seconds
     private let reconnectionGracePeriod: TimeInterval = 30 // 30 seconds
@@ -76,6 +79,10 @@ class ParkingDetector: NSObject, ObservableObject {
     }
     
     // MARK: - Public API
+    
+    func configure(vehicleManager: VehicleManager) {
+        self.vehicleManager = vehicleManager
+    }
     
     func startMonitoring() {
         guard !isMonitoring else { return }
@@ -188,6 +195,11 @@ class ParkingDetector: NSObject, ObservableObject {
         // Check audio routes for car audio
         let currentRoute = AVAudioSession.sharedInstance().currentRoute
         
+        print("🚗 🔍 Checking audio routes - found \(currentRoute.outputs.count) outputs:")
+        for (index, output) in currentRoute.outputs.enumerated() {
+            print("🚗   Output \(index): \(output.portType.rawValue) - \(output.portName)")
+        }
+        
         for output in currentRoute.outputs {
             let portName = output.portName.lowercased()
             
@@ -214,6 +226,27 @@ class ParkingDetector: NSObject, ObservableObject {
                 return true
             }
             
+            // Check for Bluetooth A2DP devices
+            if output.portType == .bluetoothA2DP {
+                // Check for car brand names in Bluetooth device name (High Confidence)
+                let carBrands = ["toyota", "honda", "ford", "bmw", "mercedes", "audi", "lexus", "acura", "infiniti", "cadillac", "buick", "gmc", "chevrolet", "chevy", "dodge", "ram", "jeep", "chrysler", "nissan", "mazda", "subaru", "hyundai", "kia", "volvo", "volkswagen", "vw", "porsche", "tesla", "mini", "land rover", "jaguar", "fiat", "alfa romeo"]
+                
+                for brand in carBrands {
+                    if portName.contains(brand) {
+                        currentDetectionMethod = .bluetooth
+                        currentConnectionConfidence = .high  // Car brand names are high confidence
+                        print("🚗 High confidence: Bluetooth device with car brand '\(brand)' - \(output.portName)")
+                        return true
+                    }
+                }
+                
+                // Generic Bluetooth audio without car brand - Low Confidence
+                currentDetectionMethod = .bluetooth
+                currentConnectionConfidence = .low
+                print("🚗 Low confidence: Generic Bluetooth A2DP device - \(output.portName)")
+                return true
+            }
+            
             if portName.contains("car") {
                 currentDetectionMethod = .carAudio
                 currentConnectionConfidence = .low
@@ -236,14 +269,21 @@ class ParkingDetector: NSObject, ObservableObject {
     
     @objc private func audioRouteChanged(notification: Notification) {
         print("🚗 Audio route changed (background capable)")
+        print("🚗 Current state: \(currentState), isEnabled: \(isEnabled), isMonitoring: \(isMonitoring)")
         
         let isConnected = isCarAudioConnected()
         let wasConnected = (currentState == .connected || currentState == .driving)
         
+        print("🚗 isConnected: \(isConnected), wasConnected: \(wasConnected)")
+        
         if isConnected && !wasConnected {
+            print("🚗 🔄 Handling car connection...")
             handleCarConnected()
         } else if !isConnected && wasConnected {
+            print("🚗 🔄 Handling car disconnection...")
             handleCarDisconnected()
+        } else {
+            print("🚗 ℹ️ No state change needed")
         }
     }
     
@@ -404,6 +444,7 @@ class ParkingDetector: NSObject, ObservableObject {
         
         // Timeout for validation
         DispatchQueue.main.asyncAfter(deadline: .now() + motionValidationDuration) {
+            print("🚗 ⏰ Walking validation timeout reached after \(self.motionValidationDuration) seconds")
             self.completeWalkingValidation()
         }
     }
@@ -418,7 +459,12 @@ class ParkingDetector: NSObject, ObservableObject {
         walkingDetected = false
         
         motionManager.startActivityUpdates(to: .main) { activity in
-            guard let activity = activity else { return }
+            guard let activity = activity else { 
+                print("🚗 ⚠️ No motion activity data received")
+                return 
+            }
+            
+            print("🚗 Motion update - walking: \(activity.walking), confidence: \(activity.confidence.rawValue), automotive: \(activity.automotive), stationary: \(activity.stationary)")
             
             if activity.walking && activity.confidence == .high {
                 print("🚗 ✅ Walking detected - parking validated")
@@ -463,7 +509,7 @@ class ParkingDetector: NSObject, ObservableObject {
         // Reverse geocode for address
         let geocoder = CLGeocoder()
         geocoder.reverseGeocodeLocation(location) { placemarks, error in
-            let address = placemarks?.first?.thoroughfare ?? "Unknown Location"
+            let address = self.formatAddress(from: placemarks?.first) ?? "Parking Location"
             
             let parkingLocation = DetectedParkingLocation(
                 coordinate: location.coordinate,
@@ -490,7 +536,32 @@ class ParkingDetector: NSObject, ObservableObject {
         
         print("🚗 ✅ Walking confirmed - finalizing parking location")
         
-        // Set as the current parking location
+        // Convert DetectedParkingLocation to ParkingLocation and save to vehicle
+        let source: ParkingSource = {
+            switch pendingLocation.detectionMethod {
+            case .carPlay: return .carplay
+            case .carAudio: return .carDisconnect
+            case .bluetooth: return .bluetooth
+            }
+        }()
+        
+        let parkingLocation = ParkingLocation(
+            coordinate: pendingLocation.coordinate,
+            address: pendingLocation.address,
+            timestamp: pendingLocation.timestamp,
+            source: source
+        )
+        
+        // Save to vehicle manager
+        if let vehicleManager = vehicleManager,
+           let currentVehicle = vehicleManager.currentVehicle {
+            vehicleManager.setParkingLocation(for: currentVehicle, location: parkingLocation)
+            print("🚗 Parking location saved to vehicle: \(pendingLocation.address)")
+        } else {
+            print("🚗 ⚠️ VehicleManager not available - location not saved to vehicle")
+        }
+        
+        // Set as the current parking location for our own state
         currentParkingLocation = pendingLocation
         updateState(.parked)
         sendParkingNotification(location: pendingLocation)
@@ -561,6 +632,24 @@ class ParkingDetector: NSObject, ObservableObject {
                 print("🚗 ✅ Parking notification sent")
             }
         }
+    }
+    
+    private func formatAddress(from placemark: CLPlacemark?) -> String? {
+        guard let placemark = placemark else { return nil }
+        
+        // Try different address components
+        if let streetNumber = placemark.subThoroughfare,
+           let streetName = placemark.thoroughfare {
+            return "\(streetNumber) \(streetName)"
+        } else if let streetName = placemark.thoroughfare {
+            return streetName
+        } else if let locality = placemark.locality {
+            return locality
+        } else if let name = placemark.name {
+            return name
+        }
+        
+        return nil
     }
     
     // MARK: - Background Task
