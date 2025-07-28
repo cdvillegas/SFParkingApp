@@ -25,110 +25,86 @@ struct RemindersSheet: View {
     @State private var hasLoggedOpen = false
     
     var body: some View {
-        ZStack {
-            Color(.systemBackground)
-                .ignoresSafeArea(.all)
-            
-            NavigationView {
-                VStack(spacing: 0) {
-                    // Fixed header
-                    headerSection
-                        .padding(.horizontal, 20)
-                        .padding(.top, 40)
-                        .padding(.bottom, 24)
-                    
-                    // Fixed street info card - only show if there's a real upcoming schedule
-                    if schedule.dayOfWeek != "Next Week" {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("UPCOMING SCHEDULE")
-                                .font(.footnote)
-                                .fontWeight(.medium)
-                                .foregroundColor(.secondary)
-                                .padding(.horizontal, 20)
-                                .onAppear {
-                                    if !hasLoggedOpen {
-                                        AnalyticsManager.shared.logRemindersSheetOpened()
-                                        hasLoggedOpen = true
-                                    }
-                                }
-                            
-                            streetInfoCard
-                                .background(.clear)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
-                                )
-                                .padding(.horizontal, 20)
-                        }
-                        .padding(.bottom, 20)
-                    }
-                    
-                    // Always show the Active Reminders section title
+        NavigationView {
+            VStack(spacing: 0) {
+                // Fixed header
+                headerSection
+                    .padding(.horizontal, 20)
+                    .padding(.top, 40)
+                    .padding(.bottom, 32)
+                
+                // Fixed street info card - only show if there's a real upcoming schedule
+                if schedule.dayOfWeek != "Next Week" {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("MY REMINDERS")
+                        Text("UPCOMING SCHEDULE")
                             .font(.footnote)
                             .fontWeight(.medium)
                             .foregroundColor(.secondary)
                             .padding(.horizontal, 20)
-                        
-                        // Scrollable content - unified for all states
-                        ScrollView {
-                            VStack(spacing: 24) {
-                                // Show unified empty state for both notifications disabled and no reminders
-                                if !notificationsEnabled || notificationManager.customReminders.isEmpty {
-                                    UnifiedEmptyStateView(isNotificationsDisabled: !notificationsEnabled)
-                                        .frame(minHeight: 300) // Give it consistent height for centering
-                                } else {
-                                    // Only custom reminders section
-                                    CustomRemindersListView(
-                                        showingCustomReminderEditor: $showingCustomReminderEditor,
-                                        customReminderToEdit: $customReminderToEdit,
-                                        nextCleaningDate: schedule.date
-                                    )
+                            .onAppear {
+                                if !hasLoggedOpen {
+                                    AnalyticsManager.shared.logRemindersSheetOpened()
+                                    hasLoggedOpen = true
                                 }
                             }
-                            .padding(.horizontal, 20)
-                            .padding(.bottom, 120) // Add bottom padding to ensure content doesn't get hidden behind button
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color.clear)
-                .navigationBarHidden(true)
-                .overlay(alignment: .bottom) {
-                    // Fixed bottom button with gradient fade
-                    VStack(spacing: 0) {
-                        // Smooth gradient fade
-                        LinearGradient(
-                            colors: [
-                                Color.clear,
-                                Color(.systemBackground)
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                        .frame(height: 50)
                         
-                        // Button area with solid background
-                        VStack(spacing: 0) {
-                            if !notificationsEnabled {
-                                // User needs to enable notifications first
-                                enableNotificationsButton
+                        streetInfoCard
+                            .padding(.horizontal, 20)
+                    }
+                    .padding(.bottom, 32)
+                }
+                
+                // Always show the Active Reminders section title
+                VStack(alignment: .leading, spacing: 20) {
+                    Text("MY REMINDERS")
+                        .font(.footnote)
+                        .fontWeight(.medium)
+                        .foregroundColor(.secondary)
+                        .padding(.horizontal, 20)
+                    
+                    // Scrollable content - unified for all states
+                    ScrollView {
+                        VStack(spacing: 24) {
+                            // Show unified empty state for both notifications disabled and no reminders
+                            if !notificationsEnabled || notificationManager.customReminders.isEmpty {
+                                UnifiedEmptyStateView(isNotificationsDisabled: !notificationsEnabled)
+                                    .frame(minHeight: 300) // Give it consistent height for centering
                                     .padding(.horizontal, 20)
-                                    .padding(.bottom, 20)
                             } else {
-                                // User has notifications enabled, show the normal action button
-                                actionButton
-                                    .padding(.horizontal, 20)
-                                    .padding(.bottom, 20)
+                                // Only custom reminders section
+                                CustomRemindersListView(
+                                    showingCustomReminderEditor: $showingCustomReminderEditor,
+                                    customReminderToEdit: $customReminderToEdit,
+                                    nextCleaningDate: schedule.date
+                                )
+                                .padding(.horizontal, 20)
                             }
                         }
-                        .background(Color(.systemBackground))
+                        .padding(.bottom, 120) // Add bottom padding to ensure content doesn't get hidden behind button
                     }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.clear)
+            .navigationBarHidden(true)
+            .overlay(alignment: .bottom) {
+                // Fixed bottom button
+                VStack(spacing: 0) {
+                    if !notificationsEnabled {
+                        // User needs to enable notifications first
+                        enableNotificationsButton
+                            .padding(.horizontal, 20)
+                            .padding(.bottom, 20)
+                    } else {
+                        // User has notifications enabled, show the normal action button
+                        actionButton
+                            .padding(.horizontal, 20)
+                            .padding(.bottom, 20)
+                    }
+                }
+                .background(Color.clear)
+            }
         }
         .onAppear {
             checkNotificationPermissions()
@@ -177,8 +153,9 @@ struct RemindersSheet: View {
                 }
             )
         }
+        .presentationBackground(.ultraThinMaterial)
+        .presentationBackgroundInteraction(.enabled)
     }
-    
     
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -224,9 +201,9 @@ struct RemindersSheet: View {
                     } label: {
                         HStack(spacing: 8) {
                             Image(systemName: "plus")
-                                .font(.system(size: 16, weight: .bold))
+                                .font(.system(size: 15, weight: .bold))
                             Text("Add")
-                                .font(.system(size: 16, weight: .semibold))
+                                .font(.system(size: 15, weight: .semibold))
                         }
                         .foregroundColor(.white)
                         .padding(.horizontal, 16)
@@ -261,8 +238,8 @@ struct RemindersSheet: View {
             }
             
             VStack(alignment: .leading, spacing: 4) {
-                Text("Street cleaning \(timeUntil)")
-                    .font(.system(size: 17, weight: .semibold))
+                Text("Street Cleaning \(timeUntil)")
+                    .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(.primary)
                 
                 Text(formatDateAndTime(schedule.date, startTime: schedule.startTime, endTime: schedule.endTime))
@@ -274,9 +251,8 @@ struct RemindersSheet: View {
             Spacer()
         }
         .padding(16)
+        .background(.clear)
     }
-    
-    
     
     private var actionButton: some View {
         Button(action: {
@@ -301,35 +277,30 @@ struct RemindersSheet: View {
         .disabled(isSettingUpNotifications)
     }
     
-    
     private var enableNotificationsButton: some View {
         Button(action: {
             requestNotificationPermission()
         }) {
             Text("Enable Notifications")
                 .font(.system(size: 18, weight: .bold))
-            .foregroundColor(.white)
-            .frame(maxWidth: .infinity)
-            .frame(height: 56)
-            .background(
-                LinearGradient(
-                    colors: [Color.blue, Color.blue.opacity(0.8)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 56)
+                .background(
+                    LinearGradient(
+                        colors: [Color.blue, Color.blue.opacity(0.8)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
                 )
-            )
-            .cornerRadius(16)
-            .shadow(color: Color.blue.opacity(0.3), radius: 8, x: 0, y: 4)
+                .cornerRadius(16)
+                .shadow(color: Color.blue.opacity(0.3), radius: 8, x: 0, y: 4)
         }
     }
     
     private var activeCustomRemindersCount: Int {
         return notificationManager.customReminders.filter { $0.isActive }.count
     }
-    
-    
-    
-    
     
     // MARK: - Helper Methods
     private func checkNotificationPermissions() {
@@ -377,7 +348,6 @@ struct RemindersSheet: View {
                 await scheduleSelectedNotifications()
                 
                 await MainActor.run {
-                    
                     // Dismiss immediately when done
                     AnalyticsManager.shared.logRemindersSheetClosed()
                     dismiss()
@@ -467,15 +437,15 @@ struct RemindersSheet: View {
         
         // Handle past/current times
         if totalSeconds <= 0 {
-            return "happening now"
+            return "Happening Now"
         }
         
         // Handle very soon (under 2 minutes)
         if totalSeconds < 120 {
             if totalSeconds < 60 {
-                return "in under 1 minute"
+                return "In Under 1 Minute"
             } else {
-                return "in 1 minute"
+                return "In 1 Minute"
             }
         }
         
@@ -487,17 +457,17 @@ struct RemindersSheet: View {
         
         // Under 1 hour - show minutes
         if hours < 1 {
-            return "in \(minutes) minute\(minutes == 1 ? "" : "s")"
+            return "In \(minutes) Minute\(minutes == 1 ? "" : "s")"
         }
         
         // Under 12 hours - show hours and be precise
         if hours < 12 {
             if remainingMinutes < 10 {
-                return "in \(hours) hour\(hours == 1 ? "" : "s")"
+                return "In \(hours) Hour\(hours == 1 ? "" : "s")"
             } else if remainingMinutes < 40 {
-                return "in \(hours)½ hours"
+                return "In \(hours)½ Hours"
             } else {
-                return "in \(hours + 1) hours"
+                return "In \(hours + 1) Hours"
             }
         }
         
@@ -506,9 +476,9 @@ struct RemindersSheet: View {
             // Check if it's actually tomorrow
             let calendar = Calendar.current
             if calendar.isDateInTomorrow(date) {
-                return "tomorrow"
+                return "Tomorrow"
             } else if hours < 24 {
-                return "in \(hours) hours"
+                return "In \(hours) Hours"
             }
         }
         
@@ -516,20 +486,20 @@ struct RemindersSheet: View {
         if hours >= 36 && hours < 60 {
             // Round to nearest half day
             if remainingHours < 6 {
-                return "in \(days) day\(days == 1 ? "" : "s")"
+                return "In \(days) Day\(days == 1 ? "" : "s")"
             } else if remainingHours < 18 {
-                return "in \(days)½ days"
+                return "In \(days)½ Days"
             } else {
-                return "in \(days + 1) days"
+                return "In \(days + 1) Days"
             }
         }
         
         // 2.5 - 6.5 days - round to nearest day
         if days >= 2 && days < 7 {
             if remainingHours < 12 {
-                return "in \(days) days"
+                return "In \(days) Days"
             } else {
-                return "in \(days + 1) days"
+                return "In \(days + 1) Days"
             }
         }
         
@@ -538,16 +508,16 @@ struct RemindersSheet: View {
         if weeks >= 1 && weeks < 4 {
             let remainingDays = days % 7
             if weeks == 1 && remainingDays <= 1 {
-                return "in 1 week"
+                return "In 1 Week"
             } else if remainingDays <= 3 {
-                return "in \(weeks) week\(weeks == 1 ? "" : "s")"
+                return "In \(weeks) Week\(weeks == 1 ? "" : "s")"
             } else {
-                return "in \(weeks + 1) weeks"
+                return "In \(weeks + 1) Weeks"
             }
         }
         
         // Default for longer periods
-        return "in \(days) days"
+        return "In \(days) Days"
     }
 }
 
@@ -602,13 +572,13 @@ private struct UnifiedEmptyStateView: View {
     }
     
     private var subtitleText: String {
-        isNotificationsDisabled 
+        isNotificationsDisabled
             ? "Enable notifications to receive street cleaning reminders and avoid parking tickets."
             : "Create your first reminder using the Add button above to get notified before street cleaning."
     }
 }
 
-
+// MARK: - RemindersSheetContent (Preview Helper)
 private struct RemindersSheetContent: View {
     let schedule: UpcomingSchedule
     let parkingLocation: ParkingLocation?
@@ -690,7 +660,6 @@ private struct RemindersSheetContent: View {
                             
                             VStack(spacing: 0) {
                                 // Default reminders
-                                // ForEach(notificationOptions.indices, id: \.self) { index in
                                 HStack(spacing: 16) {
                                     // Icon
                                     ZStack {
@@ -724,86 +693,86 @@ private struct RemindersSheetContent: View {
                                 
                                 Divider()
                                     .padding(.leading, 56)
-                            }
-                            
-                            // Sample custom reminders for preview
-                            ForEach(["2 hours before", "All Clear"], id: \.self) { customTitle in
-                                HStack(spacing: 16) {
-                                    // Icon
-                                    ZStack {
-                                        Circle()
-                                            .fill(Color.purple.opacity(0.1))
-                                            .frame(width: 40, height: 40)
-                                        
-                                        Image(systemName: "bell.badge")
-                                            .font(.system(size: 16, weight: .medium))
-                                            .foregroundColor(.purple)
-                                    }
-                                    
-                                    // Text content
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text(customTitle)
-                                            .font(.system(size: 16, weight: .medium))
-                                        
-                                        Text("Custom reminder")
-                                            .font(.system(size: 14))
-                                            .foregroundColor(.secondary)
-                                    }
-                                    
-                                    Spacer()
-                                    
-                                    // Edit button
-                                    Button(action: {}) {
-                                        Image(systemName: "pencil")
-                                            .font(.system(size: 14, weight: .medium))
-                                            .foregroundColor(.purple)
-                                            .frame(width: 32, height: 32)
-                                            .background(Color.purple.opacity(0.1))
-                                            .clipShape(Circle())
-                                    }
-                                    
-                                    // Toggle
-                                    Toggle("", isOn: .constant(customTitle == "2 hours before")) // First custom enabled
-                                        .labelsHidden()
-                                }
-                                .padding(16)
-                                .background(.clear)
                                 
-                            if customTitle != "All Clear" {
-                                Divider()
-                                    .padding(.leading, 56)
+                                // Sample custom reminders for preview
+                                ForEach(["2 hours before", "All Clear"], id: \.self) { customTitle in
+                                    HStack(spacing: 16) {
+                                        // Icon
+                                        ZStack {
+                                            Circle()
+                                                .fill(Color.purple.opacity(0.1))
+                                                .frame(width: 40, height: 40)
+                                            
+                                            Image(systemName: "bell.badge")
+                                                .font(.system(size: 16, weight: .medium))
+                                                .foregroundColor(.purple)
+                                        }
+                                        
+                                        // Text content
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(customTitle)
+                                                .font(.system(size: 16, weight: .medium))
+                                            
+                                            Text("Custom reminder")
+                                                .font(.system(size: 14))
+                                                .foregroundColor(.secondary)
+                                        }
+                                        
+                                        Spacer()
+                                        
+                                        // Edit button
+                                        Button(action: {}) {
+                                            Image(systemName: "pencil")
+                                                .font(.system(size: 14, weight: .medium))
+                                                .foregroundColor(.purple)
+                                                .frame(width: 32, height: 32)
+                                                .background(Color.purple.opacity(0.1))
+                                                .clipShape(Circle())
+                                        }
+                                        
+                                        // Toggle
+                                        Toggle("", isOn: .constant(customTitle == "2 hours before")) // First custom enabled
+                                            .labelsHidden()
+                                    }
+                                    .padding(16)
+                                    .background(.clear)
+                                    
+                                    if customTitle != "All Clear" {
+                                        Divider()
+                                            .padding(.leading, 56)
+                                    }
+                                }
                             }
+                            .background(.clear)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
+                            )
                         }
-                        .background(.clear)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
-                        )
                     }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 40)
+                    
+                    Spacer()
+                    
+                    // Action button
+                    Button(action: {}) {
+                        Text("Looks Good")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 56)
+                            .background(Color.blue)
+                            .cornerRadius(16)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 20)
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 40)
-                
-                Spacer()
-                
-                // Action button
-                Button(action: {}) {
-                    Text("Looks Good")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 56)
-                        .background(Color.blue)
-                        .cornerRadius(16)
-                }
-                .padding(.horizontal, 20)
-                .padding(.bottom, 20)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.clear)
+                .navigationBarHidden(true)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.clear)
-            .navigationBarHidden(true)
-        }
-        .background(Color.clear)
         }
         .onAppear {
             notificationManager.loadCustomReminders()

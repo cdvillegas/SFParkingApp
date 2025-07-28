@@ -27,16 +27,16 @@ struct ReminderRowView: View {
             // Text content
             VStack(alignment: .leading, spacing: 2) {
                 Text(reminder.timing.displayText)
-                    .font(.system(size: 16, weight: .medium))
+                    .font(.system(size: 18, weight: .semibold))
                 
                 if let cleaningDate = nextCleaningDate,
                    let reminderDate = reminder.timing.notificationDate(from: cleaningDate) {
                     Text(formatReminderDateTime(reminderDate))
-                        .font(.system(size: 14))
+                        .font(.system(size: 15))
                         .foregroundColor(.secondary)
                 } else {
                     Text("No upcoming cleaning scheduled")
-                        .font(.system(size: 14))
+                        .font(.system(size: 15))
                         .foregroundColor(.secondary)
                 }
             }
@@ -61,7 +61,8 @@ struct ReminderRowView: View {
                     .contentShape(Rectangle())
             }
         }
-        .padding(24)
+        .padding(.vertical, 20)
+        .padding(.horizontal, 0)
         .background(.clear)
         .contentShape(Rectangle())
     }

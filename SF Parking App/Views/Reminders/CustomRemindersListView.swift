@@ -47,10 +47,6 @@ struct CustomRemindersListView: View {
                     }
                 }
                 .background(.clear)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
-                )
             }
         }
         .frame(maxWidth: .infinity)

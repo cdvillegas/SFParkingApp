@@ -5,58 +5,41 @@ struct SmartParkingSettingsView: View {
     @StateObject private var parkingDetector = ParkingDetector.shared
     
     var body: some View {
-        ZStack {
-            Color(.systemBackground)
-                .ignoresSafeArea(.all)
+        VStack(spacing: 0) {
+            // Header
+            headerSection
+                .padding(.horizontal, 20)
+                .padding(.top, 40)
+                .padding(.bottom, 24)
             
+            // Smart parking toggle card
+            carPlayStatusCard
+                .background(.ultraThinMaterial)
+                .cornerRadius(12)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 24)
+            
+            // How it works section (always visible)
+            howItWorksSection
+                .background(.ultraThinMaterial)
+                .cornerRadius(12)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 20)
+            
+            Spacer()
+        }
+        .presentationBackground(.ultraThinMaterial)
+        .presentationBackgroundInteraction(.enabled)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.clear)
+        .overlay(alignment: .bottom) {
+            // Fixed bottom button
             VStack(spacing: 0) {
-                // Header
-                headerSection
+                doneButton
                     .padding(.horizontal, 20)
-                    .padding(.top, 40)
-                    .padding(.bottom, 24)
-                
-                // Smart parking toggle card
-                carPlayStatusCard
-                    .background(.clear)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
-                    )
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 24)
-                
-                // How it works section (always visible)
-                howItWorksSection
                     .padding(.bottom, 20)
-                
-                Spacer()
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.clear)
-            .overlay(alignment: .bottom) {
-                // Fixed bottom button with gradient fade
-                VStack(spacing: 0) {
-                    // Smooth gradient fade
-                    LinearGradient(
-                        colors: [
-                            Color.clear,
-                            Color(.systemBackground)
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                    .frame(height: 50)
-                    
-                    // Button area with solid background
-                    VStack(spacing: 0) {
-                        doneButton
-                            .padding(.horizontal, 20)
-                            .padding(.bottom, 20)
-                    }
-                    .background(Color(.systemBackground))
-                }
-            }
         }
     }
     
