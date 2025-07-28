@@ -200,18 +200,74 @@ struct VehicleSwipeCard: View {
             return "No restrictions found"
         }
         
-        let formatter = DateFormatter()
         let calendar = Calendar.current
+        let now = Date()
+        let timeInterval = nextSchedule.date.timeIntervalSince(now)
+        let hours = timeInterval / 3600
+        let minutes = Int(timeInterval / 60)
         
+        // Very close (less than 2 hours)
+        if hours < 2 {
+            if minutes <= 30 {
+                return "Move in \(minutes) Minutes"
+            } else if minutes <= 60 {
+                return "Move in 1 Hour"
+            } else {
+                let roundedHours = Int(ceil(hours))
+                return "Move in \(roundedHours) Hours"
+            }
+        }
+        
+        // Today
         if calendar.isDateInToday(nextSchedule.date) {
             return "Move by Today, \(nextSchedule.startTime)"
-        } else if calendar.isDateInTomorrow(nextSchedule.date) {
+        }
+        
+        // Tomorrow
+        if calendar.isDateInTomorrow(nextSchedule.date) {
             return "Move by Tomorrow, \(nextSchedule.startTime)"
-        } else {
+        }
+        
+        // Calculate days more accurately
+        let startOfToday = calendar.startOfDay(for: now)
+        let startOfScheduleDay = calendar.startOfDay(for: nextSchedule.date)
+        let daysUntil = calendar.dateComponents([.day], from: startOfToday, to: startOfScheduleDay).day ?? 0
+        
+        // Debug logging
+        let debugFormatter = DateFormatter()
+        debugFormatter.dateFormat = "EEE MMM d, yyyy h:mm a"
+        print("🚗 VehicleView DEBUG:")
+        print("  Today: \(debugFormatter.string(from: now))")
+        print("  Next cleaning: \(debugFormatter.string(from: nextSchedule.date))")
+        print("  Days until: \(daysUntil)")
+        
+        if daysUntil == 2 {
+            return "Move in 2 Days, \(nextSchedule.startTime)"
+        }
+        
+        // Perfect logic based on your requirements:
+        // - Within 6 days: show day name with time
+        // - Exactly 7 days (next week same day): show "Next [Day]" without time  
+        // - 8+ days but < 2 weeks: show "Next [Day]" without time
+        // - 2+ weeks: show weeks
+        
+        if daysUntil <= 6 {
+            // Within 6 days - show day name with time
+            let formatter = DateFormatter()
             formatter.dateFormat = "EEEE"
             let dayString = formatter.string(from: nextSchedule.date)
             return "Move by \(dayString), \(nextSchedule.startTime)"
+        } else if daysUntil <= 14 {
+            // 7-14 days - show "Next [Day]" without time
+            let formatter = DateFormatter()
+            formatter.dateFormat = "EEEE"
+            let dayString = formatter.string(from: nextSchedule.date)
+            return "Move by Next \(dayString)"
         }
+        
+        // More than 2 weeks
+        let weeks = daysUntil / 7
+        return "Move in \(weeks) Weeks"
     }
     
     private enum UrgencyLevel {

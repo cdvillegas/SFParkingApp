@@ -14,7 +14,7 @@ struct CustomRemindersListView: View {
     let nextCleaningDate: Date?
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 0) {
             if notificationManager.customReminders.isEmpty {
                 Spacer()
                 
@@ -42,7 +42,7 @@ struct CustomRemindersListView: View {
                         
                         if reminder != notificationManager.customReminders.last {
                             Divider()
-                                .padding(.leading, 56)
+                                .padding(.horizontal, 20)
                         }
                     }
                 }

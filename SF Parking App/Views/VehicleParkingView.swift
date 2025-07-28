@@ -107,17 +107,8 @@ struct VehicleParkingView: View {
             Text("Enable notifications to get reminders about street cleaning and avoid parking tickets.")
         }
         .sheet(isPresented: $showingRemindersSheet) {
-            // Always use the same NotificationSettingsSheet, create dummy schedule if needed
-            let schedule = viewModel.streetDataManager.nextUpcomingSchedule ?? UpcomingSchedule(
-                streetName: viewModel.vehicleManager.currentVehicle?.parkingLocation?.address ?? "Your Location",
-                date: Date().addingTimeInterval(7 * 24 * 3600), // 1 week from now
-                endDate: Date().addingTimeInterval(7 * 24 * 3600 + 7200), // 2 hours later
-                dayOfWeek: "Next Week",
-                startTime: "8:00 AM",
-                endTime: "10:00 AM"
-            )
             RemindersSheet(
-                schedule: schedule,
+                schedule: viewModel.streetDataManager.nextUpcomingSchedule,
                 parkingLocation: viewModel.vehicleManager.currentVehicle?.parkingLocation
             )
         }
@@ -256,15 +247,15 @@ struct VehicleParkingView: View {
            let parkingLocation = selectedVehicle.parkingLocation {
             viewModel.centerMapOnLocation(parkingLocation.coordinate)
             
-            // Load persisted schedule if available
+            // Load user's selected schedule if available
             if let persistedSchedule = parkingLocation.selectedSchedule {
                 let schedule = StreetDataService.shared.convertToSweepSchedule(from: persistedSchedule)
                 viewModel.streetDataManager.schedule = schedule
                 viewModel.streetDataManager.processNextSchedule(for: schedule)
+            } else {
+                // Only fetch fresh data if no selected schedule is persisted
+                viewModel.streetDataManager.forceFetchSchedules(for: parkingLocation.coordinate)
             }
-            
-            // Always fetch fresh street data to ensure timing is current
-            viewModel.streetDataManager.fetchSchedules(for: parkingLocation.coordinate)
         } else if let userLocation = viewModel.locationManager.userLocation {
             viewModel.centerMapOnLocation(userLocation.coordinate)
         } else {

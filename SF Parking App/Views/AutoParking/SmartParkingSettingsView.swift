@@ -3,6 +3,7 @@ import SwiftUI
 struct SmartParkingSettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var parkingDetector = ParkingDetector.shared
+    @State private var impactFeedbackLight = UIImpactFeedbackGenerator(style: .light)
     
     var body: some View {
         VStack(spacing: 0) {
@@ -13,18 +14,34 @@ struct SmartParkingSettingsView: View {
                 .padding(.bottom, 24)
             
             // Smart parking toggle card
-            carPlayStatusCard
-                .background(.ultraThinMaterial)
-                .cornerRadius(12)
-                .padding(.horizontal, 20)
-                .padding(.bottom, 24)
+            VStack(spacing: 0) {
+                carPlayStatusCard
+            }
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(.ultraThinMaterial)
+            )
+            .padding(.horizontal, 20)
+            .padding(.bottom, 24)
             
             // How it works section (always visible)
-            howItWorksSection
-                .background(.ultraThinMaterial)
-                .cornerRadius(12)
+            VStack(alignment: .leading, spacing: 12) {
+                Text("HOW IT WORKS")
+                    .font(.footnote)
+                    .fontWeight(.medium)
+                    .foregroundColor(.secondary)
+                    .padding(.horizontal, 20)
+                
+                VStack(spacing: 0) {
+                    howItWorksCard
+                }
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                )
                 .padding(.horizontal, 20)
-                .padding(.bottom, 20)
+            }
+            .padding(.bottom, 20)
             
             Spacer()
         }
@@ -84,6 +101,7 @@ struct SmartParkingSettingsView: View {
             Toggle("", isOn: Binding(
                 get: { parkingDetector.isMonitoring },
                 set: { enabled in
+                    impactFeedbackLight.impactOccurred()
                     if enabled {
                         parkingDetector.startMonitoring()
                     } else {
@@ -93,24 +111,7 @@ struct SmartParkingSettingsView: View {
             ))
             .labelsHidden()
         }
-        .padding(16)
-    }
-    
-    private var howItWorksSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("HOW IT WORKS")
-                .font(.footnote)
-                .fontWeight(.medium)
-                .foregroundColor(.secondary)
-                .padding(.horizontal, 20)
-            
-            howItWorksCard
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
-                )
-                .padding(.horizontal, 20)
-        }
+        .padding(20)
     }
     
     private var howItWorksCard: some View {
@@ -138,7 +139,7 @@ struct SmartParkingSettingsView: View {
                 
                 Spacer()
             }
-            .padding(16)
+            .padding(20)
             
             Divider()
             
@@ -165,7 +166,7 @@ struct SmartParkingSettingsView: View {
                 
                 Spacer()
             }
-            .padding(16)
+            .padding(20)
             
             Divider()
             
@@ -192,7 +193,7 @@ struct SmartParkingSettingsView: View {
                 
                 Spacer()
             }
-            .padding(16)
+            .padding(20)
         }
     }
     
@@ -221,7 +222,7 @@ struct SmartParkingSettingsView: View {
                 
                 Spacer()
             }
-            .padding(16)
+            .padding(20)
         }
     }
     
@@ -264,9 +265,10 @@ struct SmartParkingSettingsView: View {
     
     private var doneButton: some View {
         Button(action: {
+            impactFeedbackLight.impactOccurred()
             dismiss()
         }) {
-            Text("Done")
+            Text("Looks Good")
                 .font(.system(size: 18, weight: .bold))
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)

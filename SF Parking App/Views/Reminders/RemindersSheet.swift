@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct RemindersSheet: View {
-    let schedule: UpcomingSchedule
+    let schedule: UpcomingSchedule?
     let parkingLocation: ParkingLocation?
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
@@ -31,11 +31,11 @@ struct RemindersSheet: View {
                 headerSection
                     .padding(.horizontal, 20)
                     .padding(.top, 40)
-                    .padding(.bottom, 32)
+                    .padding(.bottom, 24)
                 
                 // Fixed street info card - only show if there's a real upcoming schedule
-                if schedule.dayOfWeek != "Next Week" {
-                    VStack(alignment: .leading, spacing: 8) {
+                if let schedule = schedule, schedule.dayOfWeek != "Next Week" {
+                    VStack(alignment: .leading, spacing: 12) {
                         Text("UPCOMING SCHEDULE")
                             .font(.footnote)
                             .fontWeight(.medium)
@@ -48,41 +48,82 @@ struct RemindersSheet: View {
                                 }
                             }
                         
-                        streetInfoCard
-                            .padding(.horizontal, 20)
+                        VStack(spacing: 0) {
+                            streetInfoCard
+                                .padding(20)
+                        }
+                        .background(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .fill(.ultraThinMaterial)
+                        )
+                        .padding(.horizontal, 20)
                     }
-                    .padding(.bottom, 32)
+                    .padding(.bottom, 24)
                 }
                 
                 // Always show the Active Reminders section title
-                VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 0) {
                     Text("MY REMINDERS")
                         .font(.footnote)
                         .fontWeight(.medium)
                         .foregroundColor(.secondary)
                         .padding(.horizontal, 20)
+                        .padding(.bottom, 12)
                     
                     // Scrollable content - unified for all states
                     ScrollView {
-                        VStack(spacing: 24) {
+                        VStack(spacing: 0) {
                             // Show unified empty state for both notifications disabled and no reminders
                             if !notificationsEnabled || notificationManager.customReminders.isEmpty {
                                 UnifiedEmptyStateView(isNotificationsDisabled: !notificationsEnabled)
-                                    .frame(minHeight: 300) // Give it consistent height for centering
+                                    .frame(minHeight: 300)
+                                    .padding(20)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                            .fill(.ultraThinMaterial)
+                                    )
                                     .padding(.horizontal, 20)
                             } else {
                                 // Only custom reminders section
-                                CustomRemindersListView(
-                                    showingCustomReminderEditor: $showingCustomReminderEditor,
-                                    customReminderToEdit: $customReminderToEdit,
-                                    nextCleaningDate: schedule.date
+                                VStack(spacing: 0) {
+                                    CustomRemindersListView(
+                                        showingCustomReminderEditor: $showingCustomReminderEditor,
+                                        customReminderToEdit: $customReminderToEdit,
+                                        nextCleaningDate: schedule?.date ?? Date()
+                                    )
+                                }
+                                .background(
+                                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                        .fill(.ultraThinMaterial)
                                 )
                                 .padding(.horizontal, 20)
                             }
                         }
-                        .padding(.bottom, 120) // Add bottom padding to ensure content doesn't get hidden behind button
+                        .padding(.bottom, 20)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .mask(
+                        VStack(spacing: 0) {
+                            // Top fade - from transparent to opaque
+                            LinearGradient(
+                                gradient: Gradient(colors: [Color.clear, Color.black]),
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                            .frame(height: 8)
+                            
+                            // Middle is fully visible
+                            Color.black
+                            
+                            // Bottom fade - from opaque to transparent
+                            LinearGradient(
+                                gradient: Gradient(colors: [Color.black, Color.clear]),
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                            .frame(height: 40)
+                        }
+                    )
+                    .padding(.bottom, 96)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -146,7 +187,14 @@ struct RemindersSheet: View {
         .sheet(isPresented: $showingCustomReminderEditor) {
             CustomReminderEditorView(
                 reminderToEdit: customReminderToEdit,
-                schedule: schedule,
+                schedule: schedule ?? UpcomingSchedule(
+                    streetName: parkingLocation?.address ?? "Your Location",
+                    date: Date().addingTimeInterval(7 * 24 * 3600),
+                    endDate: Date().addingTimeInterval(7 * 24 * 3600 + 7200),
+                    dayOfWeek: "Next Week",
+                    startTime: "8:00 AM",
+                    endTime: "10:00 AM"
+                ),
                 onDismiss: {
                     showingCustomReminderEditor = false
                     customReminderToEdit = nil
@@ -224,7 +272,15 @@ struct RemindersSheet: View {
     }
     
     private var streetInfoCard: some View {
-        let timeUntil = formatPreciseTimeUntil(schedule.date)
+        // Debug logging
+        if let schedule = schedule {
+            let debugFormatter = DateFormatter()
+            debugFormatter.dateFormat = "EEE MMM d, yyyy h:mm a"
+            print("📅 RemindersSheet DEBUG:")
+            print("  Next cleaning: \(debugFormatter.string(from: schedule.date))")
+        }
+        
+        let timeUntil = formatPreciseTimeUntil(schedule?.date ?? Date())
         
         return HStack(spacing: 16) {
             ZStack {
@@ -242,7 +298,7 @@ struct RemindersSheet: View {
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(.primary)
                 
-                Text(formatDateAndTime(schedule.date, startTime: schedule.startTime, endTime: schedule.endTime))
+                Text(formatDateAndTime(schedule?.date ?? Date(), startTime: schedule?.startTime ?? "8:00 AM", endTime: schedule?.endTime ?? "10:00 AM"))
                     .font(.system(size: 15))
                     .foregroundColor(.secondary)
                     .lineLimit(1)
@@ -250,7 +306,6 @@ struct RemindersSheet: View {
             
             Spacer()
         }
-        .padding(16)
         .background(.clear)
     }
     
@@ -780,7 +835,14 @@ private struct RemindersSheetContent: View {
         .sheet(isPresented: $showingCustomReminderEditor) {
             CustomReminderEditorView(
                 reminderToEdit: customReminderToEdit,
-                schedule: schedule,
+                schedule: schedule ?? UpcomingSchedule(
+                    streetName: parkingLocation?.address ?? "Your Location",
+                    date: Date().addingTimeInterval(7 * 24 * 3600),
+                    endDate: Date().addingTimeInterval(7 * 24 * 3600 + 7200),
+                    dayOfWeek: "Next Week",
+                    startTime: "8:00 AM",
+                    endTime: "10:00 AM"
+                ),
                 onDismiss: {
                     showingCustomReminderEditor = false
                     customReminderToEdit = nil

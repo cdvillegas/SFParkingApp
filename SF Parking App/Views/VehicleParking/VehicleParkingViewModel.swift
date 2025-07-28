@@ -421,7 +421,11 @@ class VehicleParkingViewModel: ObservableObject {
         
         if !nearbySchedules.isEmpty && hasSelectedSchedule {
             let selectedSchedule = nearbySchedules[selectedScheduleIndex].schedule
+            // Set schedule immediately for instant UI update
             streetDataManager.schedule = selectedSchedule
+            // Calculate next schedule immediately for instant "Move by" date
+            streetDataManager.nextUpcomingSchedule = streetDataManager.calculateNextScheduleImmediate(for: selectedSchedule)
+            // Also process in background for any additional calculations
             streetDataManager.processNextSchedule(for: selectedSchedule)
         } else {
             streetDataManager.schedule = nil

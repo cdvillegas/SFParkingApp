@@ -11,6 +11,7 @@ struct VehicleParkingMapView: View {
     @State private var markerStillTimer: Timer?
     @State private var lastMapCenterCoordinate: CLLocationCoordinate2D?
     @State private var isAppActive: Bool = true
+    @Namespace private var mapScope
     
     // Use ViewModel's published heading property
     private var currentHeading: CLLocationDirection {
@@ -18,7 +19,7 @@ struct VehicleParkingMapView: View {
     }
     
     var body: some View {
-        Map(position: $viewModel.mapPosition, interactionModes: isAppActive ? .all : []) {
+        Map(position: $viewModel.mapPosition, interactionModes: isAppActive ? .all : [], scope: mapScope) {
             // User location annotation
             if viewModel.locationManager.authorizationStatus == .authorizedWhenInUse || viewModel.locationManager.authorizationStatus == .authorizedAlways {
                 userLocationAnnotation
@@ -34,7 +35,16 @@ struct VehicleParkingMapView: View {
         }
         .overlay(settingLocationPin)
         .overlay(enableLocationButton, alignment: .bottom)
+        .overlay(alignment: .topTrailing) {
+            MapCompass(scope: mapScope)
+                .padding(.top, 60)
+                .padding(.trailing, 30)
+        }
         .mapStyle(.standard)
+        .mapScope(mapScope)
+        .mapControls {
+            // Empty mapControls block hides default controls
+        }
         .onMapCameraChange(frequency: .continuous) { context in
             guard isAppActive else { return }
             currentMapHeading = context.camera.heading
@@ -237,7 +247,7 @@ struct VehicleParkingMapView: View {
         if let userLocation = userLocation {
             Annotation("", coordinate: userLocation.coordinate) {
                 UserDirectionCone(heading: currentHeading, mapHeading: currentMapHeading)
-                    .id("userLocation-\(currentHeading)-\(currentMapHeading)")
+                    .animation(.easeInOut(duration: 0.2), value: currentHeading)
             }
         }
     }

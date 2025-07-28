@@ -61,8 +61,7 @@ struct ReminderRowView: View {
                     .contentShape(Rectangle())
             }
         }
-        .padding(.vertical, 20)
-        .padding(.horizontal, 0)
+        .padding(20)
         .background(.clear)
         .contentShape(Rectangle())
     }
