@@ -40,8 +40,8 @@ struct VehicleParkingView: View {
             VStack {
                 if viewModel.isSettingLocation || viewModel.isConfirmingSchedule {
                     instructionWindow
-                        .padding(.horizontal, 20)
-                        .padding(.top, 20) // Move down from top
+                        .padding(.horizontal, 12)
+                        .padding(.top, 20)
                         .transition(.asymmetric(
                             insertion: .move(edge: .top).combined(with: .opacity),
                             removal: .move(edge: .top).combined(with: .opacity)
@@ -49,10 +49,10 @@ struct VehicleParkingView: View {
                 } else {
                     HStack {
                         topStatusButtons
-                            .padding(.leading, 20)
+                            .padding(.leading, 12)
                         Spacer()
                     }
-                    .padding(.top, 10) // Move down from top
+                    .padding(.top, 10)
                     .transition(.asymmetric(
                         insertion: .move(edge: .top).combined(with: .opacity),
                         removal: .move(edge: .top).combined(with: .opacity)
@@ -72,7 +72,7 @@ struct VehicleParkingView: View {
                 HStack {
                     Spacer()
                     mapControlButtons
-                        .padding(.trailing, 20)
+                        .padding(.trailing, 12)
                         .padding(.bottom, 12) // Small gap above content
                 }
                 
@@ -151,8 +151,20 @@ struct VehicleParkingView: View {
                 parkingLocation: viewModel.vehicleManager.currentVehicle?.parkingLocation
             )
         }
+        .onChange(of: showingRemindersSheet) { _, isShowing in
+            if !isShowing {
+                // Sheet was dismissed, show details for 5 seconds
+                expandButtonDetails()
+            }
+        }
         .sheet(isPresented: $showingAutoParkingSettings) {
             SmartParkingSettingsView()
+        }
+        .onChange(of: showingAutoParkingSettings) { _, isShowing in
+            if !isShowing {
+                // Sheet was dismissed, show details for 5 seconds
+                expandButtonDetails()
+            }
         }
     }
     
@@ -192,78 +204,121 @@ struct VehicleParkingView: View {
     
     // MARK: - Top Status Buttons
     
+    @State private var showStatusDetails = true
+    @State private var detailsTimer: Timer?
+    
     private var topStatusButtons: some View {
-        HStack(spacing: 12) {
-            // Reminders pill
+        HStack(alignment: .top, spacing: 12) {
+            // Reminders button
             Button(action: {
                 let impactFeedback = UIImpactFeedbackGenerator(style: .light)
                 impactFeedback.impactOccurred()
                 showingRemindersSheet = true
             }) {
-                HStack(spacing: 10) {
-                    ZStack {
-                        Circle()
-                            .fill(activeRemindersCount > 0 ? Color.green : Color.gray)
-                            .frame(width: 28, height: 28)
-                        
-                        Image(systemName: "bell.fill")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white)
-                    }
+                HStack(spacing: 8) {
+                    Image(systemName: remindersAreEffective ? "bell.fill" : "bell.slash.fill")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(remindersAreEffective ? Color.green : Color.gray)
                     
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Reminders")
                             .font(.system(size: 15, weight: .semibold))
                             .foregroundColor(.primary)
+                            .lineLimit(1)
                         
-                        Text(activeRemindersCount > 0 ? "\(activeRemindersCount) Enabled" : "Disabled")
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(.secondary)
+                        if showStatusDetails {
+                            Text(remindersStatusText)
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(.secondary)
+                                .lineLimit(1)
+                                .transition(.asymmetric(
+                                    insertion: .opacity.combined(with: .move(edge: .top)),
+                                    removal: .opacity.combined(with: .move(edge: .top))
+                                ))
+                        }
                     }
                 }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 8)
+                .padding(.horizontal, 20)
+                .padding(.vertical, showStatusDetails ? 16 : 12)
+                .frame(height: showStatusDetails ? 56 : 48)
                 .background(
                     Capsule()
                         .fill(.regularMaterial)
                         .shadow(color: Color.black.opacity(0.15), radius: 4, x: 0, y: 2)
                 )
+                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: showStatusDetails)
             }
             
-            // Smart parking pill
+            // Smart parking button
             Button(action: {
                 let impactFeedback = UIImpactFeedbackGenerator(style: .light)
                 impactFeedback.impactOccurred()
                 showingAutoParkingSettings = true
             }) {
-                HStack(spacing: 10) {
-                    ZStack {
-                        Circle()
-                            .fill(smartParkingIsOn ? Color.green : Color.gray)
-                            .frame(width: 28, height: 28)
-                        
-                        Image(systemName: "sparkles")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white)
-                    }
+                HStack(spacing: 8) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(smartParkingIsOn ? Color.green : Color.gray)
                     
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Smart Park")
                             .font(.system(size: 15, weight: .semibold))
                             .foregroundColor(.primary)
+                            .lineLimit(1)
                         
-                        Text(smartParkingIsOn ? "Enabled" : "Disabled")
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(.secondary)
+                        if showStatusDetails {
+                            Text(smartParkingIsOn ? "Enabled" : "Disabled")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(.secondary)
+                                .lineLimit(1)
+                                .transition(.asymmetric(
+                                    insertion: .opacity.combined(with: .move(edge: .top)),
+                                    removal: .opacity.combined(with: .move(edge: .top))
+                                ))
+                        }
                     }
                 }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 8)
+                .padding(.horizontal, 20)
+                .padding(.vertical, showStatusDetails ? 16 : 12)
+                .frame(height: showStatusDetails ? 56 : 48)
                 .background(
                     Capsule()
                         .fill(.regularMaterial)
                         .shadow(color: Color.black.opacity(0.15), radius: 4, x: 0, y: 2)
                 )
+                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: showStatusDetails)
+            }
+            
+        }
+        .onAppear {
+            startDetailsTimer()
+        }
+        .onDisappear {
+            detailsTimer?.invalidate()
+        }
+    }
+    
+    private func startDetailsTimer() {
+        detailsTimer?.invalidate()
+        showStatusDetails = true
+        
+        detailsTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { _ in
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                showStatusDetails = false
+            }
+        }
+    }
+    
+    private func expandButtonDetails() {
+        detailsTimer?.invalidate()
+        
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+            showStatusDetails = true
+        }
+        
+        detailsTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { _ in
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                showStatusDetails = false
             }
         }
     }
@@ -272,13 +327,76 @@ struct VehicleParkingView: View {
         return NotificationManager.shared.customReminders.filter { $0.isActive }.count
     }
     
+    private var notificationsEnabled: Bool {
+        return NotificationManager.shared.notificationPermissionStatus == .authorized
+    }
+    
+    private var remindersAreEffective: Bool {
+        return activeRemindersCount > 0 && notificationsEnabled
+    }
+    
     private var remindersStatusText: String {
-        if activeRemindersCount == 0 {
+        if !notificationsEnabled {
+            return "Disabled"
+        } else if activeRemindersCount == 0 {
             return "Disabled"
         } else {
-            return "\(activeRemindersCount) Active"
+            return "\(activeRemindersCount) Enabled"
         }
     }
+    
+    private func getScheduleUrgencyColor(for date: Date) -> Color {
+        let timeInterval = date.timeIntervalSinceNow
+        let hours = timeInterval / 3600
+        
+        if hours < 24 {
+            return .red
+        } else {
+            return .green
+        }
+    }
+    
+    private func getScheduleTimeText(for date: Date) -> String {
+        let calendar = Calendar.current
+        let now = Date()
+        let timeInterval = date.timeIntervalSince(now)
+        let hours = timeInterval / 3600
+        
+        // Very close (less than 2 hours)
+        if hours < 2 {
+            let minutes = Int(timeInterval / 60)
+            if minutes <= 30 {
+                return "\(minutes)m"
+            } else if minutes <= 60 {
+                return "1h"
+            } else {
+                let roundedHours = Int(ceil(hours))
+                return "\(roundedHours)h"
+            }
+        }
+        
+        // Today
+        if calendar.isDateInToday(date) {
+            return "Today"
+        }
+        
+        // Tomorrow
+        if calendar.isDateInTomorrow(date) {
+            return "Tomorrow"
+        }
+        
+        // This week
+        let daysUntil = calendar.dateComponents([.day], from: calendar.startOfDay(for: now), to: calendar.startOfDay(for: date)).day ?? 0
+        
+        if daysUntil <= 6 {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "E" // Short day name
+            return formatter.string(from: date)
+        }
+        
+        return "Schedule"
+    }
+    
     
     private var smartParkingIsOn: Bool {
         return ParkingDetector.shared.isMonitoring

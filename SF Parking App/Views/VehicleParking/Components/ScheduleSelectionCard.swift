@@ -64,37 +64,23 @@ struct ScheduleSelectionCard: View {
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: 12) {
-                // Left: Direction indicator - matching vehicle card style exactly
-                ZStack {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    isSelected ? urgencyColor : Color.secondary,
-                                    isSelected ? urgencyColor.opacity(0.8) : Color.secondary.opacity(0.8)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 28, height: 28)
-                    
-                    Text(formatSideDescription(scheduleWithSide.side).prefix(1).uppercased())
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(.white)
-                        .shadow(
-                            color: isSelected ? urgencyColor.opacity(0.8) : Color.clear,
-                            radius: isSelected ? 4 : 0,
-                            x: 0,
-                            y: 0
-                        )
-                }
-                .shadow(
-                    color: (isSelected ? urgencyColor : Color.secondary).opacity(0.3),
-                    radius: 3,
-                    x: 0,
-                    y: 1
-                )
+                // Left: Direction indicator as pill
+                Text(formatSideDescription(scheduleWithSide.side))
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(isSelected ? .white : .white)
+                    .lineLimit(1)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule()
+                            .fill(isSelected ? urgencyColor : Color.secondary)
+                    )
+                    .shadow(
+                        color: (isSelected ? urgencyColor : Color.secondary).opacity(0.3),
+                        radius: 3,
+                        x: 0,
+                        y: 1
+                    )
                 
                 // Right: Schedule details - matching vehicle card text layout exactly
                 VStack(alignment: .leading, spacing: 4) {
