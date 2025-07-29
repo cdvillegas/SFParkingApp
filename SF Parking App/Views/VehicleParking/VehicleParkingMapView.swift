@@ -7,6 +7,7 @@ struct VehicleParkingMapView: View {
     @State private var currentMapHeading: CLLocationDirection = 0
     @State private var impactFeedbackLight = UIImpactFeedbackGenerator(style: .light)
     @State private var userLocation: CLLocation?
+    @State private var animatedUserCoordinate: CLLocationCoordinate2D?
     @State private var smartSelectionTimer: Timer?
     @State private var markerStillTimer: Timer?
     @State private var lastMapCenterCoordinate: CLLocationCoordinate2D?
@@ -37,8 +38,8 @@ struct VehicleParkingMapView: View {
         .overlay(enableLocationButton, alignment: .bottom)
         .overlay(alignment: .topTrailing) {
             MapCompass(scope: mapScope)
-                .padding(.top, 60)
-                .padding(.trailing, 30)
+                .padding(.top, 65) // Position at top of visible view
+                .padding(.trailing, 20)
         }
         .mapStyle(.standard)
         .mapScope(mapScope)
@@ -53,6 +54,9 @@ struct VehicleParkingMapView: View {
         .onAppear {
             // Initialize user location on view appear
             userLocation = viewModel.locationManager.userLocation
+            if let location = userLocation {
+                animatedUserCoordinate = location.coordinate
+            }
         }
         .onDisappear {
             // Clean up timers to prevent retain cycles
@@ -76,8 +80,11 @@ struct VehicleParkingMapView: View {
             // Keep local state in sync with location manager
             userLocation = newLocation
             
-            // Center map on user location if no parking location is set
+            // Smoothly animate user location changes
             if let location = newLocation {
+                animateUserLocationChange(to: location.coordinate)
+                
+                // Center map on user location if no parking location is set
                 let hasParkedVehicle = viewModel.vehicleManager.currentVehicle?.parkingLocation != nil
                 if !hasParkedVehicle {
                     viewModel.centerMapOnLocation(location.coordinate)
@@ -87,6 +94,9 @@ struct VehicleParkingMapView: View {
         .onReceive(viewModel.locationManager.$authorizationStatus) { newStatus in
             // Update user location when authorization changes
             userLocation = viewModel.locationManager.userLocation
+            if let location = userLocation {
+                animatedUserCoordinate = location.coordinate
+            }
             
             // If permission was just granted, request location immediately
             if newStatus == .authorizedWhenInUse || newStatus == .authorizedAlways {
@@ -97,6 +107,9 @@ struct VehicleParkingMapView: View {
             // Refresh when returning from Settings
             viewModel.locationManager.refreshAuthorizationStatus()
             userLocation = viewModel.locationManager.userLocation
+            if let location = userLocation {
+                animatedUserCoordinate = location.coordinate
+            }
         }
         .onDisappear {
             // Clean up timers when view disappears
@@ -244,8 +257,8 @@ struct VehicleParkingMapView: View {
     
     @MapContentBuilder
     private var userLocationAnnotation: some MapContent {
-        if let userLocation = userLocation {
-            Annotation("", coordinate: userLocation.coordinate) {
+        if let animatedCoordinate = animatedUserCoordinate {
+            Annotation("", coordinate: animatedCoordinate) {
                 UserDirectionCone(heading: currentHeading, mapHeading: currentMapHeading)
             }
         }
@@ -510,6 +523,44 @@ struct VehicleParkingMapView: View {
     }
     
     // MARK: - Private Methods
+    
+    private func animateUserLocationChange(to newCoordinate: CLLocationCoordinate2D) {
+        // If this is the first location update, set immediately without animation
+        guard let currentCoordinate = animatedUserCoordinate else {
+            animatedUserCoordinate = newCoordinate
+            return
+        }
+        
+        // Calculate distance to determine animation approach
+        let currentLocation = CLLocation(latitude: currentCoordinate.latitude, longitude: currentCoordinate.longitude)
+        let newLocation = CLLocation(latitude: newCoordinate.latitude, longitude: newCoordinate.longitude)
+        let distance = currentLocation.distance(from: newLocation)
+        
+        // Smart animation based on distance
+        if distance < 5 { // Very small movements (< 5 meters) - walking precision
+            withAnimation(.interactiveSpring(response: 2.0, dampingFraction: 0.8, blendDuration: 0.2)) {
+                animatedUserCoordinate = newCoordinate
+            }
+        } else if distance < 50 { // Small movements (5-50 meters) - walking/jogging
+            withAnimation(.easeInOut(duration: 1.5)) {
+                animatedUserCoordinate = newCoordinate
+            }
+        } else if distance < 500 { // Medium movements (50-500 meters) - fast walking/biking
+            withAnimation(.easeInOut(duration: 2.0)) {
+                animatedUserCoordinate = newCoordinate
+            }
+        } else if distance < 10000 { // Large movements (0.5-10 km) - driving within city
+            withAnimation(.easeInOut(duration: 2.5)) {
+                animatedUserCoordinate = newCoordinate
+            }
+        } else {
+            // Very large jumps (10+ km) - long distance travel (LA to SF)
+            // Use a smooth but faster animation to avoid jarring immediate jump
+            withAnimation(.easeInOut(duration: 3.0)) {
+                animatedUserCoordinate = newCoordinate
+            }
+        }
+    }
     
     private func enableLocationAction() {
         impactFeedbackLight.impactOccurred()

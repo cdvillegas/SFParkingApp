@@ -48,7 +48,7 @@ struct SmartParkingSettingsView: View {
             
             Spacer()
         }
-        .presentationBackground(.ultraThinMaterial)
+        .presentationBackground(.thinMaterial)
         .presentationBackgroundInteraction(.enabled)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.clear)
@@ -81,7 +81,7 @@ struct SmartParkingSettingsView: View {
         HStack(spacing: 16) {
             ZStack {
                 Circle()
-                    .fill(parkingDetector.isMonitoring ? Color.blue : Color.gray)
+                    .fill(parkingDetector.isMonitoring ? Color.green : Color.gray)
                     .frame(width: 40, height: 40)
                 
                 Image(systemName: "sparkles")

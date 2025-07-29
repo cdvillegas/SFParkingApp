@@ -110,10 +110,10 @@ struct VehicleSwipeCard: View {
                             .lineLimit(2)
                         
                         Text(cachedMoveText)
-                            .font(.callout)
+                            .font(.system(size: 16))
                             .foregroundColor(.secondary)
-                            .lineLimit(nil)
-                            .fixedSize(horizontal: false, vertical: true)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
                     } else {
                         Text("No vehicle location set")
                             .font(.title3)
@@ -122,10 +122,9 @@ struct VehicleSwipeCard: View {
                             .lineLimit(1)
                         
                         Text("Press \"Set Vehicle Location\"")
-                            .font(.callout)
+                            .font(.system(size: 16))
                             .foregroundColor(.secondary)
-                            .lineLimit(nil)
-                            .fixedSize(horizontal: false, vertical: true)
+                            .lineLimit(1)
                     }
                 }
                 
@@ -144,21 +143,6 @@ struct VehicleSwipeCard: View {
                                 onShare(parkingLocation)
                             }
                         }
-                        
-                        Divider()
-                    }
-                    
-                    // Settings actions (always available)
-                    if let onShowReminders = onShowReminders {
-                        Button("Reminders", systemImage: "bell.fill") {
-                            onShowReminders()
-                        }
-                    }
-                    
-                    if let onShowSmartParking = onShowSmartParking {
-                        Button("Smart Parking", systemImage: "sparkles") {
-                            onShowSmartParking()
-                        }
                     }
                 } label: {
                     Image(systemName: "ellipsis")
@@ -167,7 +151,7 @@ struct VehicleSwipeCard: View {
                         .frame(width: 30, height: 30)
                         .background(
                             Circle()
-                                .fill(.thinMaterial)
+                                .fill(.regularMaterial)
                                 .shadow(color: Color.black.opacity(0.1), radius: 3, x: 0, y: 1)
                         )
                 }
@@ -269,17 +253,19 @@ struct VehicleSwipeCard: View {
             formatter.dateFormat = "EEEE"
             let dayString = formatter.string(from: nextSchedule.date)
             return "Move by \(dayString), \(nextSchedule.startTime)"
-        } else if daysUntil <= 14 {
-            // 7-14 days - show "Next [Day]" without time
+        } else if daysUntil <= 13 {
+            // 7-13 days (next week) - show "Next [Day]" with time
             let formatter = DateFormatter()
             formatter.dateFormat = "EEEE"
             let dayString = formatter.string(from: nextSchedule.date)
-            return "Move by Next \(dayString)"
+            return "Move by Next \(dayString), \(nextSchedule.startTime)"
+        } else {
+            // 14+ days - show actual date with time
+            let formatter = DateFormatter()
+            formatter.dateFormat = "MMMM d"  // e.g., "August 12"
+            let dateString = formatter.string(from: nextSchedule.date)
+            return "Move by \(dateString), \(nextSchedule.startTime)"
         }
-        
-        // More than 2 weeks
-        let weeks = daysUntil / 7
-        return "Move in \(weeks) Weeks"
     }
     
     private enum UrgencyLevel {

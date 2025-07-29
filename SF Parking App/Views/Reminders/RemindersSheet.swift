@@ -63,23 +63,24 @@ struct RemindersSheet: View {
                 }
                 
                 // Always show the Active Reminders section title
-                VStack(alignment: .leading, spacing: 0) {
-                    Text("MY REMINDERS")
-                        .font(.footnote)
-                        .fontWeight(.medium)
-                        .foregroundColor(.secondary)
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 12)
+                VStack(spacing: 0) {
+                    HStack {
+                        Text("MY REMINDERS")
+                            .font(.footnote)
+                            .fontWeight(.medium)
+                            .foregroundColor(.secondary)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 12)
                     
                     // Content based on notification state
                     if !notificationsEnabled {
                         // Notifications disabled - floating empty state
-                        VStack {
-                            Spacer()
-                            UnifiedEmptyStateView(isNotificationsDisabled: true)
-                            Spacer()
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        Spacer()
+                        UnifiedEmptyStateView(isNotificationsDisabled: true)
+                        Spacer()
+                            .frame(maxHeight: 120)
                     } else {
                         // Notifications enabled - scrollable content with background
                         ScrollView {
@@ -216,7 +217,7 @@ struct RemindersSheet: View {
                 }
             )
         }
-        .presentationBackground(.ultraThinMaterial)
+        .presentationBackground(.thinMaterial)
         .presentationBackgroundInteraction(.enabled)
     }
     
@@ -269,7 +270,7 @@ struct RemindersSheet: View {
                                 .font(.system(size: 15, weight: .semibold))
                         }
                         .foregroundColor(.white)
-                        .padding(.horizontal, 16)
+                        .padding(.horizontal, 20)
                         .padding(.vertical, 10)
                         .background(
                             LinearGradient(
@@ -617,9 +618,9 @@ private struct UnifiedEmptyStateView: View {
                         .multilineTextAlignment(.center)
                     
                     Text(subtitleText)
-                        .font(.system(size: 16))
+                        .font(.system(size: 14))
                         .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
+                        .lineLimit(1)
                         .padding(.horizontal, 8)
                 }
             }

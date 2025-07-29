@@ -14,25 +14,126 @@ struct VehicleLocationSetting: View {
             // Content cards
             contentSection
             
-            // Divider (always show when there are buttons)
+            // Elegant divider for visual hierarchy
             if viewModel.vehicleManager.currentVehicle != nil || !viewModel.vehicleManager.activeVehicles.isEmpty {
                 Divider()
-                    .padding(.top, 4)
+                    .padding(.vertical, 8)
             }
             
             // Bottom buttons
             buttonSection
         }
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(.thinMaterial)
-                .shadow(color: Color.black.opacity(0.2), radius: 15, x: 0, y: -5)
-        )
+        .padding(.horizontal, 20)
+        .padding(.top, 20)
+        .padding(.bottom, 16) // Reduced padding for home indicator
+        .background(.regularMaterial)
+        .ignoresSafeArea(edges: .bottom)
     }
     
     private func showRemindersSheet() {
         onShowReminders()
+    }
+    
+    // MARK: - Status Buttons
+    
+    private var statusButtons: some View {
+        HStack(spacing: 12) {
+            // Reminders status button
+            Button(action: {
+                impactFeedbackLight.impactOccurred()
+                onShowReminders()
+            }) {
+                HStack(spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .fill(activeRemindersCount > 0 ? Color.green : Color.gray)
+                            .frame(width: 28, height: 28)
+                        
+                        Image(systemName: "bell.fill")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Reminders")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(.primary)
+                        
+                        Text(remindersStatusText)
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    Spacer()
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .frame(maxWidth: .infinity)
+                .background(Color.clear)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(Color.secondary.opacity(0.2), lineWidth: 0.5)
+                )
+            }
+            
+            // Smart parking status button
+            Button(action: {
+                impactFeedbackLight.impactOccurred()
+                onShowSmartParking()
+            }) {
+                HStack(spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .fill(smartParkingIsOn ? Color.green : Color.gray)
+                            .frame(width: 28, height: 28)
+                        
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Smart Park")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(.primary)
+                        
+                        Text(smartParkingStatus)
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    Spacer()
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .frame(maxWidth: .infinity)
+                .background(Color.clear)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(Color.secondary.opacity(0.2), lineWidth: 0.5)
+                )
+            }
+        }
+    }
+    
+    private var activeRemindersCount: Int {
+        return NotificationManager.shared.customReminders.filter { $0.isActive }.count
+    }
+    
+    private var remindersStatusText: String {
+        if activeRemindersCount == 0 {
+            return "Disabled"
+        } else {
+            return "\(activeRemindersCount) Active"
+        }
+    }
+    
+    private var smartParkingIsOn: Bool {
+        return ParkingDetector.shared.isMonitoring
+    }
+    
+    private var smartParkingStatus: String {
+        return smartParkingIsOn ? "Active" : "Disabled"
     }
     
     // MARK: - Content Section
@@ -62,7 +163,7 @@ struct VehicleLocationSetting: View {
                     Circle()
                         .fill(
                             LinearGradient(
-                                colors: [Color.blue, Color.blue.opacity(0.8)],
+                                colors: [getMovingPinColor(), getMovingPinColor().opacity(0.8)],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
@@ -73,7 +174,7 @@ struct VehicleLocationSetting: View {
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(.white)
                 }
-                .shadow(color: Color.blue.opacity(0.3), radius: 3, x: 0, y: 1)
+                .shadow(color: getMovingPinColor().opacity(0.3), radius: 3, x: 0, y: 1)
                 
                 // Status text
                 VStack(alignment: .leading, spacing: 4) {
@@ -252,7 +353,7 @@ struct VehicleLocationSetting: View {
                     .frame(height: 52)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
-                            .fill(.thinMaterial)
+                            .fill(.regularMaterial)
                             .shadow(color: Color.black.opacity(0.1), radius: 3, x: 0, y: 1)
                     )
             }
@@ -310,7 +411,7 @@ struct VehicleLocationSetting: View {
                     .frame(height: 52)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
-                            .fill(.thinMaterial)
+                            .fill(.regularMaterial)
                             .shadow(color: Color.black.opacity(0.1), radius: 3, x: 0, y: 1)
                     )
             }
@@ -391,6 +492,29 @@ struct VehicleLocationSetting: View {
         mapItem.name = "Parking Location"
         
         mapItem.openInMaps(launchOptions: [:])
+    }
+    
+    private func getMovingPinColor() -> Color {
+        // Use the color of the currently selected schedule, or green as default
+        if viewModel.hasSelectedSchedule,
+           viewModel.selectedScheduleIndex < viewModel.nearbySchedules.count {
+            let selectedSchedule = viewModel.nearbySchedules[viewModel.selectedScheduleIndex].schedule
+            return getUrgencyColor(for: selectedSchedule)
+        }
+        return .green  // Default to green when no schedule selected
+    }
+    
+    private func getUrgencyColor(for schedule: SweepSchedule) -> Color {
+        guard let nextSchedule = viewModel.streetDataManager.nextUpcomingSchedule else { return .green }
+        
+        let timeInterval = nextSchedule.date.timeIntervalSinceNow
+        let hours = timeInterval / 3600
+        
+        if hours < 24 {
+            return .red
+        } else {
+            return .green
+        }
     }
     
     private func shareParkingLocation(_ parkingLocation: ParkingLocation) {

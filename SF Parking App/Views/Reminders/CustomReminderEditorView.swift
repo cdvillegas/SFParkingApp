@@ -77,7 +77,7 @@ struct CustomReminderEditorView: View {
                     .background(Color.clear)
                 }
         }
-        .presentationBackground(.ultraThinMaterial)
+        .presentationBackground(.thinMaterial)
         .presentationBackgroundInteraction(.enabled)
         .onAppear {
             loadExistingReminder()
