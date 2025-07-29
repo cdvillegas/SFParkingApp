@@ -7,6 +7,7 @@
 
 import Foundation
 import CoreLocation
+import Darwin
 
 enum ParkingError: LocalizedError {
     case networkError(Error)
@@ -150,8 +151,17 @@ struct LocalSweepSchedule {
     let week4: Int
     let week5: Int
     let holidays: Int
-    let blockSweepID: Int
+    let scheduleID: Int // Changed from blockSweepID to match new dataset
     let lineCoordinates: [[Double]] // Parsed from Line column
+    
+    // New fields from pipeline dataset (for future use)
+    let citationCount: Int
+    let avgCitationTime: Double?
+    let minCitationTime: Double?
+    let maxCitationTime: Double?
+    
+    // Backward compatibility
+    var blockSweepID: Int { return scheduleID }
     
     // Computed properties for compatibility with existing code
     var streetName: String { return corridor }
@@ -192,7 +202,7 @@ class SpatialGrid {
             }
             
             // Avoid duplicates
-            if !grid[key]!.contains(where: { $0.blockSweepID == schedule.blockSweepID }) {
+            if !grid[key]!.contains(where: { $0.scheduleID == schedule.scheduleID }) {
                 grid[key]!.append(schedule)
             }
         }
@@ -215,8 +225,8 @@ class SpatialGrid {
         }
         
         // Remove duplicates
-        let uniqueSchedules = Array(Set(schedules.map { $0.blockSweepID }))
-            .compactMap { id in schedules.first { $0.blockSweepID == id } }
+        let uniqueSchedules = Array(Set(schedules.map { $0.scheduleID }))
+            .compactMap { id in schedules.first { $0.scheduleID == id } }
         
         return uniqueSchedules
     }
@@ -232,12 +242,52 @@ final class StreetDataService {
     private var isLoaded = false
     
     private init() {
-        // Test WKT parsing with known good data
-        if let testCoords = parseLineCoordinates("\"LINESTRING (-122.416291701103 37.777493843394, -122.416317106137 37.777410028361)\"") {
-            print("🧪 WKT parsing test successful: \(testCoords.count) coordinates")
+        // Test Python dict parsing with known good data
+        if let testCoords = parseLineCoordinatesFromDict("\"{'type': 'LineString', 'coordinates': [[-122.395007841381, 37.787717615642], [-122.394481273193, 37.787298215216]]}\"") {
+            print("🧪 Python dict parsing test successful: \(testCoords.count) coordinates")
         } else {
-            print("❌ WKT parsing test failed")
+            print("❌ Python dict parsing test failed")
         }
+        
+        print("🧪 Testing next occurrence logic...")
+        let testSchedule = LocalSweepSchedule(
+            cnn: "test",
+            corridor: "Test St",
+            limits: "Test Limits",
+            blockSide: "Test",
+            fullName: "Monday",
+            weekday: "Monday", 
+            fromHour: 8,
+            toHour: 10,
+            week1: 1, week2: 0, week3: 1, week4: 0, week5: 0,
+            holidays: 0,
+            scheduleID: 999999,
+            lineCoordinates: [[0.0, 0.0]],
+            citationCount: 0,
+            avgCitationTime: nil,
+            minCitationTime: nil,
+            maxCitationTime: nil
+        )
+        
+        if let nextDate = getNextValidOccurrence(for: testSchedule, after: Date()) {
+            print("🧪 Next occurrence test: \(nextDate)")
+        }
+        
+        // Test side detection logic
+        let testSegment = LineSegment(
+            start: CLLocationCoordinate2D(latitude: 37.787717615642, longitude: -122.395007841381),
+            end: CLLocationCoordinate2D(latitude: 37.787298215216, longitude: -122.394481273193)
+        )
+        
+        // Test point slightly east of the segment
+        let testPointEast = CLLocationCoordinate2D(latitude: 37.787500, longitude: -122.394700)
+        let sideEast = determineStreetSide(point: testPointEast, segment: testSegment)
+        print("🧪 Side detection test (East): \(sideEast)")
+        
+        // Test point slightly west of the segment  
+        let testPointWest = CLLocationCoordinate2D(latitude: 37.787500, longitude: -122.394800)
+        let sideWest = determineStreetSide(point: testPointWest, segment: testSegment)
+        print("🧪 Side detection test (West): \(sideWest)")
         
         loadSchedulesFromCSV()
     }
@@ -246,7 +296,7 @@ final class StreetDataService {
     private func loadSchedulesFromCSV() {
         print("Loading street sweeping schedules from CSV...")
         
-        guard let csvPath = Bundle.main.path(forResource: "Street_Sweeping_Schedule_20250709", ofType: "csv") else {
+        guard let csvPath = Bundle.main.path(forResource: "final_analysis_20250728_220918_schedules_20250729_000531", ofType: "csv") else {
             print("❌ CSV file not found in bundle")
             return
         }
@@ -285,39 +335,44 @@ final class StreetDataService {
     private func parseCSVLine(_ line: String, lineIndex: Int) -> LocalSweepSchedule? {
         let columns = parseCSVRow(line)
         
-        guard columns.count >= 17 else {
+        guard columns.count >= 19 else {
             return nil
         }
         
-        // Parse the Line column (WKT LINESTRING format)
-        guard let lineCoordinates = parseLineCoordinates(columns[16]) else {
+        // Parse the Line column (Python dict format)
+        guard let lineCoordinates = parseLineCoordinatesFromDict(columns[14]) else {
             if lineIndex < 5 {
-                print("❌ Failed to parse coordinates for line \(lineIndex): \(columns[16].prefix(100))")
+                print("❌ Failed to parse coordinates for line \(lineIndex): \(columns[14].prefix(100))")
             }
             return nil
         }
         
         if lineIndex < 5 {
-            print("✅ Parsed \(lineCoordinates.count) coordinates for \(columns[1])")
+            print("✅ Parsed \(lineCoordinates.count) coordinates for \(columns[2])")
         }
         
+        // Map new dataset columns to LocalSweepSchedule
         return LocalSweepSchedule(
-            cnn: columns[0],
-            corridor: columns[1],
-            limits: columns[2],
-            blockSide: columns[4],
-            fullName: columns[5],
-            weekday: columns[6],
-            fromHour: Int(columns[7]) ?? 0,
-            toHour: Int(columns[8]) ?? 0,
-            week1: Int(columns[9]) ?? 0,
-            week2: Int(columns[10]) ?? 0,
-            week3: Int(columns[11]) ?? 0,
-            week4: Int(columns[12]) ?? 0,
-            week5: Int(columns[13]) ?? 0,
-            holidays: Int(columns[14]) ?? 0,
-            blockSweepID: Int(columns[15]) ?? 0,
-            lineCoordinates: lineCoordinates
+            cnn: columns[1],                          // cnn
+            corridor: columns[2],                     // corridor
+            limits: columns[3],                       // limits
+            blockSide: columns[5],                    // block_side
+            fullName: columns[6],                     // weekday (use as fullName for now)
+            weekday: columns[6],                      // weekday
+            fromHour: Int(columns[7]) ?? 0,          // scheduled_from_hour
+            toHour: Int(columns[8]) ?? 0,            // scheduled_to_hour
+            week1: Int(columns[9]) ?? 0,             // week1
+            week2: Int(columns[10]) ?? 0,            // week2
+            week3: Int(columns[11]) ?? 0,            // week3
+            week4: Int(columns[12]) ?? 0,            // week4
+            week5: Int(columns[13]) ?? 0,            // week5
+            holidays: 0,                              // Not in new dataset, default to 0
+            scheduleID: Int(columns[0]) ?? 0,        // schedule_id
+            lineCoordinates: lineCoordinates,
+            citationCount: Int(columns[15]) ?? 0,    // citation_count
+            avgCitationTime: Double(columns[16]),    // avg_citation_time (can be empty)
+            minCitationTime: Double(columns[17]),    // min_citation_time (can be empty)
+            maxCitationTime: Double(columns[18])     // max_citation_time (can be empty)
         )
     }
     
@@ -397,6 +452,56 @@ final class StreetDataService {
         return coordinates.isEmpty ? nil : coordinates
     }
     
+    // Parse the Line column which contains Python dict format
+    private func parseLineCoordinatesFromDict(_ dictString: String) -> [[Double]]? {
+        // The Line column contains Python dict format like: "{'type': 'LineString', 'coordinates': [[-122.395007841381, 37.787717615642], [-122.394481273193, 37.787298215216]]}"
+        let trimmed = dictString.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Remove outer quotes if present
+        let unquoted = trimmed.hasPrefix("\"") && trimmed.hasSuffix("\"") 
+            ? String(trimmed.dropFirst().dropLast()) 
+            : trimmed
+        
+        // Find the coordinates array within the dict
+        guard let coordinatesStart = unquoted.range(of: "'coordinates': ["),
+              let coordinatesEnd = unquoted.range(of: "]}", options: .backwards) else {
+            return nil
+        }
+        
+        // Extract just the coordinates array content
+        let startIndex = coordinatesStart.upperBound
+        let endIndex = coordinatesEnd.lowerBound
+        let coordinatesContent = String(unquoted[startIndex..<endIndex])
+        
+        // Parse coordinate pairs: [[-122.395007841381, 37.787717615642], [-122.394481273193, 37.787298215216]]
+        var coordinates: [[Double]] = []
+        
+        // Split by "], [" to get individual coordinate pairs
+        let pairStrings = coordinatesContent.components(separatedBy: "], [")
+        
+        for (index, pairString) in pairStrings.enumerated() {
+            var cleanPair = pairString
+            
+            // Clean up the first and last pairs
+            if index == 0 {
+                cleanPair = cleanPair.replacingOccurrences(of: "[", with: "")
+            }
+            if index == pairStrings.count - 1 {
+                cleanPair = cleanPair.replacingOccurrences(of: "]", with: "")
+            }
+            
+            // Parse lon, lat
+            let components = cleanPair.components(separatedBy: ", ")
+            if components.count == 2,
+               let lon = Double(components[0]),
+               let lat = Double(components[1]) {
+                coordinates.append([lon, lat])
+            }
+        }
+        
+        return coordinates.isEmpty ? nil : coordinates
+    }
+    
     // MARK: - Public API (matches your existing interface)
     func getClosestSchedule(for coordinate: CLLocationCoordinate2D, completion: @escaping (Result<SweepSchedule?, ParkingError>) -> Void) {
         guard isLoaded else {
@@ -461,13 +566,44 @@ final class StreetDataService {
     
     // MARK: - Helper Methods
     private func findClosestSchedule(from point: CLLocationCoordinate2D, schedules: [LocalSweepSchedule]) -> LocalSweepSchedule? {
-        var closestSchedule: LocalSweepSchedule?
+        // Step 1: Find the street segment the user is closest to
+        guard let closestSegmentInfo = findClosestStreetSegment(from: point, schedules: schedules) else {
+            return nil
+        }
+        
+        // Step 2: Determine which side of the street the user is on
+        let userSide = determineStreetSide(point: point, segment: closestSegmentInfo.segment)
+        
+        // Step 3: Filter schedules to only those that match the user's side and street segment
+        let sideMatchingSchedules = schedules.filter { schedule in
+            // Must be same street segment (using corridor + limits as identifier)
+            let sameStreet = schedule.corridor == closestSegmentInfo.schedule.corridor && 
+                           schedule.limits == closestSegmentInfo.schedule.limits
+            
+            // Must match the user's side of the street
+            let sameSide = doesScheduleMatchSide(schedule: schedule, userSide: userSide, segment: closestSegmentInfo.segment)
+            
+            return sameStreet && sameSide
+        }
+        
+        print("🎯 Found \(sideMatchingSchedules.count) schedules matching user's side (\(userSide)) on \(closestSegmentInfo.schedule.corridor)")
+        
+        // Step 4: Find the schedule with the next soonest valid occurrence
+        let nextSchedule = findNextUpcomingSchedule(from: sideMatchingSchedules)
+        
+        if let schedule = nextSchedule {
+            print("🎯 Selected next upcoming schedule: \(schedule.corridor) (\(schedule.blockSide)) on \(schedule.weekday) at \(schedule.startTime)")
+        }
+        
+        return nextSchedule
+    }
+    
+    private func findClosestStreetSegment(from point: CLLocationCoordinate2D, schedules: [LocalSweepSchedule]) -> (schedule: LocalSweepSchedule, segment: LineSegment, distance: Double)? {
+        var closestInfo: (schedule: LocalSweepSchedule, segment: LineSegment, distance: Double)?
         var minDistance = Double.infinity
         
         for schedule in schedules {
-            var scheduleMinDistance = Double.infinity
-            
-            // Check distance to each line segment
+            // Check distance to each line segment for this schedule
             for i in 0..<(schedule.lineCoordinates.count - 1) {
                 let segment = LineSegment(
                     start: CLLocationCoordinate2D(latitude: schedule.lineCoordinates[i][1], longitude: schedule.lineCoordinates[i][0]),
@@ -475,18 +611,182 @@ final class StreetDataService {
                 )
                 
                 let (_, distance) = segment.closestPoint(to: point)
-                scheduleMinDistance = min(scheduleMinDistance, distance)
-            }
-            
-            let distanceInFeet = scheduleMinDistance * 3.28084
-            
-            if distanceInFeet <= maxDistance && scheduleMinDistance < minDistance {
-                minDistance = scheduleMinDistance
-                closestSchedule = schedule
+                let distanceInFeet = distance * 3.28084
+                
+                if distanceInFeet <= maxDistance && distance < minDistance {
+                    minDistance = distance
+                    closestInfo = (schedule: schedule, segment: segment, distance: distance)
+                }
             }
         }
         
-        return closestSchedule
+        return closestInfo
+    }
+    
+    private func determineStreetSide(point: CLLocationCoordinate2D, segment: LineSegment) -> String {
+        // Calculate which side of the street segment the point is on
+        let streetVector = (
+            longitude: segment.end.longitude - segment.start.longitude,
+            latitude: segment.end.latitude - segment.start.latitude
+        )
+        
+        let pointVector = (
+            longitude: point.longitude - segment.start.longitude,
+            latitude: point.latitude - segment.start.latitude
+        )
+        
+        // Cross product to determine which side
+        let crossProduct = streetVector.longitude * pointVector.latitude - streetVector.latitude * pointVector.longitude
+        
+        // Determine cardinal direction based on street orientation
+        let streetAngle = atan2(streetVector.latitude, streetVector.longitude)
+        let streetAngleDegrees = streetAngle * 180 / .pi
+        
+        // Normalize angle to 0-360
+        let normalizedAngle = streetAngleDegrees < 0 ? streetAngleDegrees + 360 : streetAngleDegrees
+        
+        // Determine if street runs more north-south or east-west
+        let isNorthSouth = (normalizedAngle > 45 && normalizedAngle <= 135) || (normalizedAngle > 225 && normalizedAngle <= 315)
+        
+        if isNorthSouth {
+            // Street runs north-south, sides are East/West
+            return crossProduct > 0 ? "East" : "West"
+        } else {
+            // Street runs east-west, sides are North/South  
+            return crossProduct > 0 ? "North" : "South"
+        }
+    }
+    
+    private func doesScheduleMatchSide(schedule: LocalSweepSchedule, userSide: String, segment: LineSegment) -> Bool {
+        let blockSide = schedule.blockSide.lowercased()
+        let userSideLower = userSide.lowercased()
+        
+        // Direct matches
+        if blockSide.contains(userSideLower) {
+            return true
+        }
+        
+        // Handle compound directions (NorthEast, SouthWest, etc.)
+        switch userSideLower {
+        case "north":
+            return blockSide.contains("north")
+        case "south":
+            return blockSide.contains("south")  
+        case "east":
+            return blockSide.contains("east")
+        case "west":
+            return blockSide.contains("west")
+        default:
+            return false
+        }
+    }
+    
+    private func findNextUpcomingSchedule(from schedules: [LocalSweepSchedule]) -> LocalSweepSchedule? {
+        let now = Date()
+        var nearestSchedule: LocalSweepSchedule?
+        var nearestDate: Date?
+        
+        for schedule in schedules {
+            if let nextDate = getNextValidOccurrence(for: schedule, after: now) {
+                print("📅 Schedule for \(schedule.weekday): next occurrence at \(nextDate)")
+                if nearestDate == nil || nextDate < nearestDate! {
+                    nearestDate = nextDate
+                    nearestSchedule = schedule
+                }
+            }
+        }
+        
+        return nearestSchedule
+    }
+    
+    private func getNextValidOccurrence(for schedule: LocalSweepSchedule, after date: Date) -> Date? {
+        let calendar = Calendar.current
+        
+        // Get the target weekday (1 = Sunday, 2 = Monday, etc.)
+        let targetWeekday = getWeekdayNumber(from: schedule.weekday)
+        guard targetWeekday != -1 else { 
+            print("⚠️ Unknown weekday: \(schedule.weekday)")
+            return nil 
+        }
+        
+        // Check if any weeks are valid for this schedule
+        let hasValidWeeks = schedule.week1 == 1 || schedule.week2 == 1 || schedule.week3 == 1 || schedule.week4 == 1 || schedule.week5 == 1
+        guard hasValidWeeks else {
+            print("⚠️ No valid weeks found for schedule")
+            return nil
+        }
+        
+        // Check next 8 weeks to find a valid occurrence
+        for weeksAhead in 0...8 {
+            let checkDate = calendar.date(byAdding: .weekOfYear, value: weeksAhead, to: date)!
+            
+            // Find the next occurrence of the target weekday
+            if let nextWeekdayDate = getNextOccurrence(of: targetWeekday, after: weeksAhead == 0 ? date : checkDate, calendar: calendar) {
+                let weekOfMonth = getWeekOfMonth(for: nextWeekdayDate)
+                
+                // Check if this week is valid for the schedule
+                if isWeekValid(weekOfMonth, for: schedule) {
+                    // Check if the time hasn't passed today
+                    if calendar.isDate(nextWeekdayDate, inSameDayAs: date) {
+                        // If it's today, check if the time has passed
+                        if let scheduleTime = calendar.date(bySettingHour: schedule.fromHour, minute: 0, second: 0, of: nextWeekdayDate) {
+                            if scheduleTime > date {
+                                return scheduleTime
+                            }
+                        }
+                    } else if nextWeekdayDate > date {
+                        // If it's a future date, return the schedule time
+                        return calendar.date(bySettingHour: schedule.fromHour, minute: 0, second: 0, of: nextWeekdayDate)
+                    }
+                }
+            }
+        }
+        
+        return nil
+    }
+    
+    private func getWeekdayNumber(from weekdayString: String) -> Int {
+        let lowercased = weekdayString.lowercased()
+        switch lowercased {
+        case "sunday": return 1
+        case "monday": return 2
+        case "tuesday": return 3
+        case "wednesday": return 4
+        case "thursday": return 5
+        case "friday": return 6
+        case "saturday": return 7
+        default: return -1
+        }
+    }
+    
+    private func getWeekOfMonth(for date: Date) -> Int {
+        let calendar = Calendar.current
+        let weekOfMonth = calendar.component(.weekOfMonth, from: date)
+        return weekOfMonth
+    }
+    
+    private func getNextOccurrence(of weekday: Int, after date: Date, calendar: Calendar) -> Date? {
+        let currentWeekday = calendar.component(.weekday, from: date)
+        
+        if currentWeekday == weekday {
+            // Today is the target day, return today
+            return calendar.startOfDay(for: date)
+        } else {
+            // Calculate days until target weekday
+            let daysUntilTarget = (weekday - currentWeekday + 7) % 7
+            return calendar.date(byAdding: .day, value: daysUntilTarget, to: date)
+        }
+    }
+    
+    private func isWeekValid(_ weekOfMonth: Int, for schedule: LocalSweepSchedule) -> Bool {
+        switch weekOfMonth {
+        case 1: return schedule.week1 == 1
+        case 2: return schedule.week2 == 1
+        case 3: return schedule.week3 == 1
+        case 4: return schedule.week4 == 1
+        case 5: return schedule.week5 == 1
+        default: return false
+        }
     }
     
     private func findSchedulesWithSides(from point: CLLocationCoordinate2D, schedules: [LocalSweepSchedule]) -> [SweepScheduleWithSide] {
