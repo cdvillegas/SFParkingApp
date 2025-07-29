@@ -15,7 +15,8 @@ struct SmartParkingSettingsView: View {
             
             // Smart parking toggle card
             VStack(spacing: 0) {
-                carPlayStatusCard
+                smartParkToggleCard
+                    .padding(20)
             }
             .background(Color.clear)
             .overlay(
@@ -25,7 +26,7 @@ struct SmartParkingSettingsView: View {
             .padding(.horizontal, 20)
             .padding(.bottom, 24)
             
-            // How it works section (always visible)
+            // How it works section
             VStack(alignment: .leading, spacing: 12) {
                 Text("HOW IT WORKS")
                     .font(.footnote)
@@ -76,7 +77,7 @@ struct SmartParkingSettingsView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
     
-    private var carPlayStatusCard: some View {
+    private var smartParkToggleCard: some View {
         HStack(spacing: 16) {
             ZStack {
                 Circle()
@@ -113,7 +114,6 @@ struct SmartParkingSettingsView: View {
             ))
             .labelsHidden()
         }
-        .padding(20)
     }
     
     private var howItWorksCard: some View {
@@ -198,72 +198,6 @@ struct SmartParkingSettingsView: View {
             .padding(20)
         }
     }
-    
-    private var detectionStatusCard: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 16) {
-                ZStack {
-                    Circle()
-                        .fill(statusColor.opacity(0.1))
-                        .frame(width: 40, height: 40)
-                    
-                    Image(systemName: statusIcon)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(statusColor)
-                }
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(statusTitle)
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.primary)
-                    
-                    Text(statusDescription)
-                        .font(.system(size: 15))
-                        .foregroundColor(.secondary)
-                }
-                
-                Spacer()
-            }
-            .padding(20)
-        }
-    }
-    
-    private var statusColor: Color {
-        switch parkingDetector.currentState {
-        case .idle: return .gray
-        case .connected: return .blue
-        case .driving: return .orange
-        case .parked: return .green
-        }
-    }
-    
-    private var statusIcon: String {
-        switch parkingDetector.currentState {
-        case .idle: return "car"
-        case .connected: return "car.fill"
-        case .driving: return "speedometer"
-        case .parked: return "parkingsign.circle.fill"
-        }
-    }
-    
-    private var statusTitle: String {
-        switch parkingDetector.currentState {
-        case .idle: return "No Connection"
-        case .connected: return "Car Connected"
-        case .driving: return "Driving Detected"
-        case .parked: return "Parking Saved"
-        }
-    }
-    
-    private var statusDescription: String {
-        switch parkingDetector.currentState {
-        case .idle: return "Waiting for car audio connection"
-        case .connected: return "Monitoring speed and location"
-        case .driving: return "Speed threshold exceeded"
-        case .parked: return "Location automatically saved"
-        }
-    }
-    
     
     private var doneButton: some View {
         Button(action: {
