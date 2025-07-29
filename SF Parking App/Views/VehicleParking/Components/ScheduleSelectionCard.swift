@@ -246,6 +246,17 @@ struct ScheduleSelectionCard: View {
     private func formatWeekAndDay(_ schedule: SweepSchedule) -> String {
         let pattern = getCompactWeekPattern(schedule)
         let dayShort = getDayAbbreviation(schedule.sweepDay)
+        
+        // If the day is already "Daily" (from consolidation), don't add "Every"
+        if dayShort == "Daily" {
+            return dayShort
+        }
+        
+        // If pattern is "Every" and we have consolidated weekdays, just use the weekdays
+        if pattern == "Every" && (dayShort.contains(",") || dayShort == "Weekdays" || dayShort == "Weekends" || dayShort.contains("-")) {
+            return dayShort
+        }
+        
         return "\(pattern) \(dayShort)"
     }
     

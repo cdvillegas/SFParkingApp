@@ -134,6 +134,22 @@ struct SweepScheduleWithSide {
     let offsetCoordinate: CLLocationCoordinate2D // Coordinate offset to the side of the street
     let side: String // "North", "South", "East", "West" or blockside description
     let distance: Double // Distance from user's selected point
+    
+    // For consolidated schedules, store the individual schedules for processing
+    let individualSchedules: [SweepSchedule]? // nil for non-consolidated schedules
+    
+    // Computed property to get the schedule to use for processing (handles both consolidated and individual)
+    var scheduleForProcessing: SweepSchedule {
+        // For consolidated schedules, find the next upcoming individual schedule
+        if let individuals = individualSchedules, individuals.count > 1 {
+            // This is a consolidated schedule, need to find the next upcoming one
+            // For now, just return the first one - we'll improve this later
+            return individuals.first ?? schedule
+        } else {
+            // This is an individual schedule, use as-is
+            return schedule
+        }
+    }
 }
 
 struct LocalSweepSchedule {
@@ -547,9 +563,146 @@ final class StreetDataService {
         // Find all schedules within range and calculate their side positions
         let schedulesWithSides = findSchedulesWithSides(from: coordinate, schedules: candidates)
         
-        print("🔍 Found \(schedulesWithSides.count) schedules with side information for selection")
+        // Consolidate schedules that share the same block/side/time
+        let consolidatedSchedules = consolidateSchedulesByGroup(schedulesWithSides)
         
-        completion(.success(schedulesWithSides))
+        print("🔍 Found \(schedulesWithSides.count) raw schedules, consolidated to \(consolidatedSchedules.count) grouped schedules")
+        
+        completion(.success(consolidatedSchedules))
+    }
+    
+    private func consolidateSchedulesByGroup(_ schedulesWithSides: [SweepScheduleWithSide]) -> [SweepScheduleWithSide] {
+        // Group schedules by block + side + time
+        var groups: [String: [SweepScheduleWithSide]] = [:]
+        
+        for scheduleWithSide in schedulesWithSides {
+            let schedule = scheduleWithSide.schedule
+            
+            // Create grouping key: corridor + limits + blockside + fromhour + tohour
+            let groupKey = "\(schedule.corridor ?? "")|\(schedule.limits ?? "")|\(schedule.blockside ?? "")|\(schedule.fromhour ?? "")|\(schedule.tohour ?? "")"
+            
+            if groups[groupKey] == nil {
+                groups[groupKey] = []
+            }
+            groups[groupKey]!.append(scheduleWithSide)
+        }
+        
+        // Convert groups back to consolidated schedules
+        var consolidatedSchedules: [SweepScheduleWithSide] = []
+        
+        for (_, groupSchedules) in groups {
+            if let consolidatedSchedule = createConsolidatedSchedule(from: groupSchedules) {
+                consolidatedSchedules.append(consolidatedSchedule)
+            }
+        }
+        
+        // Sort by distance, closest first
+        return consolidatedSchedules.sorted { $0.distance < $1.distance }
+    }
+    
+    private func createConsolidatedSchedule(from schedules: [SweepScheduleWithSide]) -> SweepScheduleWithSide? {
+        guard let firstSchedule = schedules.first else { return nil }
+        
+        // If only one schedule, return as-is
+        if schedules.count == 1 {
+            return firstSchedule
+        }
+        
+        // Collect all the weekdays from the schedules
+        var weekdays: [String] = []
+        var weekdaySet: Set<String> = []
+        
+        for scheduleWithSide in schedules {
+            if let weekday = scheduleWithSide.schedule.weekday, !weekdaySet.contains(weekday) {
+                weekdays.append(weekday)
+                weekdaySet.insert(weekday)
+            }
+        }
+        
+        // Sort weekdays in logical order
+        let dayOrder = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        weekdays.sort { dayOrder.firstIndex(of: $0) ?? 99 < dayOrder.firstIndex(of: $1) ?? 99 }
+        
+        // Create consolidated weekday string with short names and "Daily" for all 7 days
+        let consolidatedWeekday = formatConsolidatedWeekdays(weekdays)
+        
+        // Merge week patterns - if any schedule is active for a week, the consolidated one should be too
+        var mergedWeek1 = "0", mergedWeek2 = "0", mergedWeek3 = "0", mergedWeek4 = "0", mergedWeek5 = "0"
+        
+        for scheduleWithSide in schedules {
+            let schedule = scheduleWithSide.schedule
+            if schedule.week1 == "1" { mergedWeek1 = "1" }
+            if schedule.week2 == "1" { mergedWeek2 = "1" }
+            if schedule.week3 == "1" { mergedWeek3 = "1" }
+            if schedule.week4 == "1" { mergedWeek4 = "1" }
+            if schedule.week5 == "1" { mergedWeek5 = "1" }
+        }
+        
+        // Create consolidated schedule using the first schedule as template
+        let consolidatedSweepSchedule = SweepSchedule(
+            cnn: firstSchedule.schedule.cnn,
+            corridor: firstSchedule.schedule.corridor,
+            limits: firstSchedule.schedule.limits,
+            blockside: firstSchedule.schedule.blockside,
+            fullname: consolidatedWeekday, // Use consolidated weekdays as fullname
+            weekday: consolidatedWeekday,  // Use consolidated weekdays
+            fromhour: firstSchedule.schedule.fromhour,
+            tohour: firstSchedule.schedule.tohour,
+            week1: mergedWeek1,
+            week2: mergedWeek2,
+            week3: mergedWeek3,
+            week4: mergedWeek4,
+            week5: mergedWeek5,
+            holidays: firstSchedule.schedule.holidays,
+            line: firstSchedule.schedule.line
+        )
+        
+        return SweepScheduleWithSide(
+            schedule: consolidatedSweepSchedule,
+            offsetCoordinate: firstSchedule.offsetCoordinate,
+            side: firstSchedule.side,
+            distance: firstSchedule.distance,
+            individualSchedules: schedules.map { $0.schedule } // Store all individual schedules
+        )
+    }
+    
+    private func formatConsolidatedWeekdays(_ weekdays: [String]) -> String {
+        // If all 7 days, return "Daily"
+        if weekdays.count == 7 {
+            return "Daily"
+        }
+        
+        // Convert to short names
+        let shortNames = weekdays.compactMap { longName -> String? in
+            switch longName {
+            case "Monday": return "Mon"
+            case "Tuesday": return "Tue"
+            case "Wednesday": return "Wed"
+            case "Thursday": return "Thu"
+            case "Friday": return "Fri"
+            case "Saturday": return "Sat"
+            case "Sunday": return "Sun"
+            default: return nil
+            }
+        }
+        
+        // Check for common patterns to make them more readable
+        if shortNames == ["Mon", "Tue", "Wed", "Thu", "Fri"] {
+            return "Weekdays"
+        } else if shortNames == ["Sat", "Sun"] {
+            return "Weekends"
+        } else if shortNames == ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] {
+            return "Mon-Sat"
+        } else if shortNames == ["Tue", "Wed", "Thu", "Fri", "Sat"] {
+            return "Tue-Sat"
+        } else if shortNames == ["Mon", "Tue", "Wed", "Thu"] {
+            return "Mon-Thu"
+        } else if shortNames == ["Tue", "Wed", "Thu", "Fri"] {
+            return "Tue-Fri"
+        } else {
+            // For other patterns, just join with commas
+            return shortNames.joined(separator: ", ")
+        }
     }
     
     func getSchedulesInArea(for coordinate: CLLocationCoordinate2D, completion: @escaping (Result<[SweepSchedule], ParkingError>) -> Void) {
@@ -821,7 +974,8 @@ final class StreetDataService {
                     schedule: convertToAPIFormat(schedule),
                     offsetCoordinate: offsetCoordinate,
                     side: schedule.blockSide,
-                    distance: distanceInFeet
+                    distance: distanceInFeet,
+                    individualSchedules: nil // Non-consolidated individual schedule
                 )
                 
                 schedulesWithSides.append(scheduleWithSide)
