@@ -196,6 +196,45 @@ struct SmartParkingSettingsView: View {
                 Spacer()
             }
             .padding(20)
+            
+            Divider()
+            
+            Button(action: {
+                impactFeedbackLight.impactOccurred()
+                if let url = URL(string: "App-Prefs:root=Bluetooth") {
+                    UIApplication.shared.open(url)
+                }
+            }) {
+                HStack(spacing: 16) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.gray.opacity(0.1))
+                            .frame(width: 40, height: 40)
+                        
+                        Image(systemName: "questionmark.circle")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.gray)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Not working?")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundColor(.primary)
+                        
+                        Text("Add car's make (ex: Toyota) to its bluetooth name")
+                            .font(.system(size: 15))
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    Spacer()
+                    
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.secondary)
+                }
+                .padding(20)
+            }
+            .buttonStyle(PlainButtonStyle())
         }
     }
     
