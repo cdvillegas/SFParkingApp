@@ -578,8 +578,8 @@ final class StreetDataService {
         for scheduleWithSide in schedulesWithSides {
             let schedule = scheduleWithSide.schedule
             
-            // Create grouping key: corridor + limits + blockside + fromhour + tohour
-            let groupKey = "\(schedule.corridor ?? "")|\(schedule.limits ?? "")|\(schedule.blockside ?? "")|\(schedule.fromhour ?? "")|\(schedule.tohour ?? "")"
+            // Create grouping key: corridor + limits + blockside + fromhour + tohour + week pattern
+            let groupKey = "\(schedule.corridor ?? "")|\(schedule.limits ?? "")|\(schedule.blockside ?? "")|\(schedule.fromhour ?? "")|\(schedule.tohour ?? "")|\(schedule.week1 ?? "")|\(schedule.week2 ?? "")|\(schedule.week3 ?? "")|\(schedule.week4 ?? "")|\(schedule.week5 ?? "")"
             
             if groups[groupKey] == nil {
                 groups[groupKey] = []
