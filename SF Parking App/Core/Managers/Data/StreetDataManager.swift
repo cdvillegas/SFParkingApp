@@ -32,7 +32,15 @@ class StreetDataManager: ObservableObject {
             return
         }
         
-        
+        performFetch(for: coordinate)
+    }
+    
+    // Force a fresh fetch, bypassing debouncing
+    func forceFetchSchedules(for coordinate: CLLocationCoordinate2D) {
+        performFetch(for: coordinate)
+    }
+    
+    private func performFetch(for coordinate: CLLocationCoordinate2D) {
         // Update tracking variables
         lastFetchedCoordinate = coordinate
         lastFetchTime = Date()
@@ -155,6 +163,46 @@ class StreetDataManager: ObservableObject {
         }
     }
     
+    /// Calculate next schedule immediately (synchronous) for instant UI updates
+    func calculateNextScheduleImmediate(for schedule: SweepSchedule) -> UpcomingSchedule? {
+        let now = Date()
+        
+        guard let weekday = schedule.weekday,
+              let fromHour = schedule.fromhour,
+              let toHour = schedule.tohour else { 
+            return nil
+        }
+        
+        let weekdayNum = dayStringToWeekday(weekday)
+        guard weekdayNum > 0 else { return nil }
+        
+        guard let startHour = Int(fromHour),
+              let endHour = Int(toHour) else { 
+            return nil
+        }
+        
+        // Quick calculation for immediate UI update - just get next occurrence
+        let nextOccurrences = findNextOccurrences(weekday: weekdayNum, schedule: schedule, from: now)
+        
+        for nextDate in nextOccurrences {
+            if let nextDateTime = createDateTime(date: nextDate, hour: startHour),
+               let endDateTime = createDateTime(date: nextDate, hour: endHour),
+               nextDateTime > now {
+                
+                return UpcomingSchedule(
+                    streetName: schedule.streetName,
+                    date: nextDateTime,
+                    endDate: endDateTime,
+                    dayOfWeek: weekday,
+                    startTime: schedule.startTime,
+                    endTime: schedule.endTime
+                )
+            }
+        }
+        
+        return nil
+    }
+    
     private func processNextScheduleAsync(for schedule: SweepSchedule) async {
         let now = Date()
         
@@ -238,15 +286,25 @@ class StreetDataManager: ObservableObject {
                     guard let startHour = schedule.fromhour, let hour = Int(startHour) else { continue }
                     guard let scheduleDateTime = calendar.date(bySettingHour: hour, minute: 0, second: 0, of: weekdayDate) else { continue }
                     
+                    // Debug logging
+                    let debugFormatter = DateFormatter()
+                    debugFormatter.dateFormat = "EEE MMM d, yyyy h:mm a"
+                    print("  🔍 Checking occurrence: \(debugFormatter.string(from: scheduleDateTime)) (week \(weekPos))")
+                    
                     // Only include if the schedule time is in the future
                     if scheduleDateTime > date {
+                        print("    ✅ Added to occurrences")
                         occurrences.append(weekdayDate)
                         
                         // Early exit optimization: stop after finding 3 occurrences
                         if occurrences.count >= 3 {
                             return occurrences.sorted()
                         }
+                    } else {
+                        print("    ❌ Skipped (in the past)")
                     }
+                } else {
+                    print("  ❌ Schedule doesn't apply to week \(weekPos)")
                 }
             }
         }

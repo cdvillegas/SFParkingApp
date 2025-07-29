@@ -78,17 +78,22 @@ struct SF_Parking_AppApp: App {
                     }
                 }
             }
-        } else {
-            print("🚀 No pending parking data found on app launch")
         }
+        // Removed the "No pending parking data" log since it's normal
     }
     
     private func handlePendingNotificationData(_ data: [String: Any]) {
+        print("🚀 Attempting to parse notification data: \(data)")
+        
         guard let coordinateData = data["coordinate"] as? [String: Double],
               let latitude = coordinateData["latitude"],
               let longitude = coordinateData["longitude"],
               let address = data["address"] as? String else { 
-            print("🚀 Failed to parse pending parking data")
+            print("🚀 Failed to parse pending parking data - invalid format")
+            print("🚀 Expected: coordinate[latitude/longitude], address")
+            print("🚀 Received keys: \(data.keys)")
+            // Clear the invalid data
+            UserDefaults.standard.removeObject(forKey: "pendingParkingLocation")
             return 
         }
         

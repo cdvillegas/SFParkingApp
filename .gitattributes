@@ -1,0 +1,2 @@
+*_matches_* filter=lfs diff=lfs merge=lfs -text
+data_processing/production/output/pipeline_results/**/*.csv filter=lfs diff=lfs merge=lfs -text

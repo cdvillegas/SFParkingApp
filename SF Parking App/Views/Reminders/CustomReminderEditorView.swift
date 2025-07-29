@@ -31,29 +31,25 @@ struct CustomReminderEditorView: View {
     @State private var showingDuplicateAlert = false
     @State private var pendingReminder: CustomReminder?
     
-    private let impactFeedback = UIImpactFeedbackGenerator(style: .rigid)
+    @State private var impactFeedbackLight = UIImpactFeedbackGenerator(style: .light)
     
     private var isEditing: Bool {
         reminderToEdit != nil
     }
     
     var body: some View {
-        ZStack {
-            Color(.systemBackground)
-                .ignoresSafeArea(.all)
-            
-            NavigationView {
+        NavigationView {
                 VStack(spacing: 0) {
                     // Fixed header
                     headerSection
                         .padding(.horizontal, 20)
-                        .padding(.top, 20)
-                        .padding(.bottom, 20)
+                        .padding(.top, 40)
+                        .padding(.bottom, 24)
                     
                     // Reminder preview
                     reminderPreviewCard
                         .padding(.horizontal, 20)
-                        .padding(.bottom, 32)
+                        .padding(.bottom, 24)
                     
                     // Main content area
                     VStack(spacing: 24) {
@@ -72,31 +68,17 @@ struct CustomReminderEditorView: View {
                 .background(Color.clear)
                 .navigationBarHidden(true)
                 .overlay(alignment: .bottom) {
-                    // Fixed bottom buttons with gradient fade
+                    // Fixed bottom buttons
                     VStack(spacing: 0) {
-                        // Smooth gradient fade
-                        LinearGradient(
-                            colors: [
-                                Color.clear,
-                                Color(.systemBackground)
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                        .frame(height: 50)
-                        
-                        // Button area
-                        VStack(spacing: 0) {
-                            buttonsSection
-                                .padding(.horizontal, 20)
-                                .padding(.bottom, 20)
-                        }
-                        .background(Color(.systemBackground))
+                        buttonsSection
+                            .padding(.horizontal, 20)
+                            .padding(.bottom, 20)
                     }
+                    .background(Color.clear)
                 }
-            }
-            .background(Color.clear)
         }
+        .presentationBackground(.thinMaterial)
+        .presentationBackgroundInteraction(.enabled)
         .onAppear {
             loadExistingReminder()
         }
@@ -104,7 +86,7 @@ struct CustomReminderEditorView: View {
             Button("Keep Both") {
                 if let reminder = pendingReminder {
                     let _ = notificationManager.addCustomReminderForced(reminder)
-                    impactFeedback.impactOccurred()
+                    impactFeedbackLight.impactOccurred()
                     onDismiss()
                 }
             }
@@ -126,6 +108,7 @@ struct CustomReminderEditorView: View {
                 Spacer()
                 
                 Button(action: {
+                    impactFeedbackLight.impactOccurred()
                     onDismiss()
                 }) {
                     HStack(spacing: 8) {
@@ -134,18 +117,13 @@ struct CustomReminderEditorView: View {
                         Text("Back")
                             .font(.system(size: 16, weight: .semibold))
                     }
-                    .foregroundColor(.white)
+                    .foregroundColor(.secondary)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 10)
                     .background(
-                        LinearGradient(
-                            colors: [Color(.systemGray4), Color(.systemGray5)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .fill(.ultraThinMaterial)
                     )
-                    .cornerRadius(20)
-                    .shadow(color: Color(.systemGray4).opacity(0.3), radius: 6, x: 0, y: 3)
                 }
             }
         }
@@ -200,7 +178,7 @@ struct CustomReminderEditorView: View {
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(generateTitle())
-                        .font(.system(size: 17, weight: .semibold))
+                        .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(.primary)
                         .animation(.easeInOut(duration: 0.2), value: unit)
                         .animation(.easeInOut(duration: 0.2), value: amount)
@@ -217,11 +195,11 @@ struct CustomReminderEditorView: View {
                 
                 Spacer()
             }
-            .padding(16)
-            .background(.clear)
+            .padding(20)
+            .background(Color.clear)
             .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(Color.secondary.opacity(0.2), lineWidth: 0.5)
             )
         }
     }
@@ -274,13 +252,12 @@ struct CustomReminderEditorView: View {
         }
         .frame(height: 160)
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 16)
-        .background(.clear)
+        .padding(20)
+        .background(Color.clear)
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Color.secondary.opacity(0.2), lineWidth: 0.5)
         )
-        .cornerRadius(12)
     }
     
     private var dayTimingSection: some View {
@@ -289,6 +266,7 @@ struct CustomReminderEditorView: View {
             HStack(spacing: 4) {
                 ForEach(DayTiming.allCases, id: \.self) { timing in
                     Button(action: {
+                        impactFeedbackLight.impactOccurred()
                         dayTiming = timing
                     }) {
                         Text(timing.title)
@@ -301,20 +279,22 @@ struct CustomReminderEditorView: View {
                     }
                 }
             }
-            .padding(2)
-            .background(.clear)
+            .padding(4)
+            .background(Color.clear)
             .overlay(
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(Color.secondary.opacity(0.2), lineWidth: 0.5)
             )
-            .cornerRadius(10)
         }
     }
     
     private var buttonsSection: some View {
         VStack(spacing: 12) {
             // Save button
-            Button(action: saveReminder) {
+            Button(action: {
+                impactFeedbackLight.impactOccurred()
+                saveReminder()
+            }) {
                 Text(isEditing ? "Update Reminder" : "Save Reminder")
                     .font(.system(size: 18, weight: .bold))
                     .foregroundColor(.white)
@@ -402,19 +382,19 @@ struct CustomReminderEditorView: View {
             
             switch result {
             case .success:
-                impactFeedback.impactOccurred()
+                impactFeedbackLight.impactOccurred()
                 onDismiss()
             case .duplicate:
                 pendingReminder = newReminder
                 showingDuplicateAlert = true
             case .maxReached:
-                impactFeedback.impactOccurred()
+                impactFeedbackLight.impactOccurred()
                 onDismiss()
             }
             return // Don't execute the code below
         }
         
-        impactFeedback.impactOccurred()
+        impactFeedbackLight.impactOccurred()
         onDismiss()
     }
     

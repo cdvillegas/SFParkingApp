@@ -330,7 +330,8 @@ class DaySpecificHybridMatcher:
                 'week2': schedule_row['week2'],
                 'week3': schedule_row['week3'],
                 'week4': schedule_row['week4'],
-                'week5': schedule_row['week5']
+                'week5': schedule_row['week5'],
+                'line': schedule_row['line']
             }
             
             # Add citation statistics if matches exist

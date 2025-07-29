@@ -3,60 +3,63 @@ import SwiftUI
 struct SmartParkingSettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var parkingDetector = ParkingDetector.shared
+    @State private var impactFeedbackLight = UIImpactFeedbackGenerator(style: .light)
     
     var body: some View {
-        ZStack {
-            Color(.systemBackground)
-                .ignoresSafeArea(.all)
+        VStack(spacing: 0) {
+            // Header
+            headerSection
+                .padding(.horizontal, 20)
+                .padding(.top, 40)
+                .padding(.bottom, 24)
             
+            // Smart parking toggle card
             VStack(spacing: 0) {
-                // Header
-                headerSection
-                    .padding(.horizontal, 20)
-                    .padding(.top, 40)
-                    .padding(.bottom, 24)
-                
-                // Smart parking toggle card
-                carPlayStatusCard
-                    .background(.clear)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
-                    )
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 24)
-                
-                // How it works section (always visible)
-                howItWorksSection
-                    .padding(.bottom, 20)
-                
-                Spacer()
+                smartParkToggleCard
+                    .padding(20)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.clear)
-            .overlay(alignment: .bottom) {
-                // Fixed bottom button with gradient fade
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(Color.secondary.opacity(0.2), lineWidth: 0.5)
+            )
+            .padding(.horizontal, 20)
+            .padding(.bottom, 24)
+            
+            // How it works section
+            VStack(alignment: .leading, spacing: 12) {
+                Text("HOW IT WORKS")
+                    .font(.footnote)
+                    .fontWeight(.medium)
+                    .foregroundColor(.secondary)
+                    .padding(.horizontal, 20)
+                
                 VStack(spacing: 0) {
-                    // Smooth gradient fade
-                    LinearGradient(
-                        colors: [
-                            Color.clear,
-                            Color(.systemBackground)
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                    .frame(height: 50)
-                    
-                    // Button area with solid background
-                    VStack(spacing: 0) {
-                        doneButton
-                            .padding(.horizontal, 20)
-                            .padding(.bottom, 20)
-                    }
-                    .background(Color(.systemBackground))
+                    howItWorksCard
                 }
+                .background(Color.clear)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(Color.secondary.opacity(0.2), lineWidth: 0.5)
+                )
+                .padding(.horizontal, 20)
             }
+            .padding(.bottom, 20)
+            
+            Spacer()
+        }
+        .presentationBackground(.thinMaterial)
+        .presentationBackgroundInteraction(.enabled)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.clear)
+        .overlay(alignment: .bottom) {
+            // Fixed bottom button
+            VStack(spacing: 0) {
+                doneButton
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 20)
+            }
+            .background(Color.clear)
         }
     }
     
@@ -74,11 +77,11 @@ struct SmartParkingSettingsView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
     
-    private var carPlayStatusCard: some View {
+    private var smartParkToggleCard: some View {
         HStack(spacing: 16) {
             ZStack {
                 Circle()
-                    .fill(parkingDetector.isMonitoring ? Color.blue : Color.gray)
+                    .fill(parkingDetector.isMonitoring ? Color.green : Color.gray)
                     .frame(width: 40, height: 40)
                 
                 Image(systemName: "sparkles")
@@ -101,6 +104,7 @@ struct SmartParkingSettingsView: View {
             Toggle("", isOn: Binding(
                 get: { parkingDetector.isMonitoring },
                 set: { enabled in
+                    impactFeedbackLight.impactOccurred()
                     if enabled {
                         parkingDetector.startMonitoring()
                     } else {
@@ -109,24 +113,6 @@ struct SmartParkingSettingsView: View {
                 }
             ))
             .labelsHidden()
-        }
-        .padding(16)
-    }
-    
-    private var howItWorksSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("HOW IT WORKS")
-                .font(.footnote)
-                .fontWeight(.medium)
-                .foregroundColor(.secondary)
-                .padding(.horizontal, 20)
-            
-            howItWorksCard
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
-                )
-                .padding(.horizontal, 20)
         }
     }
     
@@ -155,7 +141,7 @@ struct SmartParkingSettingsView: View {
                 
                 Spacer()
             }
-            .padding(16)
+            .padding(20)
             
             Divider()
             
@@ -182,7 +168,7 @@ struct SmartParkingSettingsView: View {
                 
                 Spacer()
             }
-            .padding(16)
+            .padding(20)
             
             Divider()
             
@@ -209,81 +195,16 @@ struct SmartParkingSettingsView: View {
                 
                 Spacer()
             }
-            .padding(16)
+            .padding(20)
         }
     }
-    
-    private var detectionStatusCard: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 16) {
-                ZStack {
-                    Circle()
-                        .fill(statusColor.opacity(0.1))
-                        .frame(width: 40, height: 40)
-                    
-                    Image(systemName: statusIcon)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(statusColor)
-                }
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(statusTitle)
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.primary)
-                    
-                    Text(statusDescription)
-                        .font(.system(size: 15))
-                        .foregroundColor(.secondary)
-                }
-                
-                Spacer()
-            }
-            .padding(16)
-        }
-    }
-    
-    private var statusColor: Color {
-        switch parkingDetector.currentState {
-        case .idle: return .gray
-        case .connected: return .blue
-        case .driving: return .orange
-        case .parked: return .green
-        }
-    }
-    
-    private var statusIcon: String {
-        switch parkingDetector.currentState {
-        case .idle: return "car"
-        case .connected: return "car.fill"
-        case .driving: return "speedometer"
-        case .parked: return "parkingsign.circle.fill"
-        }
-    }
-    
-    private var statusTitle: String {
-        switch parkingDetector.currentState {
-        case .idle: return "No Connection"
-        case .connected: return "Car Connected"
-        case .driving: return "Driving Detected"
-        case .parked: return "Parking Saved"
-        }
-    }
-    
-    private var statusDescription: String {
-        switch parkingDetector.currentState {
-        case .idle: return "Waiting for car audio connection"
-        case .connected: return "Monitoring speed and location"
-        case .driving: return "Speed threshold exceeded"
-        case .parked: return "Location automatically saved"
-        }
-    }
-    
     
     private var doneButton: some View {
         Button(action: {
+            impactFeedbackLight.impactOccurred()
             dismiss()
         }) {
-            Text("Done")
+            Text("Looks Good")
                 .font(.system(size: 18, weight: .bold))
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)

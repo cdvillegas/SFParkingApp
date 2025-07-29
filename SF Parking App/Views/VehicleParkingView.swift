@@ -16,34 +16,68 @@ struct VehicleParkingView: View {
     var autoDetectedSource: ParkingSource?
     var onAutoParkingHandled: (() -> Void)?
     
+    // Calculate the height needed for bottom content
+    private var bottomContentHeight: CGFloat {
+        // Dynamic height based on content state
+        if viewModel.isConfirmingSchedule {
+            return 280 // More space for schedule confirmation
+        } else if viewModel.isSettingLocation {
+            return 220 // Same as normal mode for consistency
+        } else if viewModel.vehicleManager.currentVehicle?.parkingLocation != nil {
+            return 220 // Space for parked vehicle info
+        } else {
+            return 180 // Minimum space for empty state
+        }
+    }
+    
     var body: some View {
         ZStack {
-            // Background color
-            Color(.systemBackground)
-                .ignoresSafeArea()
+            // Map extends to absolute bottom edge
+            VehicleParkingMapView(viewModel: viewModel)
+                .ignoresSafeArea(.all)
             
-            VStack(spacing: 0) {
-                // Map section with auto parking toggle overlay
-                ZStack {
-                    VehicleParkingMapView(viewModel: viewModel)
-                        .frame(maxHeight: .infinity)
-                    
-                    // Auto parking toggle button in top-left
-                    VStack {
-                        HStack {
-                            autoParkingToggleButton
-                            Spacer()
-                        }
+            // Top status buttons or instructions
+            VStack {
+                if viewModel.isSettingLocation || viewModel.isConfirmingSchedule {
+                    instructionWindow
+                        .padding(.horizontal, 12)
+                        .padding(.top, 20)
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .top).combined(with: .opacity),
+                            removal: .move(edge: .top).combined(with: .opacity)
+                        ))
+                } else {
+                    HStack {
+                        topStatusButtons
+                            .padding(.leading, 12)
                         Spacer()
                     }
-                    .padding(.top, 8)
-                    .padding(.leading, 16)
+                    .padding(.top, 10)
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .top).combined(with: .opacity),
+                        removal: .move(edge: .top).combined(with: .opacity)
+                    ))
                 }
                 
-                // Bottom interface
+                Spacer()
+            }
+            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: viewModel.isSettingLocation)
+            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: viewModel.isConfirmingSchedule)
+            
+            // Content overlay at bottom
+            VStack {
+                Spacer()
+                
+                // Map control buttons positioned above content
+                HStack {
+                    Spacer()
+                    mapControlButtons
+                        .padding(.trailing, 12)
+                        .padding(.bottom, 12) // Small gap above content
+                }
+                
                 bottomInterface
             }
-            
         }
         .sheet(isPresented: $viewModel.showingAddVehicle) {
             AddEditVehicleView(
@@ -112,22 +146,336 @@ struct VehicleParkingView: View {
             Text("Enable notifications to get reminders about street cleaning and avoid parking tickets.")
         }
         .sheet(isPresented: $showingRemindersSheet) {
-            // Always use the same NotificationSettingsSheet, create dummy schedule if needed
-            let schedule = viewModel.streetDataManager.nextUpcomingSchedule ?? UpcomingSchedule(
-                streetName: viewModel.vehicleManager.currentVehicle?.parkingLocation?.address ?? "Your Location",
-                date: Date().addingTimeInterval(7 * 24 * 3600), // 1 week from now
-                endDate: Date().addingTimeInterval(7 * 24 * 3600 + 7200), // 2 hours later
-                dayOfWeek: "Next Week",
-                startTime: "8:00 AM",
-                endTime: "10:00 AM"
-            )
             RemindersSheet(
-                schedule: schedule,
+                schedule: viewModel.streetDataManager.nextUpcomingSchedule,
                 parkingLocation: viewModel.vehicleManager.currentVehicle?.parkingLocation
             )
         }
+        .onChange(of: showingRemindersSheet) { _, isShowing in
+            if !isShowing {
+                // Sheet was dismissed, show details for 5 seconds
+                expandButtonDetails()
+            }
+        }
         .sheet(isPresented: $showingAutoParkingSettings) {
             SmartParkingSettingsView()
+        }
+        .onChange(of: showingAutoParkingSettings) { _, isShowing in
+            if !isShowing {
+                // Sheet was dismissed, show details for 5 seconds
+                expandButtonDetails()
+            }
+        }
+    }
+    
+    // MARK: - Instruction Window
+    
+    private var instructionWindow: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(viewModel.isConfirmingSchedule ? "Confirm Schedule" : "Set Location")
+                .font(.system(size: 24, weight: .semibold))
+                .foregroundColor(.primary)
+            
+            Text(instructionText)
+                .font(.system(size: 18))
+                .foregroundColor(.secondary)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(.regularMaterial)
+        )
+    }
+    
+    private var instructionText: String {
+        if viewModel.isConfirmingSchedule {
+            if viewModel.nearbySchedules.isEmpty {
+                return "No parking restrictions found. Tap Confirm to save location."
+            } else {
+                return "Select your side of the street below, then tap Confirm."
+            }
+        } else {
+            return "Drag the map to position the pin at your vehicle's location."
+        }
+    }
+    
+    // MARK: - Top Status Buttons
+    
+    @State private var showStatusDetails = true
+    @State private var detailsTimer: Timer?
+    
+    private var topStatusButtons: some View {
+        HStack(alignment: .top, spacing: 12) {
+            // Reminders button
+            Button(action: {
+                let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                impactFeedback.impactOccurred()
+                showingRemindersSheet = true
+            }) {
+                HStack(spacing: 8) {
+                    Image(systemName: remindersAreEffective ? "bell.fill" : "bell.slash.fill")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(remindersAreEffective ? Color.green : Color.gray)
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Reminders")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(.primary)
+                            .lineLimit(1)
+                        
+                        if showStatusDetails {
+                            Text(remindersStatusText)
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(.secondary)
+                                .lineLimit(1)
+                                .transition(.asymmetric(
+                                    insertion: .opacity.combined(with: .move(edge: .top)),
+                                    removal: .opacity.combined(with: .move(edge: .top))
+                                ))
+                        }
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, showStatusDetails ? 16 : 12)
+                .frame(height: showStatusDetails ? 56 : 48)
+                .background(
+                    Capsule()
+                        .fill(.regularMaterial)
+                        .shadow(color: Color.black.opacity(0.15), radius: 4, x: 0, y: 2)
+                )
+                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: showStatusDetails)
+            }
+            
+            // Smart parking button
+            Button(action: {
+                let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                impactFeedback.impactOccurred()
+                showingAutoParkingSettings = true
+            }) {
+                HStack(spacing: 8) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(smartParkingIsOn ? Color.green : Color.gray)
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Smart Park")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(.primary)
+                            .lineLimit(1)
+                        
+                        if showStatusDetails {
+                            Text(smartParkingIsOn ? "Enabled" : "Disabled")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(.secondary)
+                                .lineLimit(1)
+                                .transition(.asymmetric(
+                                    insertion: .opacity.combined(with: .move(edge: .top)),
+                                    removal: .opacity.combined(with: .move(edge: .top))
+                                ))
+                        }
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, showStatusDetails ? 16 : 12)
+                .frame(height: showStatusDetails ? 56 : 48)
+                .background(
+                    Capsule()
+                        .fill(.regularMaterial)
+                        .shadow(color: Color.black.opacity(0.15), radius: 4, x: 0, y: 2)
+                )
+                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: showStatusDetails)
+            }
+            
+        }
+        .onAppear {
+            startDetailsTimer()
+        }
+        .onDisappear {
+            detailsTimer?.invalidate()
+        }
+    }
+    
+    private func startDetailsTimer() {
+        detailsTimer?.invalidate()
+        showStatusDetails = true
+        
+        detailsTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { _ in
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                showStatusDetails = false
+            }
+        }
+    }
+    
+    private func expandButtonDetails() {
+        detailsTimer?.invalidate()
+        
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+            showStatusDetails = true
+        }
+        
+        detailsTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { _ in
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                showStatusDetails = false
+            }
+        }
+    }
+    
+    private var activeRemindersCount: Int {
+        return NotificationManager.shared.customReminders.filter { $0.isActive }.count
+    }
+    
+    private var notificationsEnabled: Bool {
+        return NotificationManager.shared.notificationPermissionStatus == .authorized
+    }
+    
+    private var remindersAreEffective: Bool {
+        return activeRemindersCount > 0 && notificationsEnabled
+    }
+    
+    private var remindersStatusText: String {
+        if !notificationsEnabled {
+            return "Disabled"
+        } else if activeRemindersCount == 0 {
+            return "Disabled"
+        } else {
+            return "\(activeRemindersCount) Enabled"
+        }
+    }
+    
+    private func getScheduleUrgencyColor(for date: Date) -> Color {
+        let timeInterval = date.timeIntervalSinceNow
+        let hours = timeInterval / 3600
+        
+        if hours < 24 {
+            return .red
+        } else {
+            return .green
+        }
+    }
+    
+    private func getScheduleTimeText(for date: Date) -> String {
+        let calendar = Calendar.current
+        let now = Date()
+        let timeInterval = date.timeIntervalSince(now)
+        let hours = timeInterval / 3600
+        
+        // Very close (less than 2 hours)
+        if hours < 2 {
+            let minutes = Int(timeInterval / 60)
+            if minutes <= 30 {
+                return "\(minutes)m"
+            } else if minutes <= 60 {
+                return "1h"
+            } else {
+                let roundedHours = Int(ceil(hours))
+                return "\(roundedHours)h"
+            }
+        }
+        
+        // Today
+        if calendar.isDateInToday(date) {
+            return "Today"
+        }
+        
+        // Tomorrow
+        if calendar.isDateInTomorrow(date) {
+            return "Tomorrow"
+        }
+        
+        // This week
+        let daysUntil = calendar.dateComponents([.day], from: calendar.startOfDay(for: now), to: calendar.startOfDay(for: date)).day ?? 0
+        
+        if daysUntil <= 6 {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "E" // Short day name
+            return formatter.string(from: date)
+        }
+        
+        return "Schedule"
+    }
+    
+    
+    private var smartParkingIsOn: Bool {
+        return ParkingDetector.shared.isMonitoring
+    }
+    
+    private var smartParkingStatus: String {
+        return smartParkingIsOn ? "Active" : "Disabled"
+    }
+    
+    // MARK: - Map Control Buttons
+    
+    private var mapControlButtons: some View {
+        Group {
+            if !viewModel.isConfirmingSchedule || viewModel.isSettingLocation {
+                HStack(spacing: 12) {
+                    vehicleButton
+                    userLocationButton
+                }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var vehicleButton: some View {
+        if let currentVehicle = viewModel.vehicleManager.currentVehicle,
+           currentVehicle.parkingLocation != nil {
+            Button(action: {
+                let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                impactFeedback.impactOccurred()
+                centerOnVehicle()
+            }) {
+                Image(systemName: "car.fill")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.secondary)
+                    .frame(width: 44, height: 44)
+                    .background(
+                        Circle()
+                            .fill(.regularMaterial)
+                            .shadow(color: Color.black.opacity(0.2), radius: 15, x: 0, y: -5)
+                    )
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var userLocationButton: some View {
+        if viewModel.locationManager.userLocation != nil &&
+           (viewModel.locationManager.authorizationStatus == .authorizedWhenInUse || 
+            viewModel.locationManager.authorizationStatus == .authorizedAlways) {
+            Button(action: {
+                let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                impactFeedback.impactOccurred()
+                centerOnUser()
+            }) {
+                Image(systemName: "location.fill")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.secondary)
+                    .frame(width: 44, height: 44)
+                    .background(
+                        Circle()
+                            .fill(.regularMaterial)
+                            .shadow(color: Color.black.opacity(0.2), radius: 15, x: 0, y: -5)
+                    )
+            }
+        }
+    }
+    
+    // MARK: - Helper Functions
+    
+    private func centerOnVehicle() {
+        if let currentVehicle = viewModel.vehicleManager.currentVehicle,
+           let parkingLocation = currentVehicle.parkingLocation {
+            viewModel.centerMapOnLocation(parkingLocation.coordinate)
+        }
+    }
+    
+    private func centerOnUser() {
+        if let userLocation = viewModel.locationManager.userLocation {
+            viewModel.centerMapOnLocation(userLocation.coordinate)
         }
     }
     
@@ -161,26 +509,14 @@ struct VehicleParkingView: View {
     
     private var bottomInterface: some View {
         VStack(spacing: 0) {
-            // Upcoming reminders (only when not setting location)
-            if !viewModel.isSettingLocation,
-               let currentVehicle = viewModel.vehicleManager.currentVehicle,
-               let parkingLocation = currentVehicle.parkingLocation,
-               !viewModel.vehicleManager.activeVehicles.isEmpty {
-                UpcomingRemindersSection(
-                    streetDataManager: viewModel.streetDataManager,
-                    parkingLocation: parkingLocation
-                )
-                .padding(.horizontal, 20)
-                
-                Divider()
-                    .padding(.horizontal, 20)
-            }
-            
             // Main interface
             VehicleLocationSetting(
                 viewModel: viewModel,
                 onShowReminders: {
                     showingRemindersSheet = true
+                },
+                onShowSmartParking: {
+                    showingAutoParkingSettings = true
                 }
             )
         }
@@ -200,11 +536,14 @@ struct VehicleParkingView: View {
            let parkingLocation = selectedVehicle.parkingLocation {
             viewModel.centerMapOnLocation(parkingLocation.coordinate)
             
-            // Load persisted schedule if available
+            // Load user's selected schedule if available
             if let persistedSchedule = parkingLocation.selectedSchedule {
                 let schedule = StreetDataService.shared.convertToSweepSchedule(from: persistedSchedule)
                 viewModel.streetDataManager.schedule = schedule
                 viewModel.streetDataManager.processNextSchedule(for: schedule)
+            } else {
+                // Only fetch fresh data if no selected schedule is persisted
+                viewModel.streetDataManager.forceFetchSchedules(for: parkingLocation.coordinate)
             }
         } else if let userLocation = viewModel.locationManager.userLocation {
             viewModel.centerMapOnLocation(userLocation.coordinate)
@@ -279,31 +618,7 @@ struct VehicleParkingView: View {
         // parkingDetectionHandler will be cleared when user confirms the location
     }
     
-    // MARK: - Auto Parking Toggle Button
     
-    private var autoParkingToggleButton: some View {
-        Button(action: {
-            showingAutoParkingSettings = true
-        }) {
-            HStack(spacing: 8) {
-                Image(systemName: "sparkles")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(parkingDetector.isMonitoring ? .white : .primary)
-                
-                Text(parkingDetector.isMonitoring ? "Enabled" : "Enable Smart Park")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(parkingDetector.isMonitoring ? .white : .primary)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(parkingDetector.isMonitoring ? Color.blue : Color(.systemGray6))
-                    .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-            )
-        }
-        .buttonStyle(PlainButtonStyle())
-    }
 }
 
 #Preview("Light Mode") {

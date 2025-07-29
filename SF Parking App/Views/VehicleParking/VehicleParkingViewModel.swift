@@ -84,6 +84,9 @@ class VehicleParkingViewModel: ObservableObject {
         
         // Subscribe to LocationManager changes to forward them as published properties
         setupLocationSubscriptions()
+        
+        // Configure ParkingDetector with VehicleManager
+        ParkingDetector.shared.configure(vehicleManager: vehicleManager)
     }
     
     private func setupLocationSubscriptions() {
@@ -92,6 +95,42 @@ class VehicleParkingViewModel: ObservableObject {
             .receive(on: DispatchQueue.main)
             .assign(to: \.userHeading, on: self)
             .store(in: &cancellables)
+        
+        // Listen for Smart Park location saves to clear old schedule data
+        NotificationCenter.default.publisher(for: .smartParkLocationSaved)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.clearScheduleDataForSmartPark()
+            }
+            .store(in: &cancellables)
+    }
+    
+    private func clearScheduleDataForSmartPark() {
+        print("🚗 Smart Park location saved - clearing old schedule data and detecting new schedules")
+        
+        // Clear all schedule-related state
+        nearbySchedules = []
+        selectedScheduleIndex = 0
+        hasSelectedSchedule = false
+        detectedSchedule = nil
+        scheduleConfidence = 0.0
+        showingScheduleSelection = false
+        schedulesLoadedForCurrentLocation = false
+        
+        // Clear street data manager state
+        streetDataManager.schedule = nil
+        streetDataManager.nextUpcomingSchedule = nil
+        
+        // Get the new parking location and detect schedules for it
+        if let currentVehicle = vehicleManager.currentVehicle,
+           let parkingLocation = currentVehicle.parkingLocation {
+            print("🚗 Detecting schedules for Smart Park location: \(parkingLocation.address)")
+            
+            // Trigger schedule detection for the new location
+            autoDetectSchedule(for: parkingLocation.coordinate)
+        }
+        
+        print("🚗 Schedule data cleared and new schedule detection started")
     }
     
     
@@ -201,18 +240,20 @@ class VehicleParkingViewModel: ObservableObject {
                 switch result {
                 case .success(let schedulesWithSides):
                     if !schedulesWithSides.isEmpty {
-                        self.nearbySchedules = schedulesWithSides
+                        // Sort schedules for consistent ordering
+                        let sortedSchedules = self.sortSchedules(schedulesWithSides)
+                        self.nearbySchedules = sortedSchedules
                         if self.isConfirmingSchedule {
                             // During confirmation, set initial selection if we don't have any
-                            if self.selectedScheduleIndex >= schedulesWithSides.count || !self.hasSelectedSchedule {
+                            if self.selectedScheduleIndex >= sortedSchedules.count || !self.hasSelectedSchedule {
                                 self.selectedScheduleIndex = 0
                                 self.hasSelectedSchedule = true
                                 self.hoveredScheduleIndex = 0
-                                self.detectedSchedule = schedulesWithSides[0].schedule
+                                self.detectedSchedule = sortedSchedules[0].schedule
                                 self.scheduleConfidence = 0.8
                             }
                         } else {
-                            self.initialSmartSelection(for: coordinate, schedulesWithSides: schedulesWithSides)
+                            self.initialSmartSelection(for: coordinate, schedulesWithSides: sortedSchedules)
                         }
                     } else {
                         self.nearbySchedules = []
@@ -237,7 +278,7 @@ class VehicleParkingViewModel: ObservableObject {
         let currentSchedules = nearbySchedules
         let currentSelectedIndex = selectedScheduleIndex
         let currentHasSelection = hasSelectedSchedule
-        let _ = detectedSchedule
+        let currentDetectedSchedule = detectedSchedule
         let currentScheduleConfidence = scheduleConfidence
         
         isAutoDetectingSchedule = true
@@ -255,35 +296,45 @@ class VehicleParkingViewModel: ObservableObject {
                 switch result {
                 case .success(let newSchedulesWithSides):
                     if !newSchedulesWithSides.isEmpty {
+                        // Sort both current and new schedules for consistent comparison
+                        let sortedCurrent = self.sortSchedules(currentSchedules)
+                        let sortedNew = self.sortSchedules(newSchedulesWithSides)
+                        
                         // Check if schedules are the same as current ones
-                        let schedulesAreSame = self.areSchedulesSame(current: currentSchedules, new: newSchedulesWithSides)
+                        let schedulesAreSame = self.areSchedulesSame(current: sortedCurrent, new: sortedNew)
                         
                         if schedulesAreSame && !currentSchedules.isEmpty {
                             // Schedules are the same, preserve current selection
                             // Don't update nearbySchedules to avoid disrupting selection
                             return
                         } else {
-                            // Schedules are different, update them
-                            self.nearbySchedules = newSchedulesWithSides
+                            // Schedules are different, update them with sorted list
+                            self.nearbySchedules = sortedNew
                             
                             // Try to preserve selection if possible
-                            if !currentSchedules.isEmpty && currentHasSelection && currentSelectedIndex < newSchedulesWithSides.count {
-                                // Check if the previously selected schedule exists in new results
-                                if let preservedIndex = self.findMatchingScheduleIndex(
-                                    target: currentSchedules[currentSelectedIndex],
-                                    in: newSchedulesWithSides
-                                ) {
-                                    self.selectedScheduleIndex = preservedIndex
-                                    self.hasSelectedSchedule = true
-                                    self.detectedSchedule = newSchedulesWithSides[preservedIndex].schedule
-                                    self.scheduleConfidence = currentScheduleConfidence
+                            if !currentSchedules.isEmpty && currentHasSelection {
+                                // Find the previously selected schedule in the new sorted list
+                                if currentSelectedIndex < currentSchedules.count {
+                                    let targetSchedule = currentSchedules[currentSelectedIndex]
+                                    if let preservedIndex = self.findMatchingScheduleIndex(
+                                        target: targetSchedule,
+                                        in: sortedNew
+                                    ) {
+                                        self.selectedScheduleIndex = preservedIndex
+                                        self.hasSelectedSchedule = true
+                                        self.detectedSchedule = sortedNew[preservedIndex].schedule
+                                        self.scheduleConfidence = currentScheduleConfidence
+                                    } else {
+                                        // Previous selection not found, start fresh
+                                        self.initialSmartSelection(for: coordinate, schedulesWithSides: sortedNew)
+                                    }
                                 } else {
-                                    // Previous selection not found, start fresh
-                                    self.initialSmartSelection(for: coordinate, schedulesWithSides: newSchedulesWithSides)
+                                    // Invalid index, start fresh
+                                    self.initialSmartSelection(for: coordinate, schedulesWithSides: sortedNew)
                                 }
                             } else {
                                 // No previous selection to preserve
-                                self.initialSmartSelection(for: coordinate, schedulesWithSides: newSchedulesWithSides)
+                                self.initialSmartSelection(for: coordinate, schedulesWithSides: sortedNew)
                             }
                         }
                     } else {
@@ -337,7 +388,8 @@ class VehicleParkingViewModel: ObservableObject {
             // If no schedules were loaded in background, load them now
             autoDetectSchedule(for: coordinate)
         } else {
-            // Schedules already exist, set initial selection
+            // Schedules already exist, sort them and set initial selection
+            nearbySchedules = sortSchedules(nearbySchedules)
             selectedScheduleIndex = 0
             hasSelectedSchedule = true
             hoveredScheduleIndex = 0
@@ -408,7 +460,11 @@ class VehicleParkingViewModel: ObservableObject {
         
         if !nearbySchedules.isEmpty && hasSelectedSchedule {
             let selectedSchedule = nearbySchedules[selectedScheduleIndex].schedule
+            // Set schedule immediately for instant UI update
             streetDataManager.schedule = selectedSchedule
+            // Calculate next schedule immediately for instant "Move by" date
+            streetDataManager.nextUpcomingSchedule = streetDataManager.calculateNextScheduleImmediate(for: selectedSchedule)
+            // Also process in background for any additional calculations
             streetDataManager.processNextSchedule(for: selectedSchedule)
         } else {
             streetDataManager.schedule = nil
@@ -569,7 +625,7 @@ class VehicleParkingViewModel: ObservableObject {
         } else if isSettingLocation {
             return "Move Vehicle"
         } else {
-            return "My Vehicle"
+            return ""
         }
     }
     
@@ -579,14 +635,7 @@ class VehicleParkingViewModel: ObservableObject {
         } else if isSettingLocation {
             return "Position the pin where you parked"
         } else {
-            // Show last parked timing for My Vehicle or initial instruction
-            if let currentVehicle = vehicleManager.currentVehicle,
-               let parkingLocation = currentVehicle.parkingLocation {
-                let timeAgo = formatTimeAgo(from: parkingLocation.timestamp)
-                return "Last parked \(timeAgo)"
-            } else {
-                return "Location not set"
-            }
+            return nil
         }
     }
     
@@ -649,8 +698,8 @@ class VehicleParkingViewModel: ObservableObject {
             // Compare key properties that identify a schedule
             if currentSchedule.schedule.streetName != newSchedule.schedule.streetName ||
                currentSchedule.schedule.weekday != newSchedule.schedule.weekday ||
-               currentSchedule.schedule.startTime != newSchedule.schedule.startTime ||
-               currentSchedule.schedule.endTime != newSchedule.schedule.endTime ||
+               currentSchedule.schedule.fromhour != newSchedule.schedule.fromhour ||
+               currentSchedule.schedule.tohour != newSchedule.schedule.tohour ||
                currentSchedule.side != newSchedule.side {
                 return false
             }
@@ -659,13 +708,44 @@ class VehicleParkingViewModel: ObservableObject {
         return true
     }
     
+    private func sortSchedules(_ schedules: [SweepScheduleWithSide]) -> [SweepScheduleWithSide] {
+        return schedules.sorted { first, second in
+            // Sort by street name first
+            if first.schedule.streetName != second.schedule.streetName {
+                return first.schedule.streetName < second.schedule.streetName
+            }
+            
+            // Then by side
+            if first.side != second.side {
+                return first.side < second.side
+            }
+            
+            // Then by weekday (if both have weekdays)
+            if let firstWeekday = first.schedule.weekday,
+               let secondWeekday = second.schedule.weekday,
+               firstWeekday != secondWeekday {
+                return firstWeekday < secondWeekday
+            }
+            
+            // Then by start hour (if both have fromhour values)
+            if let firstHour = first.schedule.fromhour,
+               let secondHour = second.schedule.fromhour,
+               firstHour != secondHour {
+                return firstHour < secondHour
+            }
+            
+            // Finally by distance (closer schedules first)
+            return first.distance < second.distance
+        }
+    }
+    
     private func findMatchingScheduleIndex(target: SweepScheduleWithSide, in schedules: [SweepScheduleWithSide]) -> Int? {
         for (index, schedule) in schedules.enumerated() {
             // Check if this schedule matches the target
             if schedule.schedule.streetName == target.schedule.streetName &&
                schedule.schedule.weekday == target.schedule.weekday &&
-               schedule.schedule.startTime == target.schedule.startTime &&
-               schedule.schedule.endTime == target.schedule.endTime &&
+               schedule.schedule.fromhour == target.schedule.fromhour &&
+               schedule.schedule.tohour == target.schedule.tohour &&
                schedule.side == target.side {
                 return index
             }

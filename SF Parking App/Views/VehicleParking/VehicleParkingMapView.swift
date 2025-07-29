@@ -7,10 +7,12 @@ struct VehicleParkingMapView: View {
     @State private var currentMapHeading: CLLocationDirection = 0
     @State private var impactFeedbackLight = UIImpactFeedbackGenerator(style: .light)
     @State private var userLocation: CLLocation?
+    @State private var animatedUserCoordinate: CLLocationCoordinate2D?
     @State private var smartSelectionTimer: Timer?
     @State private var markerStillTimer: Timer?
     @State private var lastMapCenterCoordinate: CLLocationCoordinate2D?
     @State private var isAppActive: Bool = true
+    @Namespace private var mapScope
     
     // Use ViewModel's published heading property
     private var currentHeading: CLLocationDirection {
@@ -18,7 +20,7 @@ struct VehicleParkingMapView: View {
     }
     
     var body: some View {
-        Map(position: $viewModel.mapPosition, interactionModes: isAppActive ? .all : []) {
+        Map(position: $viewModel.mapPosition, interactionModes: isAppActive ? .all : [], scope: mapScope) {
             // User location annotation
             if viewModel.locationManager.authorizationStatus == .authorizedWhenInUse || viewModel.locationManager.authorizationStatus == .authorizedAlways {
                 userLocationAnnotation
@@ -33,9 +35,17 @@ struct VehicleParkingMapView: View {
             }
         }
         .overlay(settingLocationPin)
-        .overlay(mapControlButtons, alignment: .bottomTrailing)
         .overlay(enableLocationButton, alignment: .bottom)
+        .overlay(alignment: .topTrailing) {
+            MapCompass(scope: mapScope)
+                .padding(.top, 140) // Lower position under the buttons
+                .padding(.trailing, 12)
+        }
         .mapStyle(.standard)
+        .mapScope(mapScope)
+        .mapControls {
+            // Empty mapControls block hides default controls
+        }
         .onMapCameraChange(frequency: .continuous) { context in
             guard isAppActive else { return }
             currentMapHeading = context.camera.heading
@@ -44,6 +54,9 @@ struct VehicleParkingMapView: View {
         .onAppear {
             // Initialize user location on view appear
             userLocation = viewModel.locationManager.userLocation
+            if let location = userLocation {
+                animatedUserCoordinate = location.coordinate
+            }
         }
         .onDisappear {
             // Clean up timers to prevent retain cycles
@@ -67,8 +80,11 @@ struct VehicleParkingMapView: View {
             // Keep local state in sync with location manager
             userLocation = newLocation
             
-            // Center map on user location if no parking location is set
+            // Smoothly animate user location changes
             if let location = newLocation {
+                animateUserLocationChange(to: location.coordinate)
+                
+                // Center map on user location if no parking location is set
                 let hasParkedVehicle = viewModel.vehicleManager.currentVehicle?.parkingLocation != nil
                 if !hasParkedVehicle {
                     viewModel.centerMapOnLocation(location.coordinate)
@@ -78,6 +94,9 @@ struct VehicleParkingMapView: View {
         .onReceive(viewModel.locationManager.$authorizationStatus) { newStatus in
             // Update user location when authorization changes
             userLocation = viewModel.locationManager.userLocation
+            if let location = userLocation {
+                animatedUserCoordinate = location.coordinate
+            }
             
             // If permission was just granted, request location immediately
             if newStatus == .authorizedWhenInUse || newStatus == .authorizedAlways {
@@ -88,6 +107,9 @@ struct VehicleParkingMapView: View {
             // Refresh when returning from Settings
             viewModel.locationManager.refreshAuthorizationStatus()
             userLocation = viewModel.locationManager.userLocation
+            if let location = userLocation {
+                animatedUserCoordinate = location.coordinate
+            }
         }
         .onDisappear {
             // Clean up timers when view disappears
@@ -106,13 +128,16 @@ struct VehicleParkingMapView: View {
                 VStack {
                     Spacer()
                     
-                    // Pin with adaptive color
+                    // Pin with adaptive urgency color
                     VStack(spacing: 0) {
                         ZStack {
                             Circle()
                                 .fill(
                                     LinearGradient(
-                                        colors: [Color.green, Color.green.opacity(0.8)],
+                                        colors: [
+                                            getMovingPinColor(),
+                                            getMovingPinColor().opacity(0.8)
+                                        ],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
                                     )
@@ -123,13 +148,14 @@ struct VehicleParkingMapView: View {
                                 .font(.system(size: 12, weight: .semibold))
                                 .foregroundColor(.white)
                         }
-                        .shadow(color: Color.green.opacity(0.4), radius: 6, x: 0, y: 3)
+                        .shadow(color: getMovingPinColor().opacity(0.4), radius: 6, x: 0, y: 3)
                         
                         // Pin tail
                         RoundedRectangle(cornerRadius: 1)
-                            .fill(Color.green)
+                            .fill(getMovingPinColor())
                             .frame(width: 3, height: 12)
                     }
+                    .shadow(color: Color.black.opacity(0.4), radius: 12, x: 0, y: 6)
                     .offset(y: -18) // Move pin up so the tip of the line aligns with center
                     
                     Spacer()
@@ -167,7 +193,8 @@ struct VehicleParkingMapView: View {
                     .frame(width: 44, height: 44)
                     .background(
                         Circle()
-                            .fill(Color(.systemGray6))
+                            .fill(.thinMaterial)
+                            .shadow(color: Color.black.opacity(0.2), radius: 15, x: 0, y: -5)
                     )
             }
         }
@@ -188,7 +215,8 @@ struct VehicleParkingMapView: View {
                     .frame(width: 44, height: 44)
                     .background(
                         Circle()
-                            .fill(Color(.systemGray6))
+                            .fill(.thinMaterial)
+                            .shadow(color: Color.black.opacity(0.2), radius: 15, x: 0, y: -5)
                     )
             }
         }
@@ -229,10 +257,9 @@ struct VehicleParkingMapView: View {
     
     @MapContentBuilder
     private var userLocationAnnotation: some MapContent {
-        if let userLocation = userLocation {
-            Annotation("", coordinate: userLocation.coordinate) {
+        if let animatedCoordinate = animatedUserCoordinate {
+            Annotation("", coordinate: animatedCoordinate) {
                 UserDirectionCone(heading: currentHeading, mapHeading: currentMapHeading)
-                    .id("userLocation-\(currentHeading)-\(currentMapHeading)")
             }
         }
     }
@@ -245,6 +272,7 @@ struct VehicleParkingMapView: View {
                     VehicleParkingMapMarker(
                         vehicle: vehicle,
                         isSelected: viewModel.vehicleManager.selectedVehicle?.id == vehicle.id,
+                        streetDataManager: viewModel.streetDataManager,
                         onTap: {
                             viewModel.centerMapOnLocation(parkingLocation.coordinate)
                         }
@@ -252,6 +280,134 @@ struct VehicleParkingMapView: View {
                 }
             }
         }
+    }
+    
+    // MARK: - Urgency Color Logic
+    
+    private enum UrgencyLevel {
+        case critical  // < 24 hours
+        case safe      // >= 24 hours
+    }
+    
+    private func getUrgencyLevel(for schedule: SweepSchedule) -> UrgencyLevel {
+        let nextOccurrence = calculateNextOccurrenceForSchedule(schedule)
+        if let nextDate = nextOccurrence {
+            let hoursUntil = nextDate.timeIntervalSinceNow / 3600
+            return hoursUntil < 24 ? .critical : .safe
+        }
+        return .safe
+    }
+    
+    private func calculateNextOccurrenceForSchedule(_ schedule: SweepSchedule) -> Date? {
+        let calendar = Calendar.current
+        let now = Date()
+        
+        guard let weekday = schedule.weekday,
+              let fromHour = schedule.fromhour,
+              let startHour = Int(fromHour) else {
+            return nil
+        }
+        
+        let weekdayNum = dayStringToWeekdayMap(weekday)
+        guard weekdayNum > 0 else { return nil }
+        
+        // Look ahead for up to 3 months to find valid occurrences
+        for monthOffset in 0..<3 {
+            guard let futureMonth = calendar.date(byAdding: .month, value: monthOffset, to: now) else { continue }
+            
+            // Get all occurrences of the target weekday in this month
+            let monthOccurrences = getAllWeekdayOccurrencesInMonthMap(weekday: weekdayNum, month: futureMonth, calendar: calendar)
+            
+            for (weekNumber, weekdayDate) in monthOccurrences.enumerated() {
+                let weekPos = weekNumber + 1
+                let applies = doesScheduleApplyToWeekMap(weekNumber: weekPos, schedule: schedule)
+                
+                if applies {
+                    // Create the actual start time for this occurrence
+                    guard let scheduleDateTime = calendar.date(bySettingHour: startHour, minute: 0, second: 0, of: weekdayDate) else { continue }
+                    
+                    // Only include if the schedule time is in the future
+                    if scheduleDateTime > now {
+                        return scheduleDateTime
+                    }
+                }
+            }
+        }
+        
+        return nil
+    }
+    
+    private func getAllWeekdayOccurrencesInMonthMap(weekday: Int, month: Date, calendar: Calendar) -> [Date] {
+        var occurrences: [Date] = []
+        
+        // Get the first day of the month
+        let monthComponents = calendar.dateComponents([.year, .month], from: month)
+        guard let firstDayOfMonth = calendar.date(from: monthComponents) else { return [] }
+        
+        // Find the first occurrence of the target weekday in this month
+        let firstWeekday = calendar.component(.weekday, from: firstDayOfMonth)
+        var daysToAdd = weekday - firstWeekday
+        if daysToAdd < 0 {
+            daysToAdd += 7
+        }
+        
+        guard let firstOccurrence = calendar.date(byAdding: .day, value: daysToAdd, to: firstDayOfMonth) else { return [] }
+        
+        // Add all occurrences of this weekday in the month (typically 4-5 times)
+        var currentDate = firstOccurrence
+        while calendar.component(.month, from: currentDate) == calendar.component(.month, from: month) {
+            occurrences.append(currentDate)
+            guard let nextWeek = calendar.date(byAdding: .weekOfYear, value: 1, to: currentDate) else { break }
+            currentDate = nextWeek
+        }
+        
+        return occurrences
+    }
+    
+    private func doesScheduleApplyToWeekMap(weekNumber: Int, schedule: SweepSchedule) -> Bool {
+        switch weekNumber {
+        case 1: return schedule.week1 == "1"
+        case 2: return schedule.week2 == "1"
+        case 3: return schedule.week3 == "1"
+        case 4: return schedule.week4 == "1"
+        case 5: return schedule.week5 == "1"
+        default: return false
+        }
+    }
+    
+    private func dayStringToWeekdayMap(_ dayString: String) -> Int {
+        let normalizedDay = dayString.lowercased().trimmingCharacters(in: .whitespaces)
+        
+        switch normalizedDay {
+        case "sun", "sunday": return 1
+        case "mon", "monday": return 2
+        case "tue", "tues", "tuesday": return 3
+        case "wed", "wednesday": return 4
+        case "thu", "thur", "thursday": return 5
+        case "fri", "friday": return 6
+        case "sat", "saturday": return 7
+        default: return 0
+        }
+    }
+    
+    private func getUrgencyColor(for schedule: SweepSchedule) -> Color {
+        let urgencyLevel = getUrgencyLevel(for: schedule)
+        switch urgencyLevel {
+        case .critical:
+            return .red
+        case .safe:
+            return .green
+        }
+    }
+    
+    private func getMovingPinColor() -> Color {
+        // Use the color of the currently selected schedule, or green as default
+        if viewModel.hasSelectedSchedule,
+           viewModel.selectedScheduleIndex < viewModel.nearbySchedules.count {
+            let selectedSchedule = viewModel.nearbySchedules[viewModel.selectedScheduleIndex].schedule
+            return getUrgencyColor(for: selectedSchedule)
+        }
+        return .green  // Default to green when no schedule selected
     }
     
     // Helper function to check if cleaning is today and hasn't ended yet
@@ -315,12 +471,9 @@ struct VehicleParkingMapView: View {
                             .stroke(
                                 {
                                     let isSelected = index == viewModel.selectedScheduleIndex && viewModel.hasSelectedSchedule
-                                    let isActiveToday = isCleaningActiveToday(schedule: scheduleWithSide.schedule)
                                     
-                                    if isSelected && isActiveToday {
-                                        return Color.red
-                                    } else if isSelected {
-                                        return Color.blue
+                                    if isSelected {
+                                        return getUrgencyColor(for: scheduleWithSide.schedule)
                                     } else {
                                         return Color.secondary.opacity(0.6)
                                     }
@@ -355,7 +508,7 @@ struct VehicleParkingMapView: View {
                         if index == viewModel.selectedScheduleIndex && viewModel.hasSelectedSchedule {
                             MapPolyline(coordinates: streetEdgeCoords)
                                 .stroke(
-                                    Color.blue.opacity(0.25),
+                                    getUrgencyColor(for: scheduleWithSide.schedule).opacity(0.25),
                                     style: StrokeStyle(
                                         lineWidth: 20,
                                         lineCap: .round,
@@ -370,6 +523,44 @@ struct VehicleParkingMapView: View {
     }
     
     // MARK: - Private Methods
+    
+    private func animateUserLocationChange(to newCoordinate: CLLocationCoordinate2D) {
+        // If this is the first location update, set immediately without animation
+        guard let currentCoordinate = animatedUserCoordinate else {
+            animatedUserCoordinate = newCoordinate
+            return
+        }
+        
+        // Calculate distance to determine animation approach
+        let currentLocation = CLLocation(latitude: currentCoordinate.latitude, longitude: currentCoordinate.longitude)
+        let newLocation = CLLocation(latitude: newCoordinate.latitude, longitude: newCoordinate.longitude)
+        let distance = currentLocation.distance(from: newLocation)
+        
+        // Smart animation based on distance
+        if distance < 5 { // Very small movements (< 5 meters) - walking precision
+            withAnimation(.interactiveSpring(response: 2.0, dampingFraction: 0.8, blendDuration: 0.2)) {
+                animatedUserCoordinate = newCoordinate
+            }
+        } else if distance < 50 { // Small movements (5-50 meters) - walking/jogging
+            withAnimation(.easeInOut(duration: 1.5)) {
+                animatedUserCoordinate = newCoordinate
+            }
+        } else if distance < 500 { // Medium movements (50-500 meters) - fast walking/biking
+            withAnimation(.easeInOut(duration: 2.0)) {
+                animatedUserCoordinate = newCoordinate
+            }
+        } else if distance < 10000 { // Large movements (0.5-10 km) - driving within city
+            withAnimation(.easeInOut(duration: 2.5)) {
+                animatedUserCoordinate = newCoordinate
+            }
+        } else {
+            // Very large jumps (10+ km) - long distance travel (LA to SF)
+            // Use a smooth but faster animation to avoid jarring immediate jump
+            withAnimation(.easeInOut(duration: 3.0)) {
+                animatedUserCoordinate = newCoordinate
+            }
+        }
+    }
     
     private func enableLocationAction() {
         impactFeedbackLight.impactOccurred()

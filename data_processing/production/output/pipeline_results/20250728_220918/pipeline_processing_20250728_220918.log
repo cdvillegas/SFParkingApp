@@ -1,0 +1,55 @@
+2025-07-28 22:09:18,028 - INFO - 🚀 Starting Full SF Parking Citation Analysis Pipeline
+2025-07-28 22:09:18,028 - INFO - ================================================================================
+2025-07-28 22:09:18,029 - INFO -    Processing 365 days of data with 50 workers
+2025-07-28 22:09:18,029 - INFO -    Output directory: ../output/pipeline_results/20250728_220918
+2025-07-28 22:09:18,029 - INFO - ================================================================================
+2025-07-28 22:09:18,029 - INFO - 📅 Step 1: Fetching street sweeping schedule data from SF Open Data API
+2025-07-28 22:09:18,029 - INFO -    Fetching schedule batch at offset 0...
+2025-07-28 22:09:19,905 - INFO -    Fetched 37878 schedules (total: 37878)
+2025-07-28 22:09:19,905 - INFO - ✅ Fetched 37878 schedule records from API
+2025-07-28 22:09:20,092 - INFO - 💾 Saved raw schedule data to ../output/pipeline_results/20250728_220918/schedule_raw_20250728_220918.csv
+2025-07-28 22:09:20,096 - INFO - 🧹 Step 2: Cleaning and consolidating schedule data
+2025-07-28 22:09:24,014 - INFO - ✅ Schedule cleaning completed successfully
+2025-07-28 22:09:24,074 - INFO - 📊 Cleaned schedule: 37,878 → 34,306 records
+2025-07-28 22:09:24,075 - INFO - 🚗 Step 3: Fetching 365 days of street sweeping citations
+2025-07-28 22:09:24,075 - INFO -    Date range: 2024-07-28 to 2025-07-28
+2025-07-28 22:09:24,075 - INFO -    Fetching citation batch at offset 0...
+2025-07-28 22:09:26,605 - INFO -    Fetched 50000 citations (total: 50000)
+2025-07-28 22:09:28,111 - INFO -    Fetching citation batch at offset 50000...
+2025-07-28 22:09:30,386 - INFO -    Fetched 50000 citations (total: 100000)
+2025-07-28 22:09:31,891 - INFO -    Fetching citation batch at offset 100000...
+2025-07-28 22:09:39,301 - INFO -    Fetched 50000 citations (total: 150000)
+2025-07-28 22:09:40,807 - INFO -    Fetching citation batch at offset 150000...
+2025-07-28 22:09:46,711 - INFO -    Fetched 50000 citations (total: 200000)
+2025-07-28 22:09:48,216 - INFO -    Fetching citation batch at offset 200000...
+2025-07-28 22:09:51,268 - INFO -    Fetched 50000 citations (total: 250000)
+2025-07-28 22:09:52,773 - INFO -    Fetching citation batch at offset 250000...
+2025-07-28 22:09:55,042 - INFO -    Fetched 50000 citations (total: 300000)
+2025-07-28 22:09:56,547 - INFO -    Fetching citation batch at offset 300000...
+2025-07-28 22:09:58,787 - INFO -    Fetched 50000 citations (total: 350000)
+2025-07-28 22:10:00,292 - INFO -    Fetching citation batch at offset 350000...
+2025-07-28 22:10:02,687 - INFO -    Fetched 50000 citations (total: 400000)
+2025-07-28 22:10:04,192 - INFO -    Fetching citation batch at offset 400000...
+2025-07-28 22:10:06,534 - INFO -    Fetched 50000 citations (total: 450000)
+2025-07-28 22:10:08,040 - INFO -    Fetching citation batch at offset 450000...
+2025-07-28 22:10:10,341 - INFO -    Fetched 50000 citations (total: 500000)
+2025-07-28 22:10:11,846 - INFO -    Fetching citation batch at offset 500000...
+2025-07-28 22:10:13,873 - INFO -    Fetched 21643 citations (total: 521643)
+2025-07-28 22:10:13,874 - INFO - ✅ Fetched 521643 street sweeping citations from API
+2025-07-28 22:10:15,059 - INFO - 💾 Saved raw citation data to ../output/pipeline_results/20250728_220918/citations_raw_20250728_220918.csv
+2025-07-28 22:10:15,078 - INFO - 📍 Step 4: Geocoding all citations with parallel processing
+2025-07-28 22:10:15,411 - INFO -    Running: /Applications/Xcode.app/Contents/Developer/usr/bin/python3 production_citation_processor.py --input-file temp_citations_for_geocoding.csv --workers 50 --batch-size 5000 --rate-limit 0.01 --min-confidence MEDIUM --output ../output/pipeline_results/20250728_220918/citations_geocoded_20250728_220918.csv --output-dir ../output/pipeline_results/20250728_220918 --no-resume
+2025-07-28 23:55:11,505 - INFO - ✅ Citation geocoding completed successfully
+2025-07-28 23:55:11,928 - INFO - 📊 Geocoded citations: 493,132 with confidence filtering
+2025-07-28 23:55:12,004 - INFO - 🔄 Step 5: Calculating estimated sweeper arrival times
+2025-07-28 23:55:12,004 - INFO -    Running: /Applications/Xcode.app/Contents/Developer/usr/bin/python3 production_hybrid_matcher_day_specific.py --citation-file ../output/pipeline_results/20250728_220918/citations_geocoded_20250728_220918.csv --schedule-file ../output/pipeline_results/20250728_220918/schedule_cleaned_20250728_220918.csv --max-distance 200 --output-prefix ../output/pipeline_results/20250728_220918/final_analysis_20250728_220918 --output-dir ../output/pipeline_results/20250728_220918
+2025-07-29 00:05:34,367 - INFO - ✅ Schedule matching and analysis completed successfully
+2025-07-29 00:05:34,550 - INFO - 📊 Generated estimates for 34,284 schedule blocks
+2025-07-29 00:05:34,550 - INFO - 🎉 Full pipeline completed successfully!
+2025-07-29 00:05:34,550 - INFO - ================================================================================
+2025-07-29 00:05:34,550 - INFO - 📊 FINAL RESULTS:
+2025-07-29 00:05:34,550 - INFO -    Schedule data: 37,878 → 34,306 records
+2025-07-29 00:05:34,550 - INFO -    Citation data: 521,643 → 493,132 geocoded
+2025-07-29 00:05:34,550 - INFO -    Estimates: 34,284 schedule blocks with predicted times
+2025-07-29 00:05:34,550 - INFO -    Processing time: 1:56:16.521476
+2025-07-29 00:05:34,550 - INFO - 📁 All output saved to: ../output/pipeline_results/20250728_220918

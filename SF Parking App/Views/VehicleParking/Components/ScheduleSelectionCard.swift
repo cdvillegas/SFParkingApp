@@ -12,6 +12,17 @@ struct ScheduleSelectionCard: View {
         scheduleWithSide.schedule
     }
     
+    // Get urgency color based on schedule timing
+    private var urgencyColor: Color {
+        // Use the actual next occurrence calculation from StreetDataManager
+        let nextOccurrence = calculateNextOccurrence(for: schedule)
+        if let nextDate = nextOccurrence {
+            let hoursUntil = nextDate.timeIntervalSinceNow / 3600
+            return hoursUntil < 24 ? .red : .green
+        }
+        return .green
+    }
+    
     // Check if cleaning is today and hasn't ended yet
     private var isCleaningActiveToday: Bool {
         let calendar = Calendar.current
@@ -53,61 +64,159 @@ struct ScheduleSelectionCard: View {
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: 12) {
-                // Left: Direction pill
+                // Left: Direction indicator as pill
                 Text(formatSideDescription(scheduleWithSide.side))
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(isSelected ? .white : .primary)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 3)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(isSelected ? .white : .white)
+                    .lineLimit(1)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
                     .background(
                         Capsule()
-                            .fill(isSelected ? (isCleaningActiveToday ? Color.red : Color.blue) : Color(.systemGray5))
+                            .fill(isSelected ? urgencyColor : Color.secondary)
+                    )
+                    .shadow(
+                        color: (isSelected ? urgencyColor : Color.secondary).opacity(0.3),
+                        radius: 3,
+                        x: 0,
+                        y: 1
                     )
                 
-                // Right: Schedule details
-                VStack(alignment: .leading, spacing: 2) {
-                    // Line 1: Week pattern and day
+                // Right: Schedule details - matching vehicle card text layout exactly
+                VStack(alignment: .leading, spacing: 4) {
+                    // Line 1: Week pattern and day - matching parking address style
                     Text(formatWeekAndDay(schedule))
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.title3)
+                        .fontWeight(.semibold)
                         .foregroundColor(.primary)
-                        .lineLimit(1)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .lineLimit(2)
+                        .shadow(
+                            color: isSelected ? urgencyColor.opacity(0.3) : Color.clear,
+                            radius: isSelected ? 3 : 0,
+                            x: 0,
+                            y: 0
+                        )
                     
-                    // Line 2: Time range
+                    // Line 2: Time range - matching "Move by" text style
                     Text(formatTimeRange(schedule))
-                        .font(.system(size: 13, weight: .medium))
+                        .font(.callout)
                         .foregroundColor(.secondary)
-                        .lineLimit(1)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .lineLimit(nil)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .shadow(
+                            color: isSelected ? urgencyColor.opacity(0.2) : Color.clear,
+                            radius: isSelected ? 2 : 0,
+                            x: 0,
+                            y: 0
+                        )
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                
+                Spacer()
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 16)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(isSelected ? (isCleaningActiveToday ? Color.red.opacity(0.12) : Color.blue.opacity(0.12)) : (colorScheme == .dark ? Color(.systemBackground) : Color.white))
-                    .shadow(
-                        color: isSelected ? (isCleaningActiveToday ? Color.red.opacity(0.4) : Color.blue.opacity(0.4)) : Color.black.opacity(0.08),
-                        radius: isSelected ? 16 : 6,
-                        x: 0,
-                        y: isSelected ? 8 : 3
-                    )
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(isSelected ? (isCleaningActiveToday ? Color.red.opacity(0.8) : Color.blue.opacity(0.8)) : Color(.systemGray6), lineWidth: isSelected ? 3 : 1)
-            )
-            .scaleEffect(isSelected ? 1.02 : 1.0)
-            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isSelected)
-            .padding(.horizontal, 4)
-            .padding(.vertical, 2)
-            .frame(width: 200)
+            .opacity(isSelected ? 1.0 : 0.4)
+            .animation(.easeInOut(duration: 0.2), value: isSelected)
         }
         .buttonStyle(PlainButtonStyle())
     }
     
     // MARK: - Helper Methods
+    
+    private enum UrgencyLevel {
+        case critical  // < 24 hours
+        case safe      // >= 24 hours
+    }
+    
+    private func calculateNextOccurrence(for schedule: SweepSchedule) -> Date? {
+        let calendar = Calendar.current
+        let now = Date()
+        
+        guard let weekday = schedule.weekday,
+              let fromHour = schedule.fromhour,
+              let startHour = Int(fromHour) else {
+            return nil
+        }
+        
+        let weekdayNum = dayStringToWeekday(weekday)
+        guard weekdayNum > 0 else { return nil }
+        
+        // Look ahead for up to 3 months to find valid occurrences
+        for monthOffset in 0..<3 {
+            guard let futureMonth = calendar.date(byAdding: .month, value: monthOffset, to: now) else { continue }
+            
+            // Get all occurrences of the target weekday in this month
+            let monthOccurrences = getAllWeekdayOccurrencesInMonth(weekday: weekdayNum, month: futureMonth, calendar: calendar)
+            
+            for (weekNumber, weekdayDate) in monthOccurrences.enumerated() {
+                let weekPos = weekNumber + 1
+                let applies = doesScheduleApplyToWeek(weekNumber: weekPos, schedule: schedule)
+                
+                if applies {
+                    // Create the actual start time for this occurrence
+                    guard let scheduleDateTime = calendar.date(bySettingHour: startHour, minute: 0, second: 0, of: weekdayDate) else { continue }
+                    
+                    // Only include if the schedule time is in the future
+                    if scheduleDateTime > now {
+                        return scheduleDateTime
+                    }
+                }
+            }
+        }
+        
+        return nil
+    }
+    
+    private func getAllWeekdayOccurrencesInMonth(weekday: Int, month: Date, calendar: Calendar) -> [Date] {
+        var occurrences: [Date] = []
+        
+        // Get the first day of the month
+        let monthComponents = calendar.dateComponents([.year, .month], from: month)
+        guard let firstDayOfMonth = calendar.date(from: monthComponents) else { return [] }
+        
+        // Find the first occurrence of the target weekday in this month
+        let firstWeekday = calendar.component(.weekday, from: firstDayOfMonth)
+        var daysToAdd = weekday - firstWeekday
+        if daysToAdd < 0 {
+            daysToAdd += 7
+        }
+        
+        guard let firstOccurrence = calendar.date(byAdding: .day, value: daysToAdd, to: firstDayOfMonth) else { return [] }
+        
+        // Add all occurrences of this weekday in the month (typically 4-5 times)
+        var currentDate = firstOccurrence
+        while calendar.component(.month, from: currentDate) == calendar.component(.month, from: month) {
+            occurrences.append(currentDate)
+            guard let nextWeek = calendar.date(byAdding: .weekOfYear, value: 1, to: currentDate) else { break }
+            currentDate = nextWeek
+        }
+        
+        return occurrences
+    }
+    
+    private func doesScheduleApplyToWeek(weekNumber: Int, schedule: SweepSchedule) -> Bool {
+        switch weekNumber {
+        case 1: return schedule.week1 == "1"
+        case 2: return schedule.week2 == "1"
+        case 3: return schedule.week3 == "1"
+        case 4: return schedule.week4 == "1"
+        case 5: return schedule.week5 == "1"
+        default: return false
+        }
+    }
+    
+    private func dayStringToWeekday(_ dayString: String) -> Int {
+        let normalizedDay = dayString.lowercased().trimmingCharacters(in: .whitespaces)
+        
+        switch normalizedDay {
+        case "sun", "sunday": return 1
+        case "mon", "monday": return 2
+        case "tue", "tues", "tuesday": return 3
+        case "wed", "wednesday": return 4
+        case "thu", "thur", "thursday": return 5
+        case "fri", "friday": return 6
+        case "sat", "saturday": return 7
+        default: return 0
+        }
+    }
     
     private func formatSideDescription(_ side: String) -> String {
         let cleaned = side.lowercased()

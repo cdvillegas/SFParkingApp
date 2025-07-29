@@ -5,6 +5,39 @@ struct UserDirectionCone: View {
     let heading: CLLocationDirection
     let mapHeading: CLLocationDirection
     
+    @State private var lastDisplayedHeading: Double = 0
+    @State private var isFirstUpdate = true
+    
+    // Smart heading that prevents 0°/360° boundary jumps
+    private var smartHeading: Double {
+        let relativeHeading = heading - mapHeading
+        let normalizedHeading = normalizeHeading(relativeHeading)
+        
+        if isFirstUpdate {
+            return normalizedHeading
+        }
+        
+        // Find the shortest rotation path
+        let diff = normalizedHeading - lastDisplayedHeading
+        
+        if diff > 180 {
+            // Going the long way clockwise, adjust by subtracting 360
+            return normalizedHeading - 360
+        } else if diff < -180 {
+            // Going the long way counter-clockwise, adjust by adding 360
+            return normalizedHeading + 360
+        }
+        
+        return normalizedHeading
+    }
+    
+    private func normalizeHeading(_ heading: Double) -> Double {
+        var normalized = heading
+        while normalized < 0 { normalized += 360 }
+        while normalized >= 360 { normalized -= 360 }
+        return normalized
+    }
+    
     var body: some View {
         ZStack {
             // Flashlight beam - bigger and more visible with fade at tip
@@ -24,8 +57,12 @@ struct UserDirectionCone: View {
                 )
                 .frame(width: 40, height: 28) // Bigger cone
                 .offset(y: -18) // Position beam pointing outward from center
-                .rotationEffect(.degrees(heading - mapHeading)) // Relative to map rotation
-                .animation(.easeInOut(duration: 0.3), value: heading - mapHeading)
+                .rotationEffect(.degrees(smartHeading)) // Relative to map rotation
+                .animation(.easeInOut(duration: 0.3), value: smartHeading)
+                .onChange(of: smartHeading) { _, newValue in
+                    lastDisplayedHeading = newValue
+                    isFirstUpdate = false
+                }
             
             // User location dot - bigger and more visible
             Circle()

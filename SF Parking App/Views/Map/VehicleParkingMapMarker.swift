@@ -3,6 +3,7 @@ import SwiftUI
 struct VehicleParkingMapMarker: View {
     let vehicle: Vehicle
     let isSelected: Bool
+    let streetDataManager: StreetDataManager?
     let onTap: () -> Void
 
     @State private var isAnimating = false
@@ -18,8 +19,8 @@ struct VehicleParkingMapMarker: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                vehicle.color.color,
-                                vehicle.color.color.opacity(0.8)
+                                getUrgencyColor(for: vehicle),
+                                getUrgencyColor(for: vehicle).opacity(0.8)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -33,7 +34,7 @@ struct VehicleParkingMapMarker: View {
                     .foregroundColor(.white)
             }
             .shadow(
-                color: vehicle.color.color.opacity(0.4),
+                color: getUrgencyColor(for: vehicle).opacity(0.4),
                 radius: isSelected ? 6 : 3,
                 x: 0,
                 y: isSelected ? 3 : 1.5
@@ -61,6 +62,40 @@ struct VehicleParkingMapMarker: View {
         let impactFeedback = UIImpactFeedbackGenerator(style: .light)
         impactFeedback.impactOccurred()
     }
+    
+    // MARK: - Helper Functions
+    
+    private func getUrgencyColor(for vehicle: Vehicle) -> Color {
+        guard let streetDataManager = streetDataManager,
+              let nextSchedule = streetDataManager.nextUpcomingSchedule,
+              vehicle.parkingLocation != nil else {
+            return vehicle.color.color
+        }
+        
+        let urgencyLevel = getUrgencyLevel(for: nextSchedule.date)
+        switch urgencyLevel {
+        case .critical:
+            return .red
+        case .safe:
+            return .green
+        }
+    }
+    
+    private enum UrgencyLevel {
+        case critical  // < 24 hours
+        case safe      // >= 24 hours
+    }
+    
+    private func getUrgencyLevel(for date: Date) -> UrgencyLevel {
+        let timeInterval = date.timeIntervalSinceNow
+        let hours = timeInterval / 3600
+        
+        if hours < 24 {
+            return .critical
+        } else {
+            return .safe
+        }
+    }
 }
 
 #Preview("Light Mode") {
@@ -68,12 +103,14 @@ struct VehicleParkingMapMarker: View {
         VehicleParkingMapMarker(
             vehicle: Vehicle.sample,
             isSelected: false,
+            streetDataManager: nil,
             onTap: {}
         )
 
         VehicleParkingMapMarker(
             vehicle: Vehicle.sample,
             isSelected: true,
+            streetDataManager: nil,
             onTap: {}
         )
     }
@@ -86,12 +123,14 @@ struct VehicleParkingMapMarker: View {
         VehicleParkingMapMarker(
             vehicle: Vehicle.sample,
             isSelected: false,
+            streetDataManager: nil,
             onTap: {}
         )
 
         VehicleParkingMapMarker(
             vehicle: Vehicle.sample,
             isSelected: true,
+            streetDataManager: nil,
             onTap: {}
         )
     }
