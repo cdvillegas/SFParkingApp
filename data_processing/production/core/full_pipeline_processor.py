@@ -60,6 +60,7 @@ class FullPipelineProcessor:
         self.citations_raw_file = self.output_dir / f"citations_raw_{self.timestamp}.csv"
         self.citations_geocoded_file = self.output_dir / f"citations_geocoded_{self.timestamp}.csv"
         self.final_estimates_file = self.output_dir / f"day_specific_sweeper_estimates_{self.timestamp}.csv"
+        self.app_aggregated_file = self.output_dir / f"app_ready_schedules_{self.timestamp}.csv"
         self.pipeline_report_file = self.output_dir / f"pipeline_report_{self.timestamp}.json"
         
     def setup_logging(self):
@@ -483,6 +484,50 @@ print(f"Saved cleaned schedule data: {{len(df)}} -> {{len(result_df)}} records")
         except Exception as e:
             self.logger.error(f"Error in schedule matching: {e}")
             raise
+    
+    def aggregate_for_app(self, citations_df: pd.DataFrame, estimates_df: pd.DataFrame) -> pd.DataFrame:
+        """Step 6: Aggregate schedules for mobile app integration"""
+        self.logger.info("📱 Step 6: Aggregating schedules for mobile app")
+        
+        # Find the matches file that was created in step 5
+        matches_files = list(self.output_dir.glob(f"final_analysis_{self.timestamp}_matches_*.csv"))
+        if not matches_files:
+            raise RuntimeError("Matches file not found - schedule matching may have failed")
+        
+        matches_file = matches_files[0]
+        self.logger.info(f"   Using matches file: {matches_file.name}")
+        
+        # Set output file
+        self.app_aggregated_file = self.output_dir / f"app_ready_schedules_{self.timestamp}.csv"
+        
+        try:
+            # Run the aggregation script
+            cmd = [
+                sys.executable, 'aggregate_schedules_from_matches.py',
+                '--matches', str(matches_file),
+                '--schedules', str(self.final_estimates_file),
+                '--output', str(self.app_aggregated_file)
+            ]
+            
+            self.logger.info(f"   Running: {' '.join(cmd)}")
+            
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)  # 10 minute timeout
+            
+            if result.returncode != 0:
+                self.logger.error(f"App aggregation failed: {result.stderr}")
+                raise RuntimeError("App aggregation failed")
+                
+            self.logger.info("✅ App aggregation completed successfully")
+            
+            # Load aggregated results
+            aggregated_df = pd.read_csv(self.app_aggregated_file)
+            self.logger.info(f"📊 Aggregated schedules: {len(aggregated_df):,} app-ready rows")
+            
+            return aggregated_df
+            
+        except Exception as e:
+            self.logger.error(f"Error in app aggregation: {e}")
+            raise
             
     def generate_pipeline_report(self, 
                                 schedule_raw_count: int,
@@ -490,6 +535,7 @@ print(f"Saved cleaned schedule data: {{len(df)}} -> {{len(result_df)}} records")
                                 citations_raw_count: int,
                                 citations_geocoded_count: int,
                                 estimates_count: int,
+                                app_aggregated_count: int,
                                 start_time: datetime,
                                 end_time: datetime) -> Dict:
         """Generate comprehensive pipeline report"""
@@ -520,6 +566,11 @@ print(f"Saved cleaned schedule data: {{len(df)}} -> {{len(result_df)}} records")
                 'final_estimates': {
                     'schedules_with_estimates': estimates_count,
                     'coverage_percentage': round(estimates_count / schedule_clean_count * 100, 1) if schedule_clean_count > 0 else 0
+                },
+                'app_aggregation': {
+                    'app_ready_schedules': app_aggregated_count,
+                    'aggregation_ratio': round(schedule_clean_count / app_aggregated_count, 1) if app_aggregated_count > 0 else 0,
+                    'description': 'CNN+Side+WeekPattern combinations for mobile app'
                 }
             },
             'output_files': {
@@ -528,6 +579,7 @@ print(f"Saved cleaned schedule data: {{len(df)}} -> {{len(result_df)}} records")
                 'raw_citation_data': str(self.citations_raw_file),
                 'geocoded_citation_data': str(self.citations_geocoded_file),
                 'final_estimates': str(self.final_estimates_file),
+                'app_ready_schedules': str(self.app_aggregated_file),
                 'pipeline_report': str(self.pipeline_report_file)
             },
             'performance_metrics': {
@@ -574,13 +626,17 @@ print(f"Saved cleaned schedule data: {{len(df)}} -> {{len(result_df)}} records")
             estimates_df = self.calculate_sweeper_estimates(citations_geocoded_df, schedule_clean_df)
             estimates_count = len(estimates_df)
             
+            # Step 6: Aggregate for app
+            app_aggregated_df = self.aggregate_for_app(citations_geocoded_df, estimates_df)
+            app_aggregated_count = len(app_aggregated_df)
+            
             end_time = datetime.now()
             
-            # Step 6: Generate report
+            # Step 7: Generate report
             report = self.generate_pipeline_report(
                 schedule_raw_count, schedule_clean_count,
                 citations_raw_count, citations_geocoded_count,
-                estimates_count, start_time, end_time
+                estimates_count, app_aggregated_count, start_time, end_time
             )
             
             self.logger.info("🎉 Full pipeline completed successfully!")
@@ -589,8 +645,10 @@ print(f"Saved cleaned schedule data: {{len(df)}} -> {{len(result_df)}} records")
             self.logger.info(f"   Schedule data: {schedule_raw_count:,} → {schedule_clean_count:,} records")
             self.logger.info(f"   Citation data: {citations_raw_count:,} → {citations_geocoded_count:,} geocoded")
             self.logger.info(f"   Estimates: {estimates_count:,} schedule blocks with predicted times")
+            self.logger.info(f"   📱 App-ready: {app_aggregated_count:,} aggregated schedules (CNN+Side+Week)")
             self.logger.info(f"   Processing time: {end_time - start_time}")
             self.logger.info(f"📁 All output saved to: {self.output_dir}")
+            self.logger.info(f"🎯 Primary app file: {self.app_aggregated_file.name}")
             
             return report
             

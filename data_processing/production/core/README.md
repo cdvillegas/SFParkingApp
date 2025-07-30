@@ -6,6 +6,7 @@
 - **`production_citation_processor.py`** - Geocodes citations using Census API with parallel processing
 - **`clean_schedule_data_day_specific.py`** - Creates day-specific schedule rows with correct week patterns  
 - **`production_hybrid_matcher_day_specific.py`** - Day-specific citation-schedule matcher with left join
+- **`aggregate_schedules_from_matches.py`** - Aggregates schedules for mobile app integration
 - **`full_pipeline_processor.py`** - Complete pipeline orchestrator (runs all steps end-to-end)
 
 ### Configuration & Support
@@ -15,10 +16,10 @@
 
 ### Complete Pipeline (Recommended)
 ```bash
-# Full production pipeline (~25-30 minutes optimized)
+# Full production pipeline (~30-35 minutes optimized)
 python3 full_pipeline_processor.py --days 365
 
-# Quick testing with existing geocoded data (~15 minutes)
+# Quick testing with existing geocoded data (~20 minutes)
 python3 full_pipeline_processor.py --days 365 --skip-geocoding
 ```
 
@@ -51,6 +52,12 @@ python3 production_hybrid_matcher_day_specific.py \
   --citation-file geocoded_citations.csv \
   --schedule-file cleaned_schedules.csv \
   --output-prefix final_results
+
+# Step 4: Aggregate for mobile app
+python3 aggregate_schedules_from_matches.py \
+  --matches final_results_matches_TIMESTAMP.csv \
+  --schedules day_specific_sweeper_estimates_TIMESTAMP.csv \
+  --output app_ready_schedules_TIMESTAMP.csv
 ```
 
 ## 📊 Output Files
@@ -58,7 +65,8 @@ python3 production_hybrid_matcher_day_specific.py \
 The pipeline creates timestamped output directories: `../output/pipeline_results/YYYYMMDD_HHMMSS/`
 
 ### Key Output Files
-- **`day_specific_sweeper_estimates_TIMESTAMP.csv`** - Final schedule estimates (primary output)
+- **`app_ready_schedules_TIMESTAMP.csv`** - **📱 PRIMARY APP OUTPUT** - Aggregated schedules for mobile app
+- **`day_specific_sweeper_estimates_TIMESTAMP.csv`** - Day-specific schedule estimates  
 - **`final_analysis_TIMESTAMP_schedules_TIMESTAMP.csv`** - Detailed schedule data
 - **`final_analysis_TIMESTAMP_matches_TIMESTAMP.csv`** - Individual citation matches
 - **`pipeline_report_TIMESTAMP.json`** - Complete processing report
@@ -77,6 +85,27 @@ The pipeline creates timestamped output directories: `../output/pipeline_results
 **Citation Statistics (when available):**
 - `citation_count` - Number of citations matched to this schedule
 - `avg_citation_time`, `min_citation_time`, `max_citation_time` - Estimated sweeper times
+
+### App-Ready Schedules CSV Structure (📱 Mobile App Format)
+**Unique Key:**
+- `clean_id` - CNN + Side + Week Pattern (e.g., "110000_L_11111")
+
+**Location Fields:**
+- `cnn`, `corridor`, `limits`, `cnn_right_left`, `block_side`, `line`
+
+**Hour Matrix (Easy App Queries):**
+- `monday_hours`, `tuesday_hours`, ..., `sunday_hours` - Comma-separated active hours (e.g., "7,8,9")
+
+**Schedule Summary:**
+- `schedule_summary` - Human-readable (e.g., "Weekdays 7-9am", "Multiple schedules")
+- `total_weekly_hours` - Total hours per week
+- `has_multiple_windows` - Boolean flag for complex schedules
+
+**Week Patterns:**
+- `week1`, `week2`, `week3`, `week4`, `week5` - Binary flags for month weeks
+
+**Citation Statistics:**
+- `citation_count`, `avg_citation_time`, `median_citation_time` - Calculated from raw matches
 
 ## 🔧 Key Features
 
@@ -109,22 +138,25 @@ The pipeline creates timestamped output directories: `../output/pipeline_results
 - **Schedule cleaning**: ~5 seconds (37K → 34K day-specific records)
 - **Citation geocoding**: ~10-15 minutes (468K citations, optimized)
 - **Citation matching**: ~10 minutes (day-specific hybrid matching)
-- **Total**: ~25-30 minutes for complete pipeline
+- **App aggregation**: ~2-3 minutes (hour matrix generation from matches)
+- **Total**: ~30-35 minutes for complete pipeline
 
 ### Data Quality Results
-- **34,284 total schedules** (100% coverage with left join)
-- **28,432 schedules with citation data** (83% have real timing estimates)
-- **5,852 schedules without citations** (17% use schedule data only)
-- **Week pattern accuracy**: 71% weekly, 13% bi-weekly 2&4, 10% bi-weekly 1&3
+- **34,284 total day-specific schedules** (100% coverage with left join)
+- **22,536 app-ready aggregated schedules** (CNN+Side+WeekPattern combinations)
+- **90.2% have citation data** with accurate timing estimates (1,010+ unique times)
+- **492 locations flagged as "Multiple schedules"** for complex cleaning patterns
+- **Week pattern accuracy**: 58% weekly, 20% bi-weekly 2&4, 15% bi-weekly 1&3
 
 ## 📁 Output Directory Structure
 
 ```
 ../output/pipeline_results/
 ├── 20250722_225343/                    # Timestamped run directory
-│   ├── day_specific_sweeper_estimates_20250722_225343.csv  # 📋 PRIMARY OUTPUT
+│   ├── app_ready_schedules_20250722_225343.csv            # 📱 PRIMARY APP OUTPUT
+│   ├── day_specific_sweeper_estimates_20250722_225343.csv  # Day-specific estimates
 │   ├── final_analysis_20250722_225343_schedules_*.csv      # Detailed schedules
-│   ├── final_analysis_20250722_225343_matches_*.csv        # Citation matches
+│   ├── final_analysis_20250722_225343_matches_*.csv        # Raw citation matches
 │   ├── pipeline_report_20250722_225343.json               # Processing report
 │   ├── citations_geocoded_20250722_225343.csv             # Geocoded citations
 │   ├── schedule_cleaned_20250722_225343.csv               # Day-specific schedules
@@ -134,5 +166,5 @@ The pipeline creates timestamped output directories: `../output/pipeline_results
 
 ---
 
-**Status**: ✅ Production Ready - Day-Specific System  
-**Next**: iOS app integration using `day_specific_sweeper_estimates_*.csv`
+**Status**: ✅ Production Ready - Complete App Integration Pipeline  
+**Next**: iOS app integration using `app_ready_schedules_*.csv` with hour matrix format

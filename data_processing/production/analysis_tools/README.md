@@ -18,6 +18,24 @@ This folder contains **development and analysis tools** used for validation and 
    - **Output**: Detailed examination of individual record differences
    - **When to use**: When investigating why cleaning methods differ
 
+3. **`accuracy_comparison.py`** 
+   - **Purpose**: Compares accuracy of different matching methods
+   - **Usage**: `python3 accuracy_comparison.py`
+   - **Output**: Statistical comparison of matching algorithms
+   - **When to use**: When validating citation-schedule matching approaches
+
+4. **`match_analysis.py`**
+   - **Purpose**: Analyzes citation-schedule matching results  
+   - **Usage**: `python3 match_analysis.py`
+   - **Output**: Detailed analysis of matching patterns and quality
+   - **When to use**: When evaluating matching performance
+
+5. **`debug_performance.py`**
+   - **Purpose**: Performance debugging and profiling tools
+   - **Usage**: `python3 debug_performance.py` 
+   - **Output**: Performance metrics and bottleneck analysis
+   - **When to use**: When optimizing pipeline performance
+
 ## 📊 **Analysis Results Summary**
 
 Based on our analysis:

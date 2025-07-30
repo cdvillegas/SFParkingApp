@@ -1,0 +1,11 @@
+2025-07-29 21:02:57,232 - INFO - 🚀 Starting Full SF Parking Citation Analysis Pipeline
+2025-07-29 21:02:57,232 - INFO - ================================================================================
+2025-07-29 21:02:57,232 - INFO -    Processing 30 days of data with 10 workers
+2025-07-29 21:02:57,232 - INFO -    Output directory: ../output/pipeline_test/20250729_210257
+2025-07-29 21:02:57,232 - INFO - ================================================================================
+2025-07-29 21:02:57,232 - INFO - 📅 Step 1: Fetching street sweeping schedule data from SF Open Data API
+2025-07-29 21:02:57,232 - INFO -    Fetching schedule batch at offset 0...
+2025-07-29 21:02:59,159 - INFO -    Fetched 37878 schedules (total: 37878)
+2025-07-29 21:02:59,159 - INFO - ✅ Fetched 37878 schedule records from API
+2025-07-29 21:02:59,362 - INFO - 💾 Saved raw schedule data to ../output/pipeline_test/20250729_210257/schedule_raw_20250729_210257.csv
+2025-07-29 21:02:59,367 - INFO - 🧹 Step 2: Cleaning and consolidating schedule data
