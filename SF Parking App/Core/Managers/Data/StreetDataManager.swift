@@ -157,14 +157,10 @@ class StreetDataManager: ObservableObject {
     }
     
     func processNextSchedule(for schedule: SweepSchedule) {
-        // Check if we should use the new aggregated approach
-        if StreetDataService.shared.useNewDataset {
-            processNextScheduleAggregated(for: schedule)
-        } else {
-            // Move heavy calculations off main thread
-            Task {
-                await processNextScheduleAsync(for: schedule)
-            }
+        // When we have a specific schedule (user selected), use it directly
+        // Only use aggregated approach for initial auto-detection
+        Task {
+            await processNextScheduleAsync(for: schedule)
         }
     }
     
@@ -199,25 +195,43 @@ class StreetDataManager: ObservableObject {
         let now = Date()
         var allUpcomingSchedules: [UpcomingSchedule] = []
         
+        print("🔍 Processing \(schedules.count) schedule days for \(streetName)")
+        
         // Process each day's schedule
-        for schedule in schedules {
+        for (index, schedule) in schedules.enumerated() {
             guard let weekday = schedule.weekday,
                   let fromHour = schedule.fromhour,
-                  let toHour = schedule.tohour else { continue }
+                  let toHour = schedule.tohour else { 
+                print("🔍 Schedule \(index): Missing data - weekday: \(schedule.weekday ?? "nil"), fromHour: \(schedule.fromhour ?? "nil"), toHour: \(schedule.tohour ?? "nil")")
+                continue 
+            }
             
             let weekdayNum = dayStringToWeekday(weekday)
-            guard weekdayNum > 0 else { continue }
+            guard weekdayNum > 0 else { 
+                print("🔍 Schedule \(index): Invalid weekday: \(weekday)")
+                continue 
+            }
             
             guard let startHour = Int(fromHour),
-                  let endHour = Int(toHour) else { continue }
+                  let endHour = Int(toHour) else { 
+                print("🔍 Schedule \(index): Invalid hours: \(fromHour) - \(toHour)")
+                continue 
+            }
+            
+            print("🔍 Schedule \(index): \(weekday) \(startHour)-\(endHour) (weekday \(weekdayNum))")
             
             // Find next occurrences for this specific day
             let nextOccurrences = findNextOccurrences(weekday: weekdayNum, schedule: schedule, from: now)
+            print("🔍 Found \(nextOccurrences.count) occurrences for \(weekday)")
             
             for nextDate in nextOccurrences {
                 if let nextDateTime = createDateTime(date: nextDate, hour: startHour),
                    let endDateTime = createDateTime(date: nextDate, hour: endHour),
                    nextDateTime > now {
+                    
+                    let formatter = DateFormatter()
+                    formatter.dateFormat = "EEE MMM d, yyyy h:mm a"
+                    print("🔍 Adding occurrence: \(formatter.string(from: nextDateTime))")
                     
                     let upcomingSchedule = UpcomingSchedule(
                         streetName: streetName,
@@ -229,6 +243,12 @@ class StreetDataManager: ObservableObject {
                     )
                     
                     allUpcomingSchedules.append(upcomingSchedule)
+                } else {
+                    let formatter = DateFormatter()
+                    formatter.dateFormat = "EEE MMM d, yyyy h:mm a"
+                    if let nextDateTime = createDateTime(date: nextDate, hour: startHour) {
+                        print("🔍 Skipping past occurrence: \(formatter.string(from: nextDateTime))")
+                    }
                 }
             }
         }
