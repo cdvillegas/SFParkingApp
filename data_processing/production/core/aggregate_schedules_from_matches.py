@@ -36,10 +36,32 @@ class MatchBasedAggregator:
         """Create a string representation of the week pattern"""
         return f"{int(row['week1'])}{int(row['week2'])}{int(row['week3'])}{int(row['week4'])}{int(row.get('week5', 0))}"
     
-    def generate_schedule_summary(self, hour_arrays: dict) -> str:
+    def generate_schedule_summary(self, hour_arrays: dict, week_info: dict = None) -> str:
         """
         Generate a human-readable schedule summary from hour arrays
         """
+        # Generate week pattern prefix
+        week_prefix = ""
+        if week_info:
+            weeks = [
+                week_info.get('week1', 0),
+                week_info.get('week2', 0), 
+                week_info.get('week3', 0),
+                week_info.get('week4', 0),
+                week_info.get('week5', 0)
+            ]
+            
+            if weeks == [1, 0, 1, 0, 1]:
+                week_prefix = "1st, 3rd "
+            elif weeks == [0, 1, 0, 1, 0]:
+                week_prefix = "2nd, 4th "
+            elif weeks == [1, 0, 1, 0, 0]:
+                week_prefix = "1st, 3rd "
+            elif all(week == 1 for week in weeks[:5]):
+                week_prefix = "Every "
+            elif all(week == 1 for week in weeks[:4]):
+                week_prefix = "Every "
+        
         # Get active days and their hours
         active_days = []
         day_hour_patterns = {}
@@ -95,27 +117,48 @@ class MatchBasedAggregator:
         weekends = ['saturday', 'sunday']
         
         if set(active_days) == set(day_order):
-            return f"Daily{time_str}"
+            return f"{week_prefix}Daily{time_str}"
         elif set(active_days) == set(weekdays):
-            return f"Weekdays{time_str}"
+            # Use singular form when week_prefix is present
+            if week_prefix:
+                return f"{week_prefix}Weekday{time_str}"
+            else:
+                return f"Weekdays{time_str}"
         elif set(active_days) == set(weekends):
-            return f"Weekends{time_str}"
+            # Use singular form when week_prefix is present
+            if week_prefix:
+                return f"{week_prefix}Weekend{time_str}"
+            else:
+                return f"Weekends{time_str}"
         elif len(active_days) == 1:
-            day_name = active_days[0].capitalize()
-            return f"{day_name}s{time_str}"
+            day_abbrev = {
+                'monday': 'Mon',
+                'tuesday': 'Tues', 
+                'wednesday': 'Wed',
+                'thursday': 'Thurs',
+                'friday': 'Fri',
+                'saturday': 'Sat',
+                'sunday': 'Sun'
+            }
+            day_short = day_abbrev.get(active_days[0], active_days[0].capitalize())
+            # Use singular form when week_prefix is present (Every Mon, 1st, 3rd Mon)
+            if week_prefix:
+                return f"{week_prefix}{day_short}{time_str}"
+            else:
+                return f"{day_short}s{time_str}"
         else:
             # Abbreviate day names
             day_abbrev = {
                 'monday': 'Mon',
-                'tuesday': 'Tue', 
+                'tuesday': 'Tues', 
                 'wednesday': 'Wed',
-                'thursday': 'Thu',
+                'thursday': 'Thurs',
                 'friday': 'Fri',
                 'saturday': 'Sat',
                 'sunday': 'Sun'
             }
             abbreviated = [day_abbrev.get(day, day[:3]) for day in active_days]
-            return f"{'/'.join(abbreviated)}{time_str}"
+            return f"{week_prefix}{'/'.join(abbreviated)}{time_str}"
     
     def aggregate_from_matches(self):
         """
@@ -236,7 +279,14 @@ class MatchBasedAggregator:
                     summary_dict[day] = []
             
             # Generate schedule summary
-            schedule_summary = self.generate_schedule_summary(summary_dict)
+            week_info = {
+                'week1': schedule_info['week1'],
+                'week2': schedule_info['week2'],
+                'week3': schedule_info['week3'],
+                'week4': schedule_info['week4'],
+                'week5': schedule_info['week5']
+            }
+            schedule_summary = self.generate_schedule_summary(summary_dict, week_info)
             
             # Calculate total weekly hours
             total_hours = sum(len(hours) for hours in group_data['hour_arrays'].values())
@@ -328,7 +378,14 @@ class MatchBasedAggregator:
                         else:
                             updated_summary_dict[d] = []
                     
-                    existing_row['schedule_summary'] = self.generate_schedule_summary(updated_summary_dict)
+                    week_info = {
+                        'week1': row['week1'],
+                        'week2': row['week2'],
+                        'week3': row['week3'],
+                        'week4': row['week4'],
+                        'week5': row.get('week5', 0)
+                    }
+                    existing_row['schedule_summary'] = self.generate_schedule_summary(updated_summary_dict, week_info)
                     existing_row['total_weekly_hours'] = sum(len(hours.split(',')) if hours else 0 
                                                            for hours in [existing_row[f"{d}_hours"] for d in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']])
                 else:
@@ -340,7 +397,14 @@ class MatchBasedAggregator:
                         else:
                             summary_dict[d] = []
                     
-                    schedule_summary = self.generate_schedule_summary(summary_dict)
+                    week_info = {
+                        'week1': row['week1'],
+                        'week2': row['week2'],
+                        'week3': row['week3'],
+                        'week4': row['week4'],
+                        'week5': row.get('week5', 0)
+                    }
+                    schedule_summary = self.generate_schedule_summary(summary_dict, week_info)
                     total_hours = sum(len(hours.split(',')) if hours else 0 for hours in hour_arrays.values())
                     
                     new_row = {
