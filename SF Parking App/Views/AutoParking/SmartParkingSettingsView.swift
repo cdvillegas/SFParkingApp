@@ -81,11 +81,11 @@ struct SmartParkingSettingsView: View {
         HStack(spacing: 16) {
             ZStack {
                 Circle()
-                    .fill(parkingDetector.isMonitoring ? Color.green : Color.gray)
+                    .fill(parkingDetector.isMonitoring ? Color.blue : Color.gray)
                     .frame(width: 40, height: 40)
                 
                 Image(systemName: "sparkles")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 20, weight: .semibold))
                     .foregroundColor(.white)
             }
             
@@ -113,6 +113,7 @@ struct SmartParkingSettingsView: View {
                 }
             ))
             .labelsHidden()
+            .tint(.blue)
         }
     }
     

@@ -84,9 +84,10 @@ struct VehicleParkingMapView: View {
             if let location = newLocation {
                 animateUserLocationChange(to: location.coordinate)
                 
-                // Center map on user location if no parking location is set
+                // Only center map on user location if not showing onboarding and no parking location is set
                 let hasParkedVehicle = viewModel.vehicleManager.currentVehicle?.parkingLocation != nil
-                if !hasParkedVehicle {
+                let isShowingOnboarding = !OnboardingManager.hasCompletedOnboarding
+                if !hasParkedVehicle && !isShowingOnboarding {
                     viewModel.centerMapOnLocation(location.coordinate)
                 }
             }
@@ -106,6 +107,7 @@ struct VehicleParkingMapView: View {
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
             // Refresh when returning from Settings
             viewModel.locationManager.refreshAuthorizationStatus()
+            NotificationManager.shared.checkPermissionStatus()
             userLocation = viewModel.locationManager.userLocation
             if let location = userLocation {
                 animatedUserCoordinate = location.coordinate
@@ -172,6 +174,7 @@ struct VehicleParkingMapView: View {
                 HStack(spacing: 12) {
                     vehicleButton
                     userLocationButton
+                    enableLocationMapButton
                 }
                 .padding(.trailing, 16)
                 .padding(.bottom, 16)
@@ -202,9 +205,7 @@ struct VehicleParkingMapView: View {
     
     @ViewBuilder
     private var userLocationButton: some View {
-        if viewModel.locationManager.userLocation != nil &&
-           (viewModel.locationManager.authorizationStatus == .authorizedWhenInUse || 
-            viewModel.locationManager.authorizationStatus == .authorizedAlways) {
+        if isUserLocationAvailable {
             Button(action: {
                 impactFeedbackLight.impactOccurred()
                 centerOnUser()
@@ -222,35 +223,24 @@ struct VehicleParkingMapView: View {
         }
     }
     
+    // Location button is now handled in VehicleParkingView map controls
+    @ViewBuilder
+    private var enableLocationMapButton: some View {
+        EmptyView()
+    }
+    
+    // Check if user location is effectively available (both permission and coordinate)
+    private var isUserLocationAvailable: Bool {
+        let hasPermission = viewModel.locationManager.authorizationStatus == .authorizedWhenInUse || 
+                           viewModel.locationManager.authorizationStatus == .authorizedAlways
+        let hasCoordinate = animatedUserCoordinate != nil
+        return hasPermission && hasCoordinate
+    }
+    
+    // Location button is now handled in VehicleParkingView map controls
     @ViewBuilder
     private var enableLocationButton: some View {
-        Group {
-            if !viewModel.isConfirmingSchedule &&
-               viewModel.locationManager.authorizationStatus != .authorizedWhenInUse && 
-               viewModel.locationManager.authorizationStatus != .authorizedAlways &&
-               viewModel.locationManager.userLocation == nil {
-                VStack {
-                    Spacer()
-                    Button(action: enableLocationAction) {
-                        HStack(spacing: 8) {
-                            Image(systemName: "location.fill")
-                                .font(.system(size: 15, weight: .semibold))
-                            Text("Enable Location")
-                                .font(.system(size: 15, weight: .semibold))
-                        }
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 10)
-                        .background(
-                            Capsule()
-                                .fill(Color.blue.opacity(0.9))
-                                .shadow(color: Color.blue.opacity(0.3), radius: 6, x: 0, y: 3)
-                        )
-                    }
-                    .padding(.bottom, 20)
-                }
-            }
-        }
+        EmptyView()
     }
     
     // MARK: - Map Content Builders
@@ -536,21 +526,24 @@ struct VehicleParkingMapView: View {
         let newLocation = CLLocation(latitude: newCoordinate.latitude, longitude: newCoordinate.longitude)
         let distance = currentLocation.distance(from: newLocation)
         
-        // Smart animation based on distance
-        if distance < 5 { // Very small movements (< 5 meters) - walking precision
-            withAnimation(.interactiveSpring(response: 2.0, dampingFraction: 0.8, blendDuration: 0.2)) {
+        // Only animate if movement is significant enough (ignore tiny GPS jitter)
+        guard distance > 3 else { return }
+        
+        // Smooth sliding animations based on distance
+        if distance < 20 { // Small movements (3-20 meters) - walking precision
+            withAnimation(.easeInOut(duration: 3.0)) {
                 animatedUserCoordinate = newCoordinate
             }
-        } else if distance < 50 { // Small movements (5-50 meters) - walking/jogging
-            withAnimation(.easeInOut(duration: 1.5)) {
+        } else if distance < 100 { // Medium movements (20-100 meters) - walking/jogging
+            withAnimation(.easeInOut(duration: 4.0)) {
                 animatedUserCoordinate = newCoordinate
             }
-        } else if distance < 500 { // Medium movements (50-500 meters) - fast walking/biking
-            withAnimation(.easeInOut(duration: 2.0)) {
+        } else if distance < 500 { // Large movements (100-500 meters) - fast walking/biking
+            withAnimation(.easeInOut(duration: 5.0)) {
                 animatedUserCoordinate = newCoordinate
             }
-        } else if distance < 10000 { // Large movements (0.5-10 km) - driving within city
-            withAnimation(.easeInOut(duration: 2.5)) {
+        } else if distance < 2000 { // Very large movements (0.5-2 km) - driving
+            withAnimation(.easeInOut(duration: 6.0)) {
                 animatedUserCoordinate = newCoordinate
             }
         } else {

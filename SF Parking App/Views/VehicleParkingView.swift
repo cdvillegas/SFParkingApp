@@ -8,7 +8,10 @@ struct VehicleParkingView: View {
     @State private var showingAutoParkingSettings = false
     @EnvironmentObject var parkingDetectionHandler: ParkingDetectionHandler
     @StateObject private var parkingDetector = ParkingDetector.shared
+    @StateObject private var notificationManager = NotificationManager.shared
     @State private var wasHandlingAutoParking = false
+    @State private var showingOnboarding = !OnboardingManager.hasCompletedOnboarding
+    @State private var isComingFromOnboarding = false
     
     // Optional parameters for auto-parking detection
     var autoDetectedLocation: CLLocationCoordinate2D?
@@ -36,47 +39,66 @@ struct VehicleParkingView: View {
             VehicleParkingMapView(viewModel: viewModel)
                 .ignoresSafeArea(.all)
             
-            // Top status buttons or instructions
-            VStack {
-                if viewModel.isSettingLocation || viewModel.isConfirmingSchedule {
-                    instructionWindow
-                        .padding(.horizontal, 12)
-                        .padding(.top, 20)
+            // Top status buttons or instructions (hidden during onboarding)
+            if !showingOnboarding {
+                VStack {
+                    if viewModel.isSettingLocation || viewModel.isConfirmingSchedule {
+                        instructionWindow
+                            .padding(.horizontal, 12)
+                            .padding(.top, 20)
+                            .transition(.asymmetric(
+                                insertion: .move(edge: .top).combined(with: .opacity),
+                                removal: .move(edge: .top).combined(with: .opacity)
+                            ))
+                    } else {
+                        HStack {
+                            topStatusButtons
+                                .padding(.leading, 12)
+                            Spacer()
+                        }
+                        .padding(.top, 10)
                         .transition(.asymmetric(
                             insertion: .move(edge: .top).combined(with: .opacity),
                             removal: .move(edge: .top).combined(with: .opacity)
                         ))
-                } else {
-                    HStack {
-                        topStatusButtons
-                            .padding(.leading, 12)
-                        Spacer()
                     }
-                    .padding(.top, 10)
-                    .transition(.asymmetric(
-                        insertion: .move(edge: .top).combined(with: .opacity),
-                        removal: .move(edge: .top).combined(with: .opacity)
-                    ))
-                }
-                
-                Spacer()
-            }
-            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: viewModel.isSettingLocation)
-            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: viewModel.isConfirmingSchedule)
-            
-            // Content overlay at bottom
-            VStack {
-                Spacer()
-                
-                // Map control buttons positioned above content
-                HStack {
+                    
                     Spacer()
-                    mapControlButtons
-                        .padding(.trailing, 12)
-                        .padding(.bottom, 12) // Small gap above content
                 }
-                
-                bottomInterface
+                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: viewModel.isSettingLocation)
+                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: viewModel.isConfirmingSchedule)
+                .transition(.opacity)
+            }
+            
+            // Content overlay at bottom (hidden during onboarding)
+            if !showingOnboarding {
+                VStack {
+                    Spacer()
+                    
+                    // Map control buttons positioned above content
+                    HStack {
+                        Spacer()
+                        mapControlButtons
+                            .padding(.trailing, 12)
+                            .padding(.bottom, 12) // Small gap above content
+                    }
+                    
+                    bottomInterface
+                }
+                .transition(.opacity)
+            }
+            
+            // Onboarding overlay
+            if showingOnboarding {
+                OnboardingOverlayView(
+                    onCompleted: {
+                        isComingFromOnboarding = true
+                        withAnimation(.easeInOut(duration: 0.8)) {
+                            showingOnboarding = false
+                        }
+                    }
+                )
+                .transition(.opacity)
             }
         }
         .sheet(isPresented: $viewModel.showingAddVehicle) {
@@ -100,6 +122,20 @@ struct VehicleParkingView: View {
         .onAppear {
             setupView()
             handleAutoDetectedParking()
+            // Check notification permission status on view appear
+            notificationManager.checkPermissionStatus()
+            
+            // Set up initial map position based on context
+            if showingOnboarding {
+                // If showing onboarding, start with SF view for smooth transition
+                setupOnboardingMapView()
+            }
+        }
+        .onChange(of: showingOnboarding) { _, isShowing in
+            if !isShowing && isComingFromOnboarding {
+                // Onboarding just completed, do smooth zoom transition
+                performPostOnboardingTransition()
+            }
         }
         .onChange(of: autoDetectedAddress) { _, newAddress in
             print("🎯 VehicleParkingView - autoDetectedAddress changed to: \(newAddress ?? "nil")")
@@ -121,6 +157,10 @@ struct VehicleParkingView: View {
                 handleAutoDetectedParking()
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+            // Refresh notification permission status when returning from Settings
+            notificationManager.checkPermissionStatus()
+        }
         .onChange(of: viewModel.isSettingLocation) { oldValue, newValue in
             // When location setting completes and we were handling auto parking, clear the data
             if oldValue == true && newValue == false && wasHandlingAutoParking {
@@ -129,8 +169,9 @@ struct VehicleParkingView: View {
             }
         }
         .onReceive(viewModel.locationManager.$userLocation) { newUserLocation in
-            // If user location becomes available and no parking location is set, center on user
-            if let userLocation = newUserLocation,
+            // Only center on user location if not showing onboarding and no parking location is set
+            if !showingOnboarding,
+               let userLocation = newUserLocation,
                viewModel.vehicleManager.currentVehicle?.parkingLocation == nil {
                 viewModel.centerMapOnLocation(userLocation.coordinate)
             }
@@ -218,7 +259,7 @@ struct VehicleParkingView: View {
                 HStack(spacing: 8) {
                     Image(systemName: remindersAreEffective ? "bell.fill" : "bell.slash.fill")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(remindersAreEffective ? Color.green : Color.gray)
+                        .foregroundColor(remindersAreEffective ? Color.blue : Color.gray)
                     
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Reminders")
@@ -257,8 +298,8 @@ struct VehicleParkingView: View {
             }) {
                 HStack(spacing: 8) {
                     Image(systemName: "sparkles")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(smartParkingIsOn ? Color.green : Color.gray)
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(smartParkingIsOn ? Color.blue : Color.gray)
                     
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Smart Park")
@@ -324,11 +365,11 @@ struct VehicleParkingView: View {
     }
     
     private var activeRemindersCount: Int {
-        return NotificationManager.shared.customReminders.filter { $0.isActive }.count
+        return notificationManager.customReminders.filter { $0.isActive }.count
     }
     
     private var notificationsEnabled: Bool {
-        return NotificationManager.shared.notificationPermissionStatus == .authorized
+        return notificationManager.notificationPermissionStatus == .authorized
     }
     
     private var remindersAreEffective: Bool {
@@ -414,6 +455,7 @@ struct VehicleParkingView: View {
                 HStack(spacing: 12) {
                     vehicleButton
                     userLocationButton
+                    enableLocationButton
                 }
             }
         }
@@ -441,11 +483,17 @@ struct VehicleParkingView: View {
         }
     }
     
+    // Check if user location is effectively available (both permission and coordinate)
+    private var isUserLocationAvailable: Bool {
+        let hasPermission = viewModel.locationManager.authorizationStatus == .authorizedWhenInUse || 
+                           viewModel.locationManager.authorizationStatus == .authorizedAlways
+        let hasLocation = viewModel.locationManager.userLocation != nil
+        return hasPermission && hasLocation
+    }
+    
     @ViewBuilder
     private var userLocationButton: some View {
-        if viewModel.locationManager.userLocation != nil &&
-           (viewModel.locationManager.authorizationStatus == .authorizedWhenInUse || 
-            viewModel.locationManager.authorizationStatus == .authorizedAlways) {
+        if isUserLocationAvailable {
             Button(action: {
                 let impactFeedback = UIImpactFeedbackGenerator(style: .light)
                 impactFeedback.impactOccurred()
@@ -461,6 +509,40 @@ struct VehicleParkingView: View {
                             .shadow(color: Color.black.opacity(0.2), radius: 15, x: 0, y: -5)
                     )
             }
+        }
+    }
+    
+    @ViewBuilder
+    private var enableLocationButton: some View {
+        if !isUserLocationAvailable && !viewModel.isConfirmingSchedule && !showingOnboarding {
+            Button(action: {
+                let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                impactFeedback.impactOccurred()
+                enableLocationAction()
+            }) {
+                Image(systemName: "location.slash")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.secondary)
+                    .frame(width: 44, height: 44)
+                    .background(
+                        Circle()
+                            .fill(.regularMaterial)
+                            .shadow(color: Color.black.opacity(0.2), radius: 15, x: 0, y: -5)
+                    )
+            }
+        }
+    }
+    
+    private func enableLocationAction() {
+        if viewModel.locationManager.authorizationStatus == .denied || 
+           viewModel.locationManager.authorizationStatus == .restricted {
+            // Open settings if permission was denied
+            if let settingsUrl = URL(string: UIApplication.openSettingsURLString) {
+                UIApplication.shared.open(settingsUrl)
+            }
+        } else {
+            // Request permission if not determined
+            viewModel.locationManager.requestLocationPermission()
         }
     }
     
@@ -531,6 +613,9 @@ struct VehicleParkingView: View {
             viewModel.locationManager.requestLocation()
         }
         
+        // Only set up map position if not showing onboarding
+        guard !showingOnboarding else { return }
+        
         // Center map on vehicle or user location
         if let selectedVehicle = viewModel.vehicleManager.selectedVehicle,
            let parkingLocation = selectedVehicle.parkingLocation {
@@ -547,15 +632,59 @@ struct VehicleParkingView: View {
             }
         } else if let userLocation = viewModel.locationManager.userLocation {
             viewModel.centerMapOnLocation(userLocation.coordinate)
-        } else {
-            // Default to Sutro Tower view but also try to get user location
-            viewModel.mapPosition = .region(
-                MKCoordinateRegion(
-                    center: CLLocationCoordinate2D(latitude: 37.7551, longitude: -122.4528),
-                    span: MKCoordinateSpan(latitudeDelta: 0.18, longitudeDelta: 0.18)
-                )
-            )
         }
+        // If no parking location and no user location, leave map at default (nothing to zoom to)
+    }
+    
+    private func setupOnboardingMapView() {
+        // Start with wider SF view for smooth transition effect
+        viewModel.mapPosition = .region(
+            MKCoordinateRegion(
+                center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194), // SF center
+                span: MKCoordinateSpan(latitudeDelta: 0.3, longitudeDelta: 0.3) // Wider view
+            )
+        )
+    }
+    
+    private func performPostOnboardingTransition() {
+        // After onboarding completes, smoothly transition to appropriate view
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { // Small delay for overlay to fade
+            
+            // Check if user has location permission and is in San Francisco
+            let hasLocationPermission = self.viewModel.locationManager.authorizationStatus == .authorizedWhenInUse || 
+                                       self.viewModel.locationManager.authorizationStatus == .authorizedAlways
+            
+            if hasLocationPermission, 
+               let userLocation = self.viewModel.locationManager.userLocation,
+               self.isLocationInSanFrancisco(userLocation.coordinate) {
+                // User granted location permission and is in SF - zoom to them slowly
+                withAnimation(.easeInOut(duration: 2.5)) {
+                    self.viewModel.centerMapOnLocation(userLocation.coordinate)
+                }
+            } else {
+                // Either no location permission or not in SF - stay at SF overview
+                withAnimation(.easeInOut(duration: 1.0)) {
+                    self.viewModel.mapPosition = .region(
+                        MKCoordinateRegion(
+                            center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194), // SF center
+                            span: MKCoordinateSpan(latitudeDelta: 0.2, longitudeDelta: 0.2) // Nice SF overview
+                        )
+                    )
+                }
+            }
+            
+            // Reset the flag
+            self.isComingFromOnboarding = false
+        }
+    }
+    
+    private func isLocationInSanFrancisco(_ coordinate: CLLocationCoordinate2D) -> Bool {
+        // SF boundaries (approximate)
+        let sfLatRange = 37.70...37.84
+        let sfLonRange = (-122.52)...(-122.35)
+        
+        return sfLatRange.contains(coordinate.latitude) && 
+               sfLonRange.contains(coordinate.longitude)
     }
     
     private func handleAutoDetectedParking() {

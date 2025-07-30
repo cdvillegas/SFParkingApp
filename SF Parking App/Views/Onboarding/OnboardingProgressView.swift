@@ -6,17 +6,17 @@ struct OnboardingProgressView: View {
     let color: Color
     
     var body: some View {
-        // Page dots only
-        HStack(spacing: 8) {
+        // Beautiful glass-like progress dots
+        HStack(spacing: 12) {
             ForEach(0..<totalSteps, id: \.self) { index in
                 Circle()
                     .fill(index == currentStep ? 
-                          LinearGradient(colors: [color], startPoint: .leading, endPoint: .trailing) :
-                          LinearGradient(colors: [Color.gray.opacity(0.3)], startPoint: .leading, endPoint: .trailing)
+                          LinearGradient(colors: [color, color.opacity(0.7)], startPoint: .topLeading, endPoint: .bottomTrailing) :
+                          LinearGradient(colors: [Color.white.opacity(0.8)], startPoint: .topLeading, endPoint: .bottomTrailing)
                     )
-                    .frame(width: 8, height: 8)
-                    .scaleEffect(index == currentStep ? 1.2 : 1.0)
-                    .animation(.easeInOut(duration: 0.3), value: currentStep)
+                    .frame(width: index == currentStep ? 12 : 8, height: index == currentStep ? 12 : 8)
+                    .shadow(color: index == currentStep ? color.opacity(0.4) : Color.black.opacity(0.2), radius: 6, x: 0, y: 3)
+                    .animation(.spring(response: 0.4, dampingFraction: 0.8), value: currentStep)
             }
         }
     }

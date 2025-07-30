@@ -144,12 +144,18 @@ class VehicleParkingViewModel: ObservableObject {
     func startSettingLocation() {
         isSettingLocation = true
         
-        // Always center on user location first when moving a vehicle
+        // Prioritize user location, then vehicle location, then default to SF
         let startCoordinate: CLLocationCoordinate2D
         if let userLocation = locationManager.userLocation {
             startCoordinate = userLocation.coordinate
             centerMapOnLocation(startCoordinate)
+        } else if let selectedVehicle = vehicleManager.selectedVehicle,
+                  let parkingLocation = selectedVehicle.parkingLocation {
+            // If no user location but vehicle has a parking location, center on vehicle
+            startCoordinate = parkingLocation.coordinate
+            centerMapOnLocation(startCoordinate)
         } else {
+            // Fallback to SF coordinates
             startCoordinate = CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194)
             centerMapOnLocation(startCoordinate)
         }

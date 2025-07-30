@@ -11,7 +11,7 @@ struct OnboardingStepView: View {
     @State private var isAnimating = false
     @State private var showingPermissionDeniedAlert = false
     @State private var permissionDeniedMessage = ""
-    @State private var locationDelegate: LocationPermissionDelegate?
+    @State private var locationDelegate: OnboardingLocationDelegate?
     @State private var locationManager: CLLocationManager?
     
     var body: some View {
@@ -21,7 +21,7 @@ struct OnboardingStepView: View {
             // Hero Image/Icon Section
             VStack(spacing: 24) {
                 ZStack {
-                    if step.title == "Welcome to SF Parking" {
+                    if step.title == "Hello, San Francisco!" {
                         // Use app icon for welcome step with animations
                         Image("AppIconImage")
                             .resizable()
@@ -45,21 +45,22 @@ struct OnboardingStepView: View {
                 
                 VStack(spacing: 16) {
                     Text(step.title)
-                        .font(.title)
+                        .font(step.title == "Hello, San Francisco!" ? .largeTitle : .title)
                         .fontWeight(.bold)
                         .multilineTextAlignment(.center)
-                        .opacity(step.title == "Welcome to SF Parking" ? (isAnimating ? 1.0 : 0.0) : 1.0)
-                        .offset(y: step.title == "Welcome to SF Parking" ? (isAnimating ? 0 : 20) : 0)
-                        .animation(step.title == "Welcome to SF Parking" ? .easeInOut(duration: 0.6).delay(0.6) : .none, value: isAnimating)
+                        .opacity(step.title == "Hello, San Francisco!" ? (isAnimating ? 1.0 : 0.0) : 1.0)
+                        .offset(y: step.title == "Hello, San Francisco!" ? (isAnimating ? 0 : 20) : 0)
+                        .animation(step.title == "Hello, San Francisco!" ? .easeInOut(duration: 0.6).delay(0.6) : .none, value: isAnimating)
                     
                     Text(step.description)
-                        .font(.body)
+                        .font(.title3)
+                        .fontWeight(.medium)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
                         .lineLimit(nil)
-                        .opacity(step.title == "Welcome to SF Parking" ? (isAnimating ? 1.0 : 0.0) : 1.0)
-                        .offset(y: step.title == "Welcome to SF Parking" ? (isAnimating ? 0 : 20) : 0)
-                        .animation(step.title == "Welcome to SF Parking" ? .easeInOut(duration: 0.6).delay(0.8) : .none, value: isAnimating)
+                        .opacity(step.title == "Hello, San Francisco!" ? (isAnimating ? 1.0 : 0.0) : 1.0)
+                        .offset(y: step.title == "Hello, San Francisco!" ? (isAnimating ? 0 : 20) : 0)
+                        .animation(step.title == "Hello, San Francisco!" ? .easeInOut(duration: 0.6).delay(0.8) : .none, value: isAnimating)
                 }
             }
             .padding(.horizontal, 32)
@@ -67,28 +68,26 @@ struct OnboardingStepView: View {
             Spacer()
             
             // Button Section
-            VStack(spacing: 12) {
+            VStack(spacing: 24) {
                 Button(action: handleMainAction) {
-                    HStack {
-                        Text(step.buttonText)
-                            .font(.headline)
-                            .fontWeight(.semibold)
-                        
-                        if step.permissionType != nil {
-                            Image(systemName: "arrow.right")
-                                .font(.system(size: 14, weight: .semibold))
-                        }
-                    }
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 56)
-                    .background(step.color)
-                    .cornerRadius(16)
-                    .shadow(color: step.color.opacity(0.3), radius: 12, x: 0, y: 6)
+                    Text(step.buttonText)
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 56)
+                        .background(
+                            LinearGradient(
+                                colors: [step.color, step.color.opacity(0.8)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .cornerRadius(16)
+                        .shadow(color: step.color.opacity(0.4), radius: 15, x: 0, y: 8)
                 }
-                .scaleEffect(step.title == "Welcome to SF Parking" ? (isAnimating ? 1.0 : 0.9) : 1.0)
-                .opacity(step.title == "Welcome to SF Parking" ? (isAnimating ? 1.0 : 0.0) : 1.0)
-                .animation(step.title == "Welcome to SF Parking" ? .easeInOut(duration: 0.6).delay(1.0) : .none, value: isAnimating)
+                .scaleEffect(step.title == "Hello, San Francisco!" ? (isAnimating ? 1.0 : 0.9) : 1.0)
+                .opacity(step.title == "Hello, San Francisco!" ? (isAnimating ? 1.0 : 0.0) : 1.0)
+                .animation(step.title == "Hello, San Francisco!" ? .easeInOut(duration: 0.6).delay(1.0) : .none, value: isAnimating)
                 
                 if step.permissionType != nil {
                     Button("Skip for now") {
@@ -98,8 +97,8 @@ struct OnboardingStepView: View {
                     }
                     .font(.body)
                     .foregroundColor(.secondary)
-                    .opacity(step.title == "Welcome to SF Parking" ? (isAnimating ? 1.0 : 0.0) : 1.0)
-                    .animation(step.title == "Welcome to SF Parking" ? .easeInOut(duration: 0.6).delay(1.2) : .none, value: isAnimating)
+                    .opacity(step.title == "Hello, San Francisco!" ? (isAnimating ? 1.0 : 0.0) : 1.0)
+                    .animation(step.title == "Hello, San Francisco!" ? .easeInOut(duration: 0.6).delay(1.2) : .none, value: isAnimating)
                 }
             }
             .padding(.horizontal, 32)
@@ -153,6 +152,8 @@ struct OnboardingStepView: View {
             requestLocationPermission()
         case .notifications:
             requestNotificationPermission()
+        case .smartParking:
+            requestSmartParkingPermission()
         }
     }
     
@@ -163,14 +164,14 @@ struct OnboardingStepView: View {
         switch authorizationStatus {
         case .notDetermined:
             // Create a delegate to listen for authorization changes
-            locationDelegate = LocationPermissionDelegate { [self] authorized in
+            locationDelegate = OnboardingLocationDelegate { [self] authorized in
                 DispatchQueue.main.async {
                     if authorized {
                         let successFeedback = UINotificationFeedbackGenerator()
                         successFeedback.notificationOccurred(.success)
                         self.onNext()
                     } else {
-                        self.showPermissionDeniedAlert(message: "Location access is required to show your parking location and provide accurate street cleaning information. Please enable it in Settings.")
+                        self.showPermissionDeniedAlert(message: "Location access helps us track where you parked and show you the street cleaning rules for that location. Please enable it in Settings.")
                     }
                 }
             }
@@ -179,7 +180,7 @@ struct OnboardingStepView: View {
             locationManager!.requestWhenInUseAuthorization()
             
         case .denied, .restricted:
-            showPermissionDeniedAlert(message: "Location access is required to show your parking location and provide accurate street cleaning information. Please enable it in Settings.")
+            showPermissionDeniedAlert(message: "Location access helps us track where you parked and show you the street cleaning rules for that location. Please enable it in Settings.")
         default:
             let successFeedback = UINotificationFeedbackGenerator()
             successFeedback.notificationOccurred(.success)
@@ -202,6 +203,18 @@ struct OnboardingStepView: View {
         }
     }
     
+    private func requestSmartParkingPermission() {
+        // Smart parking is an app setting, not a system permission
+        // Enable it by default and move to next step
+        ParkingDetector.shared.startMonitoring()
+        
+        let successFeedback = UINotificationFeedbackGenerator()
+        successFeedback.notificationOccurred(.success)
+        
+        AnalyticsManager.shared.logPermissionGranted(permissionType: "smart_parking")
+        onNext()
+    }
+    
     
     private func showPermissionDeniedAlert(message: String) {
         permissionDeniedMessage = message
@@ -216,6 +229,42 @@ struct OnboardingStepView: View {
             withAnimation {
                 isAnimating = true
             }
+        }
+    }
+}
+
+// Custom delegate that only calls completion once for onboarding flow
+class OnboardingLocationDelegate: NSObject, CLLocationManagerDelegate {
+    private let completion: (Bool) -> Void
+    private var hasCompleted = false
+    
+    init(completion: @escaping (Bool) -> Void) {
+        self.completion = completion
+        super.init()
+    }
+    
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        guard !hasCompleted else { return } // Prevent multiple calls
+        
+        switch manager.authorizationStatus {
+        case .authorizedWhenInUse:
+            // Only complete on "when in use" - ignore subsequent "always" prompts
+            hasCompleted = true
+            AnalyticsManager.shared.logPermissionGranted(permissionType: "location")
+            completion(true)
+        case .denied, .restricted:
+            hasCompleted = true
+            AnalyticsManager.shared.logPermissionDenied(permissionType: "location")
+            completion(false)
+        case .authorizedAlways:
+            // Ignore "always" changes during onboarding - user already granted "when in use"
+            break
+        case .notDetermined:
+            // Still waiting for user decision
+            break
+        @unknown default:
+            hasCompleted = true
+            completion(false)
         }
     }
 }

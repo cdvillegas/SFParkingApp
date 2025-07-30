@@ -1,36 +1,22 @@
 import SwiftUI
-import MapKit
 
-struct OnboardingView: View {
+struct OnboardingOverlayView: View {
     @State private var currentStep = 0
-    @State private var showingOnboarding = true
+    @State private var showingContent = true
     @State private var hasLoggedStart = false
-    @State private var glassOpacity: Double = 1.0
-    @State private var mapPosition = MapCameraPosition.region(
-        MKCoordinateRegion(
-            center: CLLocationCoordinate2D(latitude: 37.74494, longitude: -122.44324), // Diamond Heights
-            span: MKCoordinateSpan(latitudeDelta: 0.15, longitudeDelta: 0.15)
-        )
-    )
     
+    let onCompleted: () -> Void
     let onboardingSteps = OnboardingStep.allSteps
     
     var body: some View {
         ZStack {
-            // Beautiful SF map background
-            Map(position: .constant(mapPosition))
-                .mapStyle(.standard)
+            // Blurry glass overlay
+            Rectangle()
+                .fill(.ultraThinMaterial)
                 .ignoresSafeArea(.all)
-                .allowsHitTesting(false) // Prevent interaction during onboarding
             
-            // Blurry overlay that melts away
-            ZStack {
-                Rectangle()
-                    .fill(.ultraThinMaterial)
-            }
-            .ignoresSafeArea(.all)
-            
-            if showingOnboarding {
+            // Onboarding content
+            if showingContent {
                 VStack(spacing: 0) {
                     // Progress indicator at the top
                     VStack {
@@ -51,7 +37,7 @@ struct OnboardingView: View {
                             onNext: {
                                 AnalyticsManager.shared.logOnboardingStepCompleted(stepName: onboardingSteps[currentStep].title)
                                 if currentStep < onboardingSteps.count - 1 {
-                                    withAnimation(.easeInOut(duration: 0.5)) {
+                                    withAnimation(.easeInOut(duration: 0.3)) {
                                         currentStep += 1
                                     }
                                 } else {
@@ -76,10 +62,6 @@ struct OnboardingView: View {
                         hasLoggedStart = true
                     }
                 }
-                .transition(.asymmetric(
-                    insertion: .opacity,
-                    removal: .move(edge: .top).combined(with: .opacity)
-                ))
             }
         }
     }
@@ -88,38 +70,24 @@ struct OnboardingView: View {
         AnalyticsManager.shared.logOnboardingCompleted()
         OnboardingManager.completeOnboarding()
         
-        // First fade out all the onboarding content
-        withAnimation(.easeInOut(duration: 0.8)) {
-            showingOnboarding = false
+        // Simple fade out - no complex timing
+        withAnimation(.easeOut(duration: 0.4)) {
+            showingContent = false
         }
         
-        // Then melt away the glass overlay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            withAnimation(.spring(response: 1.5, dampingFraction: 0.8, blendDuration: 0.3)) {
-                glassOpacity = 0.0
-            }
-        }
-        
-        // Finally notify that onboarding completed after glass melts
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            // Pass the map position to VehicleParkingView
-            NotificationCenter.default.post(
-                name: NSNotification.Name("OnboardingCompleted"), 
-                object: nil,
-                userInfo: [
-                    "mapPosition": mapPosition
-                ]
-            )
+        // Complete immediately after content fades
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            onCompleted()
         }
     }
 }
 
 #Preview("Light Mode") {
-    OnboardingView()
+    OnboardingOverlayView(onCompleted: {})
         .preferredColorScheme(.light)
 }
 
 #Preview("Dark Mode") {
-    OnboardingView()
+    OnboardingOverlayView(onCompleted: {})
         .preferredColorScheme(.dark)
 }

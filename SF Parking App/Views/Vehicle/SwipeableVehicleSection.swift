@@ -130,10 +130,9 @@ struct VehicleSwipeCard: View {
                 
                 Spacer()
                 
-                // Menu button (always show)
-                Menu {
-                    // Location-based actions (only when parked)
-                    if vehicle.parkingLocation != nil {
+                // Menu button (only show when there are valid options)
+                if vehicle.parkingLocation != nil {
+                    Menu {
                         Button("View in Maps", systemImage: "map") {
                             openVehicleInMaps(vehicle)
                         }
@@ -143,21 +142,21 @@ struct VehicleSwipeCard: View {
                                 onShare(parkingLocation)
                             }
                         }
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.secondary)
+                            .frame(width: 30, height: 30)
+                            .background(
+                                Circle()
+                                    .fill(.regularMaterial)
+                                    .shadow(color: Color.black.opacity(0.1), radius: 3, x: 0, y: 1)
+                            )
                     }
-                } label: {
-                    Image(systemName: "ellipsis")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.secondary)
-                        .frame(width: 30, height: 30)
-                        .background(
-                            Circle()
-                                .fill(.regularMaterial)
-                                .shadow(color: Color.black.opacity(0.1), radius: 3, x: 0, y: 1)
-                        )
-                }
-                .onLongPressGesture(minimumDuration: 0) {
-                    let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-                    impactFeedback.impactOccurred()
+                    .onLongPressGesture(minimumDuration: 0) {
+                        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                        impactFeedback.impactOccurred()
+                    }
                 }
             }
         }
