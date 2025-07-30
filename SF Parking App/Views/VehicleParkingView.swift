@@ -160,6 +160,14 @@ struct VehicleParkingView: View {
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
             // Refresh notification permission status when returning from Settings
             notificationManager.checkPermissionStatus()
+            
+            // Check if we should reopen Smart Parking sheet after returning from Settings
+            if UserDefaults.standard.bool(forKey: "smartParkingSheetWasOpen") {
+                UserDefaults.standard.removeObject(forKey: "smartParkingSheetWasOpen")
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    showingAutoParkingSettings = true
+                }
+            }
         }
         .onChange(of: viewModel.isSettingLocation) { oldValue, newValue in
             // When location setting completes and we were handling auto parking, clear the data
@@ -647,30 +655,17 @@ struct VehicleParkingView: View {
     }
     
     private func performPostOnboardingTransition() {
-        // After onboarding completes, smoothly transition to appropriate view
+        // After onboarding completes, maintain the same default view for consistency
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { // Small delay for overlay to fade
             
-            // Check if user has location permission and is in San Francisco
-            let hasLocationPermission = self.viewModel.locationManager.authorizationStatus == .authorizedWhenInUse || 
-                                       self.viewModel.locationManager.authorizationStatus == .authorizedAlways
-            
-            if hasLocationPermission, 
-               let userLocation = self.viewModel.locationManager.userLocation,
-               self.isLocationInSanFrancisco(userLocation.coordinate) {
-                // User granted location permission and is in SF - zoom to them slowly
-                withAnimation(.easeInOut(duration: 2.5)) {
-                    self.viewModel.centerMapOnLocation(userLocation.coordinate)
-                }
-            } else {
-                // Either no location permission or not in SF - stay at SF overview
-                withAnimation(.easeInOut(duration: 1.0)) {
-                    self.viewModel.mapPosition = .region(
-                        MKCoordinateRegion(
-                            center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194), // SF center
-                            span: MKCoordinateSpan(latitudeDelta: 0.2, longitudeDelta: 0.2) // Nice SF overview
-                        )
+            // Use the same default coordinates as the main map view for consistency
+            withAnimation(.easeInOut(duration: 1.0)) {
+                self.viewModel.mapPosition = .region(
+                    MKCoordinateRegion(
+                        center: CLLocationCoordinate2D(latitude: 37.73143, longitude: -122.44143), // Same as default view
+                        span: MKCoordinateSpan(latitudeDelta: 0.12, longitudeDelta: 0.20)
                     )
-                }
+                )
             }
             
             // Reset the flag
@@ -746,6 +741,7 @@ struct VehicleParkingView: View {
         // Don't clear immediately - wait for user to confirm or cancel
         // parkingDetectionHandler will be cleared when user confirms the location
     }
+    
     
     
 }

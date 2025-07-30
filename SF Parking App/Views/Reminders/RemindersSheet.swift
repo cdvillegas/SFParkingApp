@@ -618,7 +618,7 @@ private struct UnifiedEmptyStateView: View {
                         .multilineTextAlignment(.center)
                     
                     Text(subtitleText)
-                        .font(.system(size: 14))
+                        .font(.system(size: 16))
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 8)

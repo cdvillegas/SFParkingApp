@@ -527,29 +527,29 @@ struct VehicleParkingMapView: View {
         let distance = currentLocation.distance(from: newLocation)
         
         // Only animate if movement is significant enough (ignore tiny GPS jitter)
-        guard distance > 3 else { return }
+        guard distance > 5 else { return }
         
-        // Smooth sliding animations based on distance
+        // Smooth sliding animations based on distance - much faster for responsive feel
         if distance < 20 { // Small movements (3-20 meters) - walking precision
-            withAnimation(.easeInOut(duration: 3.0)) {
+            withAnimation(.easeOut(duration: 0.8)) {
                 animatedUserCoordinate = newCoordinate
             }
         } else if distance < 100 { // Medium movements (20-100 meters) - walking/jogging
-            withAnimation(.easeInOut(duration: 4.0)) {
+            withAnimation(.easeOut(duration: 1.2)) {
                 animatedUserCoordinate = newCoordinate
             }
         } else if distance < 500 { // Large movements (100-500 meters) - fast walking/biking
-            withAnimation(.easeInOut(duration: 5.0)) {
+            withAnimation(.easeOut(duration: 1.8)) {
                 animatedUserCoordinate = newCoordinate
             }
         } else if distance < 2000 { // Very large movements (0.5-2 km) - driving
-            withAnimation(.easeInOut(duration: 6.0)) {
+            withAnimation(.easeOut(duration: 2.5)) {
                 animatedUserCoordinate = newCoordinate
             }
         } else {
-            // Very large jumps (10+ km) - long distance travel (LA to SF)
+            // Very large jumps (2+ km) - long distance travel
             // Use a smooth but faster animation to avoid jarring immediate jump
-            withAnimation(.easeInOut(duration: 3.0)) {
+            withAnimation(.easeOut(duration: 1.5)) {
                 animatedUserCoordinate = newCoordinate
             }
         }
