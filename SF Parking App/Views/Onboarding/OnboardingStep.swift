@@ -12,32 +12,43 @@ struct OnboardingStep {
     enum PermissionType {
         case location
         case notifications
+        case motion
+        case smartParking
     }
     
     static let allSteps: [OnboardingStep] = [
         OnboardingStep(
-            title: "Welcome to SF Parking",
-            description: "Never get another parking ticket. We've built the smartest way to navigate San Francisco's complex parking rules.",
+            title: "Hello, San Francisco!",
+            description: "We know parking here can be tough. We're committed to helping you avoid tickets and park safely.",
             systemImage: "car.fill",
             color: .blue,
             permissionType: nil,
-            buttonText: "Next"
+            buttonText: "Continue"
         ),
         OnboardingStep(
-            title: "Find Your Spot Instantly",
-            description: "We use your location to show nearby parking rules and help you find safe spots faster. Your location stays private and on your device.",
+            title: "Find Your Parking Spot",
+            description: "We'll help you track where you parked and show you the street cleaning rules for that exact location.",
             systemImage: "location.fill",
-            color: .green,
+            color: .blue,
             permissionType: .location,
             buttonText: "Enable Location"
         ),
         OnboardingStep(
-            title: "Never Miss Street Cleaning",
-            description: "Get perfectly timed street cleaning alerts. You control when and how you're notified. No ads, no spam, just helpful reminders that save you money.",
+            title: "Stay One Step Ahead",
+            description: "Get perfectly timed reminders before street cleaning starts. Never rush to move your car again.",
             systemImage: "bell.badge.fill",
-            color: .orange,
+            color: .blue,
             permissionType: .notifications,
             buttonText: "Enable Notifications"
+        ),
+        OnboardingStep(
+            title: "Automatic Parking Detection",
+            description: "Automatically update your parking location using motion and vehicle connection data.",
+            systemImage: "sparkles",
+            color: .blue,
+            permissionType: .smartParking,
+            buttonText: "Enable Smart Park"
         )
     ]
+
 }

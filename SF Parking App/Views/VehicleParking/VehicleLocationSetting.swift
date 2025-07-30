@@ -5,6 +5,7 @@ struct VehicleLocationSetting: View {
     @ObservedObject var viewModel: VehicleParkingViewModel
     @State private var impactFeedbackLight = UIImpactFeedbackGenerator(style: .light)
     @Environment(\.colorScheme) private var colorScheme
+    @StateObject private var notificationManager = NotificationManager.shared
     
     let onShowReminders: () -> Void
     let onShowSmartParking: () -> Void
@@ -46,10 +47,10 @@ struct VehicleLocationSetting: View {
                 HStack(spacing: 12) {
                     ZStack {
                         Circle()
-                            .fill(activeRemindersCount > 0 ? Color.green : Color.gray)
+                            .fill(remindersAreEffective ? Color.green : Color.gray)
                             .frame(width: 28, height: 28)
                         
-                        Image(systemName: "bell.fill")
+                        Image(systemName: remindersAreEffective ? "bell.fill" : "bell.slash.fill")
                             .font(.system(size: 12, weight: .semibold))
                             .foregroundColor(.white)
                     }
@@ -117,11 +118,21 @@ struct VehicleLocationSetting: View {
     }
     
     private var activeRemindersCount: Int {
-        return NotificationManager.shared.customReminders.filter { $0.isActive }.count
+        return notificationManager.customReminders.filter { $0.isActive }.count
+    }
+    
+    private var notificationsEnabled: Bool {
+        return notificationManager.notificationPermissionStatus == .authorized
+    }
+    
+    private var remindersAreEffective: Bool {
+        return activeRemindersCount > 0 && notificationsEnabled
     }
     
     private var remindersStatusText: String {
-        if activeRemindersCount == 0 {
+        if !notificationsEnabled {
+            return "Disabled"
+        } else if activeRemindersCount == 0 {
             return "Disabled"
         } else {
             return "\(activeRemindersCount) Active"

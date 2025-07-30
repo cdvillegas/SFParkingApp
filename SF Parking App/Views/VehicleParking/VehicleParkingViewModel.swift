@@ -9,8 +9,8 @@ class VehicleParkingViewModel: ObservableObject {
     
     @Published var mapPosition = MapCameraPosition.region(
         MKCoordinateRegion(
-            center: CLLocationCoordinate2D(latitude: 37.7551, longitude: -122.4528), // Sutro Tower
-            span: MKCoordinateSpan(latitudeDelta: 0.18, longitudeDelta: 0.18)
+            center: CLLocationCoordinate2D(latitude: 37.73143, longitude: -122.44143), // Default view center
+            span: MKCoordinateSpan(latitudeDelta: 0.12, longitudeDelta: 0.20)
         )
     )
     
@@ -144,14 +144,20 @@ class VehicleParkingViewModel: ObservableObject {
     func startSettingLocation() {
         isSettingLocation = true
         
-        // Always center on user location first when moving a vehicle
+        // Prioritize user location, then vehicle location, then default to SF
         let startCoordinate: CLLocationCoordinate2D
         if let userLocation = locationManager.userLocation {
             startCoordinate = userLocation.coordinate
             centerMapOnLocation(startCoordinate)
-        } else {
-            startCoordinate = CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194)
+        } else if let selectedVehicle = vehicleManager.selectedVehicle,
+                  let parkingLocation = selectedVehicle.parkingLocation {
+            // If no user location but vehicle has a parking location, center on vehicle
+            startCoordinate = parkingLocation.coordinate
             centerMapOnLocation(startCoordinate)
+        } else {
+            // First time setting location - show wider SF view for easy navigation
+            startCoordinate = CLLocationCoordinate2D(latitude: 37.73143, longitude: -122.44143)
+            centerMapOnLocationForFirstTime(startCoordinate)
         }
         
         // For existing vehicles, preserve the address but don't center on parking location
@@ -491,8 +497,8 @@ class VehicleParkingViewModel: ObservableObject {
         withAnimation(.easeInOut(duration: 0.8)) {
             mapPosition = .region(
                 MKCoordinateRegion(
-                    center: coordinate,
-                    span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
+                    center: CLLocationCoordinate2D(latitude: 37.77084, longitude: -122.43837), // Initial parking location setting center
+                    span: MKCoordinateSpan(latitudeDelta: 0.049, longitudeDelta: 0.084)
                 )
             )
         }
@@ -504,6 +510,17 @@ class VehicleParkingViewModel: ObservableObject {
                 MKCoordinateRegion(
                     center: coordinate,
                     span: MKCoordinateSpan(latitudeDelta: 0.001, longitudeDelta: 0.001) // Zoom in closer for schedule confirmation
+                )
+            )
+        }
+    }
+    
+    func centerMapOnLocationForFirstTime(_ coordinate: CLLocationCoordinate2D) {
+        withAnimation(.easeInOut(duration: 0.8)) {
+            mapPosition = .region(
+                MKCoordinateRegion(
+                    center: coordinate,
+                    span: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.13) // Slightly more zoomed in for location setting
                 )
             )
         }

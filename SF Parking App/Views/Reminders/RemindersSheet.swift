@@ -618,9 +618,9 @@ private struct UnifiedEmptyStateView: View {
                         .multilineTextAlignment(.center)
                     
                     Text(subtitleText)
-                        .font(.system(size: 14))
+                        .font(.system(size: 16))
                         .foregroundColor(.secondary)
-                        .lineLimit(1)
+                        .multilineTextAlignment(.center)
                         .padding(.horizontal, 8)
                 }
             }
@@ -635,7 +635,7 @@ private struct UnifiedEmptyStateView: View {
     }
     
     private var iconColor: Color {
-        isNotificationsDisabled ? .red : .gray
+        isNotificationsDisabled ? .gray : .gray
     }
     
     private var titleText: String {
@@ -758,6 +758,7 @@ private struct RemindersSheetContent: View {
                                     // Toggle
                                     Toggle("", isOn: .constant(true)) // Preview toggle
                                         .labelsHidden()
+                                        .tint(.blue)
                                 }
                                 .padding(16)
                                 .background(.clear)
@@ -804,6 +805,7 @@ private struct RemindersSheetContent: View {
                                         // Toggle
                                         Toggle("", isOn: .constant(customTitle == "2 hours before")) // First custom enabled
                                             .labelsHidden()
+                                            .tint(.blue)
                                     }
                                     .padding(16)
                                     .background(.clear)

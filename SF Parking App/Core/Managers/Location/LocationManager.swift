@@ -20,13 +20,11 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         super.init()
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
-        locationManager.distanceFilter = 10
+        locationManager.distanceFilter = 20
         locationManager.headingFilter = 2 // Update heading every 2 degrees for smoother updates
         
-        // Enable background location updates for auto parking detection
-        locationManager.allowsBackgroundLocationUpdates = true
-        locationManager.pausesLocationUpdatesAutomatically = false
-        locationManager.showsBackgroundLocationIndicator = false
+        // Background updates will be enabled only when we have "always" permission
+        // This prevents the unwanted "always" permission dialog during onboarding
         
         authorizationStatus = locationManager.authorizationStatus
         print("LocationManager initialized with status: \(authorizationStatus.rawValue)")
@@ -117,6 +115,18 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         guard authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways else {
             print("Cannot start location updates - not authorized")
             return
+        }
+        
+        // Enable background updates only if we have "always" permission
+        if authorizationStatus == .authorizedAlways {
+            locationManager.allowsBackgroundLocationUpdates = true
+            locationManager.pausesLocationUpdatesAutomatically = false
+            locationManager.showsBackgroundLocationIndicator = false
+            print("Background location updates enabled")
+        } else {
+            locationManager.allowsBackgroundLocationUpdates = false
+            locationManager.pausesLocationUpdatesAutomatically = true
+            print("Background location updates disabled (when in use only)")
         }
         
         print("Starting continuous location updates")

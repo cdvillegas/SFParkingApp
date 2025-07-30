@@ -22,6 +22,7 @@ struct ReminderRowView: View {
                 set: { newValue in onToggle(newValue) }
             ))
             .labelsHidden()
+            .tint(.blue)
             .frame(width: 40, height: 40)
             
             // Text content
