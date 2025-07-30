@@ -6,6 +6,8 @@ struct VehicleLocationSetting: View {
     @State private var impactFeedbackLight = UIImpactFeedbackGenerator(style: .light)
     @Environment(\.colorScheme) private var colorScheme
     @StateObject private var notificationManager = NotificationManager.shared
+    @State private var showingParkingDetails = false
+    @State private var selectedVehicleForDetails: Vehicle?
     
     let onShowReminders: () -> Void
     let onShowSmartParking: () -> Void
@@ -29,6 +31,27 @@ struct VehicleLocationSetting: View {
         .padding(.bottom, 16) // Reduced padding for home indicator
         .background(.regularMaterial)
         .ignoresSafeArea(edges: .bottom)
+        .sheet(isPresented: $showingParkingDetails) {
+            Group {
+                if let vehicle = selectedVehicleForDetails,
+                   let parkingLocation = vehicle.parkingLocation {
+                    ParkingDetailsSheet(
+                        vehicle: vehicle,
+                        parkingLocation: parkingLocation,
+                        schedule: viewModel.streetDataManager.nextUpcomingSchedule,
+                        originalSchedule: viewModel.streetDataManager.selectedSchedule ?? viewModel.streetDataManager.schedule
+                    )
+                    .onAppear {
+                        print("📱 Presenting ParkingDetailsSheet for \(vehicle.name)")
+                    }
+                } else {
+                    Text("Error: No vehicle or parking location")
+                        .onAppear {
+                            print("❌ Failed to present ParkingDetailsSheet - missing vehicle or parking location")
+                        }
+                }
+            }
+        }
     }
     
     private func showRemindersSheet() {
@@ -316,12 +339,26 @@ struct VehicleLocationSetting: View {
     }
     
     private var normalVehicleSection: some View {
-        SwipeableVehicleSection(
-            vehicles: viewModel.vehicleManager.activeVehicles,
+        let vehicles = viewModel.vehicleManager.activeVehicles
+        
+        return SwipeableVehicleSection(
+            vehicles: vehicles,
             selectedVehicle: viewModel.vehicleManager.currentVehicle,
             onVehicleSelected: { _ in },
             onVehicleTap: { vehicle in
-                // Vehicle cards are no longer clickable - all actions go through menu or buttons
+                // Debug: Show what happens when vehicle is tapped
+                print("🚗 Vehicle tapped: \(vehicle.name)")
+                print("🅿️ Has parking location: \(vehicle.parkingLocation != nil)")
+                
+                // Show parking details when vehicle is tapped
+                if vehicle.parkingLocation != nil {
+                    print("✅ Opening ParkingDetailsSheet")
+                    impactFeedbackLight.impactOccurred()
+                    selectedVehicleForDetails = vehicle
+                    showingParkingDetails = true
+                } else {
+                    print("❌ No parking location - can't open ParkingDetailsSheet")
+                }
             },
             onShareLocation: { parkingLocation in
                 shareParkingLocation(parkingLocation)

@@ -446,8 +446,9 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "Street Park SF";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.navigation";
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "This app uses Bluetooth to detect when you disconnect from your car and automatically set your parking location.";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app needs location access to show your current position and help you find your parked car.";
-				INFOPLIST_KEY_NSMotionUsageDescription = "This app uses motion activity to automatically detect when you've finished driving and set your parking location.";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "This app needs location access to automatically detect when you park and provide street cleaning alerts even when the app is closed.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app needs location access to show your current position and find street cleaning schedules.";
+				INFOPLIST_KEY_NSMotionUsageDescription = "This app uses motion detection to confirm when you've parked and walked away from your car for automatic parking location detection.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -480,8 +481,9 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "Street Park SF";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.navigation";
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "This app uses Bluetooth to detect when you disconnect from your car and automatically set your parking location.";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app needs location access to show your current position and help you find your parked car.";
-				INFOPLIST_KEY_NSMotionUsageDescription = "This app uses motion activity to automatically detect when you've finished driving and set your parking location.";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "This app needs location access to automatically detect when you park and provide street cleaning alerts even when the app is closed.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app needs location access to show your current position and find street cleaning schedules.";
+				INFOPLIST_KEY_NSMotionUsageDescription = "This app uses motion detection to confirm when you've parked and walked away from your car for automatic parking location detection.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

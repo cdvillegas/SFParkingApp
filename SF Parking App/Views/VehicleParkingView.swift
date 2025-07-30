@@ -6,6 +6,7 @@ struct VehicleParkingView: View {
     @StateObject private var viewModel = VehicleParkingViewModel()
     @State private var showingRemindersSheet = false
     @State private var showingAutoParkingSettings = false
+    @State private var showingParkingDetailsSheet = false
     @EnvironmentObject var parkingDetectionHandler: ParkingDetectionHandler
     @StateObject private var parkingDetector = ParkingDetector.shared
     @StateObject private var notificationManager = NotificationManager.shared
@@ -38,6 +39,7 @@ struct VehicleParkingView: View {
             // Map extends to absolute bottom edge
             VehicleParkingMapView(viewModel: viewModel)
                 .ignoresSafeArea(.all)
+            
             
             // Top status buttons or instructions (hidden during onboarding)
             if !showingOnboarding {
@@ -77,7 +79,12 @@ struct VehicleParkingView: View {
                     
                     // Map control buttons positioned above content
                     HStack {
+                        parkingDetailsButton
+                            .padding(.leading, 12)
+                            .padding(.bottom, 12) // Small gap above content
+                        
                         Spacer()
+                        
                         mapControlButtons
                             .padding(.trailing, 12)
                             .padding(.bottom, 12) // Small gap above content
@@ -209,6 +216,17 @@ struct VehicleParkingView: View {
         .sheet(isPresented: $showingAutoParkingSettings) {
             SmartParkingSettingsView()
         }
+        .sheet(isPresented: $showingParkingDetailsSheet) {
+            if let vehicle = viewModel.vehicleManager.currentVehicle,
+               let parkingLocation = vehicle.parkingLocation {
+                ParkingDetailsSheet(
+                    vehicle: vehicle,
+                    parkingLocation: parkingLocation,
+                    schedule: viewModel.streetDataManager.nextUpcomingSchedule,
+                    originalSchedule: viewModel.streetDataManager.selectedSchedule ?? viewModel.streetDataManager.schedule
+                )
+            }
+        }
         .onChange(of: showingAutoParkingSettings) { _, isShowing in
             if !isShowing {
                 // Sheet was dismissed, show details for 5 seconds
@@ -258,66 +276,26 @@ struct VehicleParkingView: View {
     
     private var topStatusButtons: some View {
         HStack(alignment: .top, spacing: 12) {
-            // Reminders button
-            Button(action: {
-                let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-                impactFeedback.impactOccurred()
-                showingRemindersSheet = true
-            }) {
-                HStack(spacing: 8) {
-                    Image(systemName: remindersAreEffective ? "bell.fill" : "bell.slash.fill")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(remindersAreEffective ? Color.blue : Color.gray)
-                    
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Reminders")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(.primary)
-                            .lineLimit(1)
-                        
-                        if showStatusDetails {
-                            Text(remindersStatusText)
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(.secondary)
-                                .lineLimit(1)
-                                .transition(.asymmetric(
-                                    insertion: .opacity.combined(with: .move(edge: .top)),
-                                    removal: .opacity.combined(with: .move(edge: .top))
-                                ))
-                        }
-                    }
-                }
-                .padding(.horizontal, 20)
-                .padding(.vertical, showStatusDetails ? 16 : 12)
-                .frame(height: showStatusDetails ? 56 : 48)
-                .background(
-                    Capsule()
-                        .fill(.regularMaterial)
-                        .shadow(color: Color.black.opacity(0.15), radius: 4, x: 0, y: 2)
-                )
-                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: showStatusDetails)
-            }
-            
-            // Smart parking button
+            // Smart Park button (left side)
             Button(action: {
                 let impactFeedback = UIImpactFeedbackGenerator(style: .light)
                 impactFeedback.impactOccurred()
                 showingAutoParkingSettings = true
             }) {
-                HStack(spacing: 8) {
+                HStack(spacing: 16) {
                     Image(systemName: "sparkles")
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.system(size: 20, weight: .semibold))
                         .foregroundColor(smartParkingIsOn ? Color.blue : Color.gray)
                     
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Smart Park")
-                            .font(.system(size: 15, weight: .semibold))
+                            .font(.system(size: 17, weight: .semibold))
                             .foregroundColor(.primary)
                             .lineLimit(1)
                         
                         if showStatusDetails {
                             Text(smartParkingIsOn ? "Enabled" : "Disabled")
-                                .font(.system(size: 12, weight: .medium))
+                                .font(.system(size: 13, weight: .medium))
                                 .foregroundColor(.secondary)
                                 .lineLimit(1)
                                 .transition(.asymmetric(
@@ -329,6 +307,7 @@ struct VehicleParkingView: View {
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, showStatusDetails ? 16 : 12)
+                .frame(maxWidth: .infinity)
                 .frame(height: showStatusDetails ? 56 : 48)
                 .background(
                     Capsule()
@@ -338,6 +317,46 @@ struct VehicleParkingView: View {
                 .animation(.spring(response: 0.4, dampingFraction: 0.8), value: showStatusDetails)
             }
             
+            // Reminders button (right side)
+            Button(action: {
+                let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                impactFeedback.impactOccurred()
+                showingRemindersSheet = true
+            }) {
+                HStack(spacing: 16) {
+                    Image(systemName: remindersAreEffective ? "bell.fill" : "bell.slash.fill")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(remindersAreEffective ? Color.blue : Color.gray)
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Reminders")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundColor(.primary)
+                            .lineLimit(1)
+                        
+                        if showStatusDetails {
+                            Text(remindersStatusText)
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundColor(.secondary)
+                                .lineLimit(1)
+                                .transition(.asymmetric(
+                                    insertion: .opacity.combined(with: .move(edge: .top)),
+                                    removal: .opacity.combined(with: .move(edge: .top))
+                                ))
+                        }
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, showStatusDetails ? 16 : 12)
+                .frame(maxWidth: .infinity)
+                .frame(height: showStatusDetails ? 56 : 48)
+                .background(
+                    Capsule()
+                        .fill(.regularMaterial)
+                        .shadow(color: Color.black.opacity(0.15), radius: 4, x: 0, y: 2)
+                )
+                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: showStatusDetails)
+            }
         }
         .onAppear {
             startDetailsTimer()
@@ -465,6 +484,28 @@ struct VehicleParkingView: View {
                     userLocationButton
                     enableLocationButton
                 }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var parkingDetailsButton: some View {
+        if let currentVehicle = viewModel.vehicleManager.currentVehicle,
+           currentVehicle.parkingLocation != nil {
+            Button(action: {
+                let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                impactFeedback.impactOccurred()
+                showingParkingDetailsSheet = true
+            }) {
+                Image(systemName: "calendar")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(.secondary)
+                    .frame(width: 50, height: 50)
+                    .background(
+                        Circle()
+                            .fill(.regularMaterial)
+                            .shadow(color: Color.black.opacity(0.2), radius: 15, x: 0, y: -5)
+                    )
             }
         }
     }
