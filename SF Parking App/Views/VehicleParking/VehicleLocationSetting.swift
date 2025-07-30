@@ -13,41 +13,39 @@ struct VehicleLocationSetting: View {
     let onShowSmartParking: () -> Void
     
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 0) {
             // Content cards
             contentSection
             
-            // Elegant divider for visual hierarchy
+            // Elegant divider for visual hierarchy - perfectly centered
             if viewModel.vehicleManager.currentVehicle != nil || !viewModel.vehicleManager.activeVehicles.isEmpty {
-                Divider()
-                    .padding(.vertical, 8)
+                Divider().padding(.vertical, 16)
             }
             
             // Bottom buttons
             buttonSection
         }
         .padding(.horizontal, 16)
-        .padding(.top, 20)
-        .padding(.bottom, 16) // Reduced padding for home indicator
+        .padding(.top, 16)
         .background(.regularMaterial)
         .ignoresSafeArea(edges: .bottom)
         .sheet(isPresented: $showingParkingDetails) {
             Group {
                 if let vehicle = selectedVehicleForDetails,
                    let parkingLocation = vehicle.parkingLocation {
-                    ParkingDetailsSheet(
+                    SchedulesView(
                         vehicle: vehicle,
                         parkingLocation: parkingLocation,
                         schedule: viewModel.streetDataManager.nextUpcomingSchedule,
                         originalSchedule: viewModel.streetDataManager.selectedSchedule ?? viewModel.streetDataManager.schedule
                     )
                     .onAppear {
-                        print("📱 Presenting ParkingDetailsSheet for \(vehicle.name)")
+                        print("📱 Presenting SchedulesView for \(vehicle.name)")
                     }
                 } else {
                     Text("Error: No vehicle or parking location")
                         .onAppear {
-                            print("❌ Failed to present ParkingDetailsSheet - missing vehicle or parking location")
+                            print("❌ Failed to present SchedulesView - missing vehicle or parking location")
                         }
                 }
             }
@@ -185,8 +183,6 @@ struct VehicleLocationSetting: View {
                 normalVehicleSection
             }
         }
-        .animation(.spring(response: 0.6, dampingFraction: 0.75, blendDuration: 0.2), value: viewModel.isSettingLocation)
-        .animation(.spring(response: 0.6, dampingFraction: 0.75, blendDuration: 0.2), value: viewModel.isConfirmingSchedule)
     }
     
     private var locationSelectionCard: some View {
@@ -352,12 +348,12 @@ struct VehicleLocationSetting: View {
                 
                 // Show parking details when vehicle is tapped
                 if vehicle.parkingLocation != nil {
-                    print("✅ Opening ParkingDetailsSheet")
+                    print("✅ Opening SchedulesView")
                     impactFeedbackLight.impactOccurred()
                     selectedVehicleForDetails = vehicle
                     showingParkingDetails = true
                 } else {
-                    print("❌ No parking location - can't open ParkingDetailsSheet")
+                    print("❌ No parking location - can't open SchedulesView")
                 }
             },
             onShareLocation: { parkingLocation in
@@ -375,14 +371,15 @@ struct VehicleLocationSetting: View {
         VStack(spacing: 0) {
             if viewModel.isSettingLocation && !viewModel.isConfirmingSchedule {
                 step1Buttons
+                    .transition(.opacity.animation(.easeInOut(duration: 0.3)))
             } else if viewModel.isConfirmingSchedule {
                 step2Buttons
+                    .transition(.opacity.animation(.easeInOut(duration: 0.3)))
             } else {
                 normalModeButtons
+                    .transition(.opacity.animation(.easeInOut(duration: 0.3)))
             }
         }
-        .animation(.spring(response: 0.6, dampingFraction: 0.75, blendDuration: 0.2), value: viewModel.isSettingLocation)
-        .animation(.spring(response: 0.6, dampingFraction: 0.75, blendDuration: 0.2), value: viewModel.isConfirmingSchedule)
     }
     
     private var step1Buttons: some View {
@@ -390,15 +387,13 @@ struct VehicleLocationSetting: View {
             // Cancel button
             Button(action: {
                 impactFeedbackLight.impactOccurred()
-                withAnimation(.spring(response: 0.6, dampingFraction: 0.75, blendDuration: 0.2)) {
-                    viewModel.cancelSettingLocation()
-                }
+                viewModel.cancelSettingLocation()
             }) {
                 Text(viewModel.isSettingLocationForNewVehicle || viewModel.vehicleManager.currentVehicle?.parkingLocation == nil ? "Set Later" : "Cancel")
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 52)
+                    .frame(height: 56)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
                             .fill(.regularMaterial)
@@ -410,9 +405,7 @@ struct VehicleLocationSetting: View {
             // Set button
             Button(action: {
                 impactFeedbackLight.impactOccurred()
-                withAnimation(.spring(response: 0.6, dampingFraction: 0.75, blendDuration: 0.2)) {
-                    viewModel.proceedToScheduleConfirmation()
-                }
+                viewModel.proceedToScheduleConfirmation()
             }) {
                 HStack(spacing: 8) {
                     if viewModel.isAutoDetectingSchedule {
@@ -425,7 +418,7 @@ struct VehicleLocationSetting: View {
                 }
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
-                .frame(height: 52)
+                .frame(height: 56)
                 .background(
                     RoundedRectangle(cornerRadius: 16)
                         .fill(
@@ -448,15 +441,13 @@ struct VehicleLocationSetting: View {
             // Back button
             Button(action: {
                 impactFeedbackLight.impactOccurred()
-                withAnimation(.spring(response: 0.6, dampingFraction: 0.75, blendDuration: 0.2)) {
-                    viewModel.goBackToLocationSetting()
-                }
+                viewModel.goBackToLocationSetting()
             }) {
                 Text("Back")
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 52)
+                    .frame(height: 56)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
                             .fill(.regularMaterial)
@@ -468,15 +459,13 @@ struct VehicleLocationSetting: View {
             // Confirm button
             Button(action: {
                 impactFeedbackLight.impactOccurred()
-                withAnimation(.spring(response: 0.6, dampingFraction: 0.75, blendDuration: 0.2)) {
-                    viewModel.confirmUnifiedLocation()
-                }
+                viewModel.confirmUnifiedLocation()
             }) {
                 Text("Confirm")
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 52)
+                    .frame(height: 56)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
                             .fill(
@@ -494,33 +483,8 @@ struct VehicleLocationSetting: View {
     }
     
     private var normalModeButtons: some View {
-        Group {
-            if let currentVehicle = viewModel.vehicleManager.currentVehicle {
-                Button(action: {
-                    impactFeedbackLight.impactOccurred()
-                    viewModel.isSettingLocationForNewVehicle = false
-                    viewModel.startSettingLocationForVehicle(currentVehicle)
-                }) {
-                    Text(currentVehicle.parkingLocation != nil ? "Move Vehicle" : "Set Vehicle Location")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 52)
-                        .background(
-                            RoundedRectangle(cornerRadius: 16)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [.blue, .blue.opacity(0.8)],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .shadow(color: Color.blue.opacity(0.3), radius: 6, x: 0, y: 3)
-                        )
-                }
-                .buttonStyle(PlainButtonStyle())
-            }
-        }
+        // Move Vehicle button removed - now handled by bottom tab bar
+        EmptyView()
     }
     
     // MARK: - Map and Share Functions

@@ -4,7 +4,7 @@ import MapKit
 import CoreMotion
 import Combine
 
-struct ParkingDetailsSheet: View {
+struct SchedulesView: View {
     let vehicle: Vehicle
     let parkingLocation: ParkingLocation
     let schedule: UpcomingSchedule?
@@ -70,30 +70,6 @@ struct ParkingDetailsSheet: View {
                     .foregroundColor(.primary)
                 
                 Spacer()
-                
-                Menu {
-                    Button {
-                        impactFeedbackLight.impactOccurred()
-                        showingEditLocation = true
-                    } label: {
-                        Label("Update Location", systemImage: "location.circle")
-                    }
-                    
-                    Button {
-                        impactFeedbackLight.impactOccurred()
-                        let mapItem = MKMapItem(placemark: MKPlacemark(coordinate: parkingLocation.coordinate))
-                        mapItem.name = "My \(vehicle.name)"
-                        mapItem.openInMaps(launchOptions: [
-                            MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeWalking
-                        ])
-                    } label: {
-                        Label("Navigate in Maps", systemImage: "map")
-                    }
-                } label: {
-                    Image(systemName: "ellipsis.circle")
-                        .font(.system(size: 24))
-                        .foregroundColor(.secondary)
-                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -101,42 +77,41 @@ struct ParkingDetailsSheet: View {
     
     private var activeScheduleSection: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 20) {
+            HStack(spacing: 16) {
                 ZStack {
                     Circle()
                         .fill(scheduleUrgencyColor)
-                        .frame(width: 50, height: 50)
+                        .frame(width: 44, height: 44)
                     
                     Image(systemName: "calendar")
-                        .font(.system(size: 24, weight: .bold))
+                        .font(.system(size: 20, weight: .semibold))
                         .foregroundColor(.white)
                 }
                 
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Next Street Cleaning")
-                        .font(.system(size: 19, weight: .bold))
+                    // Line 1: Street Cleaning
+                    Text("Street Cleaning")
+                        .font(.system(size: 22, weight: .bold))
                         .foregroundColor(.primary)
                     
                     if let schedule = schedule {
-                        Text(formatScheduleDate(schedule))
-                            .font(.system(size: 17, weight: .medium))
+                        // Line 2: Date and Time
+                        Text("\(formatScheduleDate(schedule)) • \(formatScheduleTimeRange(schedule))")
+                            .font(.system(size: 16, weight: .medium))
                             .foregroundColor(.secondary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.75)
                         
-                        Text(formatScheduleTimeRange(schedule))
-                            .font(.system(size: 17, weight: .medium))
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    if let schedule = schedule {
+                        // Line 3: Time remaining
                         Text("in \(scheduleTimeRemaining)")
-                            .font(.system(size: 16, weight: .bold))
+                            .font(.system(size: 15, weight: .semibold))
                             .foregroundColor(scheduleUrgencyColor)
                     }
                 }
                 
                 Spacer()
             }
-            .padding(24)
+            .padding(16)
         }
         .background(Color.clear)
         .overlay(
@@ -153,7 +128,9 @@ struct ParkingDetailsSheet: View {
     }
     
     private func formatScheduleTimeRange(_ schedule: UpcomingSchedule) -> String {
-        return "\(schedule.startTime) - \(schedule.endTime)"
+        let cleanStartTime = schedule.startTime.replacingOccurrences(of: ":00", with: "")
+        let cleanEndTime = schedule.endTime.replacingOccurrences(of: ":00", with: "")
+        return "\(cleanStartTime) - \(cleanEndTime)"
     }
     
     @ViewBuilder
@@ -700,7 +677,7 @@ extension Color {
 }
 
 #Preview {
-    ParkingDetailsSheet(
+    SchedulesView(
         vehicle: Vehicle(
             name: "My Car",
             type: .car,

@@ -53,16 +53,9 @@ struct VehicleParkingView: View {
                                 removal: .move(edge: .top).combined(with: .opacity)
                             ))
                     } else {
-                        HStack {
-                            topStatusButtons
-                                .padding(.leading, 12)
-                            Spacer()
-                        }
-                        .padding(.top, 10)
-                        .transition(.asymmetric(
-                            insertion: .move(edge: .top).combined(with: .opacity),
-                            removal: .move(edge: .top).combined(with: .opacity)
-                        ))
+                        // Top area now empty - status buttons moved to bottom tab bar
+                        Spacer()
+                            .frame(height: 10)
                     }
                     
                     Spacer()
@@ -81,16 +74,33 @@ struct VehicleParkingView: View {
                     HStack {
                         parkingDetailsButton
                             .padding(.leading, 12)
-                            .padding(.bottom, 12) // Small gap above content
+                            .padding(.bottom, 6) // Reduced gap above content
                         
                         Spacer()
                         
                         mapControlButtons
                             .padding(.trailing, 12)
-                            .padding(.bottom, 12) // Small gap above content
+                            .padding(.bottom, 6) // Reduced gap above content
                     }
                     
-                    bottomInterface
+                    // Vehicle interface section - always present
+                    VStack(spacing: 0) {
+                        VehicleLocationSetting(
+                            viewModel: viewModel,
+                            onShowReminders: {
+                                showingRemindersSheet = true
+                            },
+                            onShowSmartParking: {
+                                showingAutoParkingSettings = true
+                            }
+                        )
+                        
+                        // Bottom tab bar - only show in normal mode
+                        if !viewModel.isSettingLocation && !viewModel.isConfirmingSchedule {
+                            bottomTabBar
+                                .transition(.opacity)
+                        }
+                    }
                 }
                 .transition(.opacity)
             }
@@ -219,7 +229,7 @@ struct VehicleParkingView: View {
         .sheet(isPresented: $showingParkingDetailsSheet) {
             if let vehicle = viewModel.vehicleManager.currentVehicle,
                let parkingLocation = vehicle.parkingLocation {
-                ParkingDetailsSheet(
+                SchedulesView(
                     vehicle: vehicle,
                     parkingLocation: parkingLocation,
                     schedule: viewModel.streetDataManager.nextUpcomingSchedule,
@@ -491,7 +501,8 @@ struct VehicleParkingView: View {
     @ViewBuilder
     private var parkingDetailsButton: some View {
         if let currentVehicle = viewModel.vehicleManager.currentVehicle,
-           currentVehicle.parkingLocation != nil {
+           currentVehicle.parkingLocation != nil,
+           viewModel.streetDataManager.nextUpcomingSchedule != nil {
             Button(action: {
                 let impactFeedback = UIImpactFeedbackGenerator(style: .light)
                 impactFeedback.impactOccurred()
@@ -636,22 +647,93 @@ struct VehicleParkingView: View {
     }
     
     
-    // MARK: - Bottom Interface
+    // MARK: - Bottom Button Group
     
-    private var bottomInterface: some View {
-        VStack(spacing: 0) {
-            // Main interface
-            VehicleLocationSetting(
-                viewModel: viewModel,
-                onShowReminders: {
-                    showingRemindersSheet = true
-                },
-                onShowSmartParking: {
+    private var bottomTabBar: some View {
+        HStack(spacing: 16) {
+            // Status indicators group
+            HStack(spacing: 8) {
+                // Smart Park Status
+                Button(action: {
+                    let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                    impactFeedback.impactOccurred()
                     showingAutoParkingSettings = true
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(smartParkingIsOn ? Color.blue : Color.secondary)
+                            .strikethrough(smartParkingIsOn)
+                        
+                        Text("Smart Park")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                    }
+                    .padding(.horizontal, 12)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 56)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(.regularMaterial)
+                    )
                 }
-            )
+                .buttonStyle(PlainButtonStyle())
+                
+                // Reminders Status
+                Button(action: {
+                    let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                    impactFeedback.impactOccurred()
+                    showingRemindersSheet = true
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: remindersAreEffective ? "bell.fill" : "bell.slash")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(remindersAreEffective ? Color.blue : Color.secondary)
+                        
+                        Text("Reminders")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                    }
+                    .padding(.horizontal, 12)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 56)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(.regularMaterial)
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            
+            // Action button (only show when vehicle exists)
+            if let currentVehicle = viewModel.vehicleManager.currentVehicle {
+                Button(action: {
+                    let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                    impactFeedback.impactOccurred()
+                    viewModel.isSettingLocationForNewVehicle = false
+                    viewModel.startSettingLocationForVehicle(currentVehicle)
+                }) {
+                    Text(currentVehicle.parkingLocation != nil ? "Move" : "Set Location")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+                    .padding(.horizontal, 16)
+                    .frame(height: 56)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.blue)
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
         }
+        .padding(.horizontal, 16)
+        .background(.regularMaterial)
+        .ignoresSafeArea(edges: .bottom)
     }
+    
     
     // MARK: - Setup
     

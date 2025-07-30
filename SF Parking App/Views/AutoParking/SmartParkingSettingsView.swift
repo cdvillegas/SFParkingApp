@@ -42,7 +42,8 @@ struct SmartParkingSettingsView: View {
                 // How it works section - only when motion permission is enabled
                 VStack(alignment: .leading, spacing: 12) {
                     Text("HOW IT WORKS")
-                        .font(.system(size: 11, weight: .medium))
+                        .font(.footnote)
+                        .fontWeight(.medium)
                         .foregroundColor(.secondary)
                         .padding(.horizontal, 20)
                     
