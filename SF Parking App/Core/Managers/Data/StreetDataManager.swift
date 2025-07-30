@@ -157,14 +157,115 @@ class StreetDataManager: ObservableObject {
     }
     
     func processNextSchedule(for schedule: SweepSchedule) {
-        // Move heavy calculations off main thread
+        // Check if we should use the new aggregated approach
+        if StreetDataService.shared.useNewDataset {
+            processNextScheduleAggregated(for: schedule)
+        } else {
+            // Move heavy calculations off main thread
+            Task {
+                await processNextScheduleAsync(for: schedule)
+            }
+        }
+    }
+    
+    private func processNextScheduleAggregated(for schedule: SweepSchedule) {
         Task {
-            await processNextScheduleAsync(for: schedule)
+            // Get the aggregated schedule from the service
+            StreetDataService.shared.getClosestAggregatedSchedule(for: CLLocationCoordinate2D(
+                latitude: schedule.line?.coordinates.first?[1] ?? 0,
+                longitude: schedule.line?.coordinates.first?[0] ?? 0
+            )) { [weak self] result in
+                switch result {
+                case .success(let aggregatedSchedule):
+                    if let aggregated = aggregatedSchedule {
+                        // Get all schedule days from the aggregated data
+                        let allDays = StreetDataService.shared.getAllScheduleDays(from: aggregated)
+                        
+                        Task {
+                            await self?.processMultipleDaysAsync(schedules: allDays, streetName: schedule.streetName)
+                        }
+                    }
+                case .failure:
+                    // Fall back to single schedule processing
+                    Task {
+                        await self?.processNextScheduleAsync(for: schedule)
+                    }
+                }
+            }
+        }
+    }
+    
+    private func processMultipleDaysAsync(schedules: [SweepSchedule], streetName: String) async {
+        let now = Date()
+        var allUpcomingSchedules: [UpcomingSchedule] = []
+        
+        // Process each day's schedule
+        for schedule in schedules {
+            guard let weekday = schedule.weekday,
+                  let fromHour = schedule.fromhour,
+                  let toHour = schedule.tohour else { continue }
+            
+            let weekdayNum = dayStringToWeekday(weekday)
+            guard weekdayNum > 0 else { continue }
+            
+            guard let startHour = Int(fromHour),
+                  let endHour = Int(toHour) else { continue }
+            
+            // Find next occurrences for this specific day
+            let nextOccurrences = findNextOccurrences(weekday: weekdayNum, schedule: schedule, from: now)
+            
+            for nextDate in nextOccurrences {
+                if let nextDateTime = createDateTime(date: nextDate, hour: startHour),
+                   let endDateTime = createDateTime(date: nextDate, hour: endHour),
+                   nextDateTime > now {
+                    
+                    let upcomingSchedule = UpcomingSchedule(
+                        streetName: streetName,
+                        date: nextDateTime,
+                        endDate: endDateTime,
+                        dayOfWeek: weekday,
+                        startTime: schedule.startTime,
+                        endTime: schedule.endTime
+                    )
+                    
+                    allUpcomingSchedules.append(upcomingSchedule)
+                }
+            }
+        }
+        
+        // Find the next upcoming schedule across all days
+        let result = allUpcomingSchedules.sorted { $0.date < $1.date }.first
+        
+        // Update UI on main thread
+        await MainActor.run {
+            nextUpcomingSchedule = result
+        }
+        
+        if let next = result {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "MMM d, yyyy h:mm a"
+            print("✅ Next occurrence (aggregated): \(formatter.string(from: next.date))")
+        } else {
+            print("❌ No upcoming schedules found in aggregated data")
         }
     }
     
     /// Calculate next schedule immediately (synchronous) for instant UI updates
     func calculateNextScheduleImmediate(for schedule: SweepSchedule) -> UpcomingSchedule? {
+        // For new dataset, we already have the summary which might be sufficient for immediate display
+        if StreetDataService.shared.useNewDataset && schedule.fullname != nil {
+            // Return a placeholder with the summary for immediate display
+            // The async method will calculate the exact next time
+            return UpcomingSchedule(
+                streetName: schedule.streetName,
+                date: Date(), // Placeholder, will be updated by async method
+                endDate: Date(),
+                dayOfWeek: "", 
+                startTime: "",
+                endTime: schedule.fullname ?? "Multiple schedules" // Use the summary
+            )
+        }
+        
         let now = Date()
         
         guard let weekday = schedule.weekday,

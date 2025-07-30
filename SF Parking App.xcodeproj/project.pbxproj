@@ -39,6 +39,7 @@
 		514A36BF2E3494F0001A7EF4 /* Exceptions for "SF Parking App" folder in "SF Parking AppTests" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				app_ready_aggregated_20250729_221947.csv,
 				"GoogleService-Info.plist",
 			);
 			target = 412820692E08BE0E0082050C /* SF Parking AppTests */;
@@ -46,6 +47,7 @@
 		514A36C02E3494F0001A7EF4 /* Exceptions for "SF Parking App" folder in "SF Parking AppUITests" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				app_ready_aggregated_20250729_221947.csv,
 				"GoogleService-Info.plist",
 			);
 			target = 412820732E08BE0E0082050C /* SF Parking AppUITests */;
@@ -439,7 +441,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = KKTVRZQNYU;
+				DEVELOPMENT_TEAM = T97B2349CB;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "SF-Parking-App-Info.plist";
@@ -473,7 +475,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = KKTVRZQNYU;
+				DEVELOPMENT_TEAM = T97B2349CB;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "SF-Parking-App-Info.plist";
