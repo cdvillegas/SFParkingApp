@@ -195,43 +195,25 @@ class StreetDataManager: ObservableObject {
         let now = Date()
         var allUpcomingSchedules: [UpcomingSchedule] = []
         
-        print("🔍 Processing \(schedules.count) schedule days for \(streetName)")
-        
         // Process each day's schedule
-        for (index, schedule) in schedules.enumerated() {
+        for schedule in schedules {
             guard let weekday = schedule.weekday,
                   let fromHour = schedule.fromhour,
-                  let toHour = schedule.tohour else { 
-                print("🔍 Schedule \(index): Missing data - weekday: \(schedule.weekday ?? "nil"), fromHour: \(schedule.fromhour ?? "nil"), toHour: \(schedule.tohour ?? "nil")")
-                continue 
-            }
+                  let toHour = schedule.tohour else { continue }
             
             let weekdayNum = dayStringToWeekday(weekday)
-            guard weekdayNum > 0 else { 
-                print("🔍 Schedule \(index): Invalid weekday: \(weekday)")
-                continue 
-            }
+            guard weekdayNum > 0 else { continue }
             
             guard let startHour = Int(fromHour),
-                  let endHour = Int(toHour) else { 
-                print("🔍 Schedule \(index): Invalid hours: \(fromHour) - \(toHour)")
-                continue 
-            }
-            
-            print("🔍 Schedule \(index): \(weekday) \(startHour)-\(endHour) (weekday \(weekdayNum))")
+                  let endHour = Int(toHour) else { continue }
             
             // Find next occurrences for this specific day
             let nextOccurrences = findNextOccurrences(weekday: weekdayNum, schedule: schedule, from: now)
-            print("🔍 Found \(nextOccurrences.count) occurrences for \(weekday)")
             
             for nextDate in nextOccurrences {
                 if let nextDateTime = createDateTime(date: nextDate, hour: startHour),
                    let endDateTime = createDateTime(date: nextDate, hour: endHour),
                    nextDateTime > now {
-                    
-                    let formatter = DateFormatter()
-                    formatter.dateFormat = "EEE MMM d, yyyy h:mm a"
-                    print("🔍 Adding occurrence: \(formatter.string(from: nextDateTime))")
                     
                     let upcomingSchedule = UpcomingSchedule(
                         streetName: streetName,
@@ -243,12 +225,6 @@ class StreetDataManager: ObservableObject {
                     )
                     
                     allUpcomingSchedules.append(upcomingSchedule)
-                } else {
-                    let formatter = DateFormatter()
-                    formatter.dateFormat = "EEE MMM d, yyyy h:mm a"
-                    if let nextDateTime = createDateTime(date: nextDate, hour: startHour) {
-                        print("🔍 Skipping past occurrence: \(formatter.string(from: nextDateTime))")
-                    }
                 }
             }
         }
@@ -272,20 +248,6 @@ class StreetDataManager: ObservableObject {
     
     /// Calculate next schedule immediately (synchronous) for instant UI updates
     func calculateNextScheduleImmediate(for schedule: SweepSchedule) -> UpcomingSchedule? {
-        // For new dataset, we already have the summary which might be sufficient for immediate display
-        if StreetDataService.shared.useNewDataset && schedule.fullname != nil {
-            // Return a placeholder with the summary for immediate display
-            // The async method will calculate the exact next time
-            return UpcomingSchedule(
-                streetName: schedule.streetName,
-                date: Date(), // Placeholder, will be updated by async method
-                endDate: Date(),
-                dayOfWeek: "", 
-                startTime: "",
-                endTime: schedule.fullname ?? "Multiple schedules" // Use the summary
-            )
-        }
-        
         let now = Date()
         
         guard let weekday = schedule.weekday,
@@ -302,7 +264,7 @@ class StreetDataManager: ObservableObject {
             return nil
         }
         
-        // Quick calculation for immediate UI update - just get next occurrence
+        // Calculate immediately - this should be fast
         let nextOccurrences = findNextOccurrences(weekday: weekdayNum, schedule: schedule, from: now)
         
         for nextDate in nextOccurrences {
