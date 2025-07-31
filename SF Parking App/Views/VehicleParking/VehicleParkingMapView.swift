@@ -38,7 +38,7 @@ struct VehicleParkingMapView: View {
         .overlay(enableLocationButton, alignment: .bottom)
         .overlay(alignment: .topTrailing) {
             MapCompass(scope: mapScope)
-                .padding(.top, 140) // Lower position under the buttons
+                .padding(.top, 60) // Higher position in top-right corner
                 .padding(.trailing, 12)
         }
         .mapStyle(.standard)
