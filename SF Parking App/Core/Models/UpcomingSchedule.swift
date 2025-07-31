@@ -72,6 +72,7 @@ struct UpcomingSchedule {
         let period = hour < 12 ? "AM" : "PM"
         let displayHour = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour)
         
+        
         if minute == 0 {
             return "\(displayHour) \(period)"
         } else {

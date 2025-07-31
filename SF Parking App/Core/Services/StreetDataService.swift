@@ -58,6 +58,8 @@ struct SweepSchedule: Decodable {
     let week5: String?
     let holidays: String?
     let line: LineGeometry?
+    let avgSweeperTime: Double?
+    let medianSweeperTime: Double?
     
     // Computed properties for easier access
     var streetName: String {
@@ -944,7 +946,9 @@ final class StreetDataService {
                     week4: String(aggregated.week4),
                     week5: String(aggregated.week5),
                     holidays: "0",
-                    line: lineGeometry
+                    line: lineGeometry,
+                    avgSweeperTime: aggregated.avgCitationTime,
+                    medianSweeperTime: aggregated.medianCitationTime
                 )
             }
         }
@@ -970,7 +974,7 @@ final class StreetDataService {
             coordinates: aggregated.lineCoordinates
         )
         
-        for (abbrev, fullName, hours) in days {
+        for (abbrev, _, hours) in days {
             if !hours.isEmpty {
                 let fromHour = hours.min() ?? 0
                 let toHour = (hours.max() ?? 0) + 1
@@ -990,7 +994,9 @@ final class StreetDataService {
                     week4: String(aggregated.week4),
                     week5: String(aggregated.week5),
                     holidays: "0",
-                    line: lineGeometry
+                    line: lineGeometry,
+                    avgSweeperTime: aggregated.avgCitationTime,
+                    medianSweeperTime: aggregated.medianCitationTime
                 )
                 schedules.append(schedule)
             }
@@ -1216,7 +1222,9 @@ final class StreetDataService {
             week4: String(local.week4),
             week5: String(local.week5),
             holidays: String(local.holidays),
-            line: lineGeometry
+            line: lineGeometry,
+            avgSweeperTime: nil,
+            medianSweeperTime: nil
         )
     }
     
@@ -1254,7 +1262,9 @@ final class StreetDataService {
             week4: persisted.week4,
             week5: persisted.week5,
             holidays: nil,
-            line: nil
+            line: nil,
+            avgSweeperTime: nil,
+            medianSweeperTime: nil
         )
     }
     

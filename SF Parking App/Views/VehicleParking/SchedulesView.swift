@@ -254,10 +254,7 @@ struct SchedulesView: View {
     private func formatScheduleDayForSign(_ dayOfWeek: String) -> String {
         // If we have the original schedule data, use it to build the proper pattern
         if let originalSchedule = originalSchedule {
-            print("🗓️ Using original schedule: \(originalSchedule.corridor ?? "Unknown")")
             return buildWeekPatternFromSchedule(originalSchedule, dayOfWeek: dayOfWeek)
-        } else {
-            print("🗓️ No original schedule available, using fallback")
         }
         
         // First try the existing complex parser
@@ -294,8 +291,6 @@ struct SchedulesView: View {
         // Get the full day name
         let fullDayName = getFullDayName(dayOfWeek)
         
-        // Debug logging
-        print("🗓️ Schedule debug: week1=\(schedule.week1 ?? "nil"), week2=\(schedule.week2 ?? "nil"), week3=\(schedule.week3 ?? "nil"), week4=\(schedule.week4 ?? "nil"), week5=\(schedule.week5 ?? "nil")")
         
         // Build array of active weeks
         var activeWeeks: [String] = []
@@ -306,8 +301,6 @@ struct SchedulesView: View {
         if schedule.week4 == "Y" || schedule.week4 == "1" { activeWeeks.append("4TH") }
         if schedule.week5 == "Y" || schedule.week5 == "1" { activeWeeks.append("5TH") }
         
-        // Debug: show what weeks are active
-        print("🗓️ Active weeks: \(activeWeeks)")
         
         // If no weeks specified or 4+ weeks active, show just the day
         if activeWeeks.isEmpty || activeWeeks.count >= 4 {
@@ -317,7 +310,6 @@ struct SchedulesView: View {
         // Build the pattern like "1ST and 3RD WEDNESDAY"
         let weekPattern = activeWeeks.joined(separator: " and ")
         let result = "\(weekPattern) \(fullDayName)"
-        print("🗓️ Final result: \(result)")
         return result
     }
     
@@ -731,7 +723,9 @@ extension Color {
             week4: "Y",
             week5: "N",
             holidays: "N",
-            line: nil
+            line: nil,
+            avgSweeperTime: 9.75,
+            medianSweeperTime: 9.5
         )
     )
 }

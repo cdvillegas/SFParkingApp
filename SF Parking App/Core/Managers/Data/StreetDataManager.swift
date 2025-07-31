@@ -157,47 +157,12 @@ class StreetDataManager: ObservableObject {
     }
     
     func processNextSchedule(for schedule: SweepSchedule) {
-        // Always use aggregated approach when available to get sweeper time data
-        if StreetDataService.shared.useNewDataset {
-            processNextScheduleAggregated(for: schedule)
-        } else {
-            Task {
-                await processNextScheduleAsync(for: schedule)
-            }
-        }
-    }
-    
-    private func processNextScheduleAggregated(for schedule: SweepSchedule) {
-        // Instead of finding the closest aggregated schedule (which might be different),
-        // enhance the user's selected schedule with sweeper time data
+        // Direct processing - sweeper time data is now included in the schedule
         Task {
-            await self.processSelectedScheduleWithSweeperData(for: schedule)
+            await processNextScheduleAsync(for: schedule, avgSweeperTime: schedule.avgSweeperTime, medianSweeperTime: schedule.medianSweeperTime)
         }
     }
     
-    private func processSelectedScheduleWithSweeperData(for schedule: SweepSchedule) async {
-        // Try to get sweeper time data for this location
-        let coordinate = CLLocationCoordinate2D(
-            latitude: schedule.line?.coordinates.first?[1] ?? 0,
-            longitude: schedule.line?.coordinates.first?[0] ?? 0
-        )
-        
-        // Get aggregated schedule to extract sweeper time data
-        StreetDataService.shared.getClosestAggregatedSchedule(for: coordinate) { [weak self] result in
-            var avgSweeperTime: Double? = nil
-            var medianSweeperTime: Double? = nil
-            
-            if case .success(let aggregated) = result, let agg = aggregated {
-                avgSweeperTime = agg.avgCitationTime
-                medianSweeperTime = agg.medianCitationTime
-            }
-            
-            // Process the user's selected schedule with the sweeper data
-            Task {
-                await self?.processNextScheduleAsync(for: schedule, avgSweeperTime: avgSweeperTime, medianSweeperTime: medianSweeperTime)
-            }
-        }
-    }
     
     private func processMultipleDaysAsync(schedules: [SweepSchedule], streetName: String, avgSweeperTime: Double? = nil, medianSweeperTime: Double? = nil) async {
         let now = Date()
