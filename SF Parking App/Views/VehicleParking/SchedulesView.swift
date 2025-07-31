@@ -109,17 +109,6 @@ struct SchedulesView: View {
                                 .foregroundColor(Color(red: 0.8, green: 0.4, blue: 0.2))
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.75)
-                        } else {
-                            // Debug: Show why no estimate is available
-                            if let medianTime = schedule.medianSweeperTime {
-                                Text("Debug: Median time \(medianTime) but failed to format")
-                                    .font(.system(size: 12, weight: .regular))
-                                    .foregroundColor(.red)
-                            } else {
-                                Text("Debug: No median sweeper time data")
-                                    .font(.system(size: 12, weight: .regular))
-                                    .foregroundColor(.orange)
-                            }
                         }
                         
                         // Line 3: Time remaining

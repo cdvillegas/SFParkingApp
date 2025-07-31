@@ -159,10 +159,8 @@ class StreetDataManager: ObservableObject {
     func processNextSchedule(for schedule: SweepSchedule) {
         // Always use aggregated approach when available to get sweeper time data
         if StreetDataService.shared.useNewDataset {
-            print("🚛 processNextSchedule - using aggregated path (with sweeper data)")
             processNextScheduleAggregated(for: schedule)
         } else {
-            print("🚛 processNextSchedule - using single schedule path (no sweeper data)")
             Task {
                 await processNextScheduleAsync(for: schedule)
             }
@@ -170,30 +168,33 @@ class StreetDataManager: ObservableObject {
     }
     
     private func processNextScheduleAggregated(for schedule: SweepSchedule) {
-        print("🚛 processNextScheduleAggregated called - will get sweeper data")
+        // Instead of finding the closest aggregated schedule (which might be different),
+        // enhance the user's selected schedule with sweeper time data
         Task {
-            // Get the aggregated schedule from the service
-            StreetDataService.shared.getClosestAggregatedSchedule(for: CLLocationCoordinate2D(
-                latitude: schedule.line?.coordinates.first?[1] ?? 0,
-                longitude: schedule.line?.coordinates.first?[0] ?? 0
-            )) { [weak self] result in
-                switch result {
-                case .success(let aggregatedSchedule):
-                    if let aggregated = aggregatedSchedule {
-                        // Get all schedule days from the aggregated data
-                        let allDays = StreetDataService.shared.getAllScheduleDays(from: aggregated)
-                        
-                        Task {
-                            print("🚛 Sweeper data: avg=\(aggregated.avgCitationTime?.description ?? "nil"), median=\(aggregated.medianCitationTime?.description ?? "nil")")
-                            await self?.processMultipleDaysAsync(schedules: allDays, streetName: schedule.streetName, avgSweeperTime: aggregated.avgCitationTime, medianSweeperTime: aggregated.medianCitationTime)
-                        }
-                    }
-                case .failure:
-                    // Fall back to single schedule processing
-                    Task {
-                        await self?.processNextScheduleAsync(for: schedule)
-                    }
-                }
+            await self.processSelectedScheduleWithSweeperData(for: schedule)
+        }
+    }
+    
+    private func processSelectedScheduleWithSweeperData(for schedule: SweepSchedule) async {
+        // Try to get sweeper time data for this location
+        let coordinate = CLLocationCoordinate2D(
+            latitude: schedule.line?.coordinates.first?[1] ?? 0,
+            longitude: schedule.line?.coordinates.first?[0] ?? 0
+        )
+        
+        // Get aggregated schedule to extract sweeper time data
+        StreetDataService.shared.getClosestAggregatedSchedule(for: coordinate) { [weak self] result in
+            var avgSweeperTime: Double? = nil
+            var medianSweeperTime: Double? = nil
+            
+            if case .success(let aggregated) = result, let agg = aggregated {
+                avgSweeperTime = agg.avgCitationTime
+                medianSweeperTime = agg.medianCitationTime
+            }
+            
+            // Process the user's selected schedule with the sweeper data
+            Task {
+                await self?.processNextScheduleAsync(for: schedule, avgSweeperTime: avgSweeperTime, medianSweeperTime: medianSweeperTime)
             }
         }
     }
@@ -222,7 +223,6 @@ class StreetDataManager: ObservableObject {
                    let endDateTime = createDateTime(date: nextDate, hour: endHour),
                    nextDateTime > now {
                     
-                    print("🚛 Creating UpcomingSchedule with sweeper times: avg=\(avgSweeperTime?.description ?? "nil"), median=\(medianSweeperTime?.description ?? "nil")")
                     let upcomingSchedule = UpcomingSchedule(
                         streetName: streetName,
                         date: nextDateTime,
@@ -298,7 +298,7 @@ class StreetDataManager: ObservableObject {
         return nil
     }
     
-    private func processNextScheduleAsync(for schedule: SweepSchedule) async {
+    private func processNextScheduleAsync(for schedule: SweepSchedule, avgSweeperTime: Double? = nil, medianSweeperTime: Double? = nil) async {
         let now = Date()
         
         guard let weekday = schedule.weekday,
@@ -339,8 +339,8 @@ class StreetDataManager: ObservableObject {
                     dayOfWeek: weekday,
                     startTime: schedule.startTime,
                     endTime: schedule.endTime,
-                    avgSweeperTime: nil,
-                    medianSweeperTime: nil
+                    avgSweeperTime: avgSweeperTime,
+                    medianSweeperTime: medianSweeperTime
                 )
                 
                 upcomingSchedules.append(upcomingSchedule)
