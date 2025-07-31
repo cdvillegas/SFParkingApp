@@ -490,7 +490,9 @@ struct CustomReminderEditorView: View {
         endDate: Calendar.current.date(byAdding: .day, value: 1, to: Date())?.addingTimeInterval(7200) ?? Date(),
         dayOfWeek: "Tomorrow",
         startTime: "8:00 AM",
-        endTime: "10:00 AM"
+        endTime: "10:00 AM",
+        avgSweeperTime: nil,
+        medianSweeperTime: nil
     )
     
     return CustomReminderEditorView(
@@ -508,7 +510,9 @@ struct CustomReminderEditorView: View {
         endDate: Calendar.current.date(byAdding: .day, value: 1, to: Date())?.addingTimeInterval(7200) ?? Date(),
         dayOfWeek: "Tomorrow",
         startTime: "8:00 AM",
-        endTime: "10:00 AM"
+        endTime: "10:00 AM",
+        avgSweeperTime: nil,
+        medianSweeperTime: nil
     )
     
     return CustomReminderEditorView(
@@ -539,7 +543,9 @@ struct CustomReminderEditorView: View {
         endDate: Calendar.current.date(byAdding: .day, value: 1, to: Date())?.addingTimeInterval(7200) ?? Date(),
         dayOfWeek: "Tomorrow",
         startTime: "8:00 AM",
-        endTime: "10:00 AM"
+        endTime: "10:00 AM",
+        avgSweeperTime: nil,
+        medianSweeperTime: nil
     )
     
     return CustomReminderEditorView(

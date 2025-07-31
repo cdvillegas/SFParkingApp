@@ -209,7 +209,9 @@ struct RemindersSheet: View {
                     endDate: Date().addingTimeInterval(7 * 24 * 3600 + 7200),
                     dayOfWeek: "Next Week",
                     startTime: "8:00 AM",
-                    endTime: "10:00 AM"
+                    endTime: "10:00 AM",
+                    avgSweeperTime: nil,
+                    medianSweeperTime: nil
                 ),
                 onDismiss: {
                     showingCustomReminderEditor = false
@@ -859,7 +861,9 @@ private struct RemindersSheetContent: View {
                     endDate: Date().addingTimeInterval(7 * 24 * 3600 + 7200),
                     dayOfWeek: "Next Week",
                     startTime: "8:00 AM",
-                    endTime: "10:00 AM"
+                    endTime: "10:00 AM",
+                    avgSweeperTime: nil,
+                    medianSweeperTime: nil
                 ),
                 onDismiss: {
                     showingCustomReminderEditor = false
@@ -877,7 +881,9 @@ private struct RemindersSheetContent: View {
         endDate: Date().addingTimeInterval(7 * 24 * 3600 + 7200), // 2 hours later
         dayOfWeek: "Next Week",
         startTime: "8:00 AM",
-        endTime: "10:00 AM"
+        endTime: "10:00 AM",
+        avgSweeperTime: nil,
+        medianSweeperTime: nil
     )
     
     return RemindersSheet(

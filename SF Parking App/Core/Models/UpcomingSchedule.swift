@@ -14,6 +14,8 @@ struct UpcomingSchedule {
     let dayOfWeek: String
     let startTime: String
     let endTime: String
+    let avgSweeperTime: Double?  // Average citation time in hours (e.g. 9.5 for 9:30 AM)
+    let medianSweeperTime: Double?  // Median citation time in hours
     
     var relativeTimeString: String {
         let timeInterval = date.timeIntervalSinceNow
@@ -56,5 +58,24 @@ struct UpcomingSchedule {
     
     var isUrgent: Bool {
         return date.timeIntervalSinceNow < 24 * 60 * 60
+    }
+    
+    var estimatedSweeperTime: String? {
+        guard let medianTime = medianSweeperTime else { return nil }
+        
+        let hour = Int(medianTime)
+        let exactMinute = Int((medianTime - Double(hour)) * 60)
+        
+        // Round down to nearest 5-minute interval
+        let minute = (exactMinute / 5) * 5
+        
+        let period = hour < 12 ? "AM" : "PM"
+        let displayHour = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour)
+        
+        if minute == 0 {
+            return "\(displayHour) \(period)"
+        } else {
+            return "\(displayHour):\(String(format: "%02d", minute)) \(period)"
+        }
     }
 }

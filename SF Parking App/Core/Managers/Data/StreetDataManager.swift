@@ -157,14 +157,20 @@ class StreetDataManager: ObservableObject {
     }
     
     func processNextSchedule(for schedule: SweepSchedule) {
-        // When we have a specific schedule (user selected), use it directly
-        // Only use aggregated approach for initial auto-detection
-        Task {
-            await processNextScheduleAsync(for: schedule)
+        // Always use aggregated approach when available to get sweeper time data
+        if StreetDataService.shared.useNewDataset {
+            print("🚛 processNextSchedule - using aggregated path (with sweeper data)")
+            processNextScheduleAggregated(for: schedule)
+        } else {
+            print("🚛 processNextSchedule - using single schedule path (no sweeper data)")
+            Task {
+                await processNextScheduleAsync(for: schedule)
+            }
         }
     }
     
     private func processNextScheduleAggregated(for schedule: SweepSchedule) {
+        print("🚛 processNextScheduleAggregated called - will get sweeper data")
         Task {
             // Get the aggregated schedule from the service
             StreetDataService.shared.getClosestAggregatedSchedule(for: CLLocationCoordinate2D(
@@ -178,7 +184,8 @@ class StreetDataManager: ObservableObject {
                         let allDays = StreetDataService.shared.getAllScheduleDays(from: aggregated)
                         
                         Task {
-                            await self?.processMultipleDaysAsync(schedules: allDays, streetName: schedule.streetName)
+                            print("🚛 Sweeper data: avg=\(aggregated.avgCitationTime?.description ?? "nil"), median=\(aggregated.medianCitationTime?.description ?? "nil")")
+                            await self?.processMultipleDaysAsync(schedules: allDays, streetName: schedule.streetName, avgSweeperTime: aggregated.avgCitationTime, medianSweeperTime: aggregated.medianCitationTime)
                         }
                     }
                 case .failure:
@@ -191,7 +198,7 @@ class StreetDataManager: ObservableObject {
         }
     }
     
-    private func processMultipleDaysAsync(schedules: [SweepSchedule], streetName: String) async {
+    private func processMultipleDaysAsync(schedules: [SweepSchedule], streetName: String, avgSweeperTime: Double? = nil, medianSweeperTime: Double? = nil) async {
         let now = Date()
         var allUpcomingSchedules: [UpcomingSchedule] = []
         
@@ -215,13 +222,16 @@ class StreetDataManager: ObservableObject {
                    let endDateTime = createDateTime(date: nextDate, hour: endHour),
                    nextDateTime > now {
                     
+                    print("🚛 Creating UpcomingSchedule with sweeper times: avg=\(avgSweeperTime?.description ?? "nil"), median=\(medianSweeperTime?.description ?? "nil")")
                     let upcomingSchedule = UpcomingSchedule(
                         streetName: streetName,
                         date: nextDateTime,
                         endDate: endDateTime,
                         dayOfWeek: weekday,
                         startTime: schedule.startTime,
-                        endTime: schedule.endTime
+                        endTime: schedule.endTime,
+                        avgSweeperTime: avgSweeperTime,
+                        medianSweeperTime: medianSweeperTime
                     )
                     
                     allUpcomingSchedules.append(upcomingSchedule)
@@ -278,7 +288,9 @@ class StreetDataManager: ObservableObject {
                     endDate: endDateTime,
                     dayOfWeek: weekday,
                     startTime: schedule.startTime,
-                    endTime: schedule.endTime
+                    endTime: schedule.endTime,
+                    avgSweeperTime: nil,
+                    medianSweeperTime: nil
                 )
             }
         }
@@ -326,7 +338,9 @@ class StreetDataManager: ObservableObject {
                     endDate: endDateTime,
                     dayOfWeek: weekday,
                     startTime: schedule.startTime,
-                    endTime: schedule.endTime
+                    endTime: schedule.endTime,
+                    avgSweeperTime: nil,
+                    medianSweeperTime: nil
                 )
                 
                 upcomingSchedules.append(upcomingSchedule)
