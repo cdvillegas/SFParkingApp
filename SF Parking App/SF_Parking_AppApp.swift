@@ -27,7 +27,8 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     
     // Initialize Smart Park 2.0 Manager for App Intents
     _ = ParkingLocationManager.shared
-    print("🚗 [Smart Park 2.0] ParkingLocationManager initialized")
+    _ = SmartParkManager.shared
+    print("🚗 [Smart Park 2.0] Managers initialized")
 
     return true
   }

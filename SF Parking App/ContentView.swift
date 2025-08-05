@@ -10,6 +10,7 @@ import Combine
 
 struct ContentView: View {
     @EnvironmentObject var parkingDetectionHandler: ParkingDetectionHandler
+    @StateObject private var smartParkManager = SmartParkManager.shared
 
     var body: some View {
         let shouldShowParking = parkingDetectionHandler.shouldShowParkingConfirmation
@@ -42,6 +43,9 @@ struct ContentView: View {
             if newValue {
                 print("🎯 ContentView - Auto parking data available: location=\(parkingDetectionHandler.pendingParkingLocation != nil), address=\(parkingDetectionHandler.pendingParkingAddress ?? "nil")")
             }
+        }
+        .sheet(isPresented: $smartParkManager.showSetup) {
+            SmartParkSetupView()
         }
     }
 }

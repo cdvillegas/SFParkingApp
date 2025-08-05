@@ -13,28 +13,28 @@ struct SmartParkAppShortcutsProvider: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         print("🚗 [Smart Park 2.0] App Shortcuts Provider called - returning shortcuts")
         return [
-        // Test intent first to verify App Intents are working
+        // Main Smart Park 2.0 Intent - the one users will use in automations
+        AppShortcut(
+            intent: SmartParkIntent(),
+            phrases: [], // Empty phrases for Personal Team
+            shortTitle: "Smart Park 2.0",
+            systemImageName: "car.fill"
+        ),
+        
+        // Setup intent for initial configuration
+        AppShortcut(
+            intent: SetupSmartParkIntent(),
+            phrases: [], // Empty phrases for Personal Team
+            shortTitle: "Setup Smart Park",
+            systemImageName: "gear"
+        ),
+        
+        // Keep test intent for debugging
         AppShortcut(
             intent: TestSmartParkIntent(),
             phrases: [],
             shortTitle: "Test Smart Park",
             systemImageName: "testtube.2"
-        ),
-        
-        // Note: Siri voice phrases won't work with Personal Team
-        // But shortcuts will still appear in Shortcuts app for manual use
-        AppShortcut(
-            intent: SaveParkingLocationIntent(),
-            phrases: [], // Empty phrases for Personal Team
-            shortTitle: "Save Parking",
-            systemImageName: "car.fill"
-        ),
-        
-        AppShortcut(
-            intent: CheckCarConnectionIntent(),
-            phrases: [], // Empty phrases for Personal Team  
-            shortTitle: "Check Car Connection",
-            systemImageName: "car.side.air.circulate.fill"
         )
         ]
     }

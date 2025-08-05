@@ -224,7 +224,7 @@ struct VehicleParkingView: View {
             }
         }
         .sheet(isPresented: $showingAutoParkingSettings) {
-            SmartParkingSettingsView()
+            SmartParkHubView()
         }
         .sheet(isPresented: $showingParkingDetailsSheet) {
             if let vehicle = viewModel.vehicleManager.currentVehicle,
