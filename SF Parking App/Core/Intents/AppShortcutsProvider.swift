@@ -19,22 +19,6 @@ struct SmartParkAppShortcutsProvider: AppShortcutsProvider {
             phrases: [], // Empty phrases for Personal Team
             shortTitle: "Smart Park 2.0",
             systemImageName: "car.fill"
-        ),
-        
-        // Setup intent for initial configuration
-        AppShortcut(
-            intent: SetupSmartParkIntent(),
-            phrases: [], // Empty phrases for Personal Team
-            shortTitle: "Setup Smart Park",
-            systemImageName: "gear"
-        ),
-        
-        // Keep test intent for debugging
-        AppShortcut(
-            intent: TestSmartParkIntent(),
-            phrases: [],
-            shortTitle: "Test Smart Park",
-            systemImageName: "testtube.2"
         )
         ]
     }

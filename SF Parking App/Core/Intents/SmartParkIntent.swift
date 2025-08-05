@@ -44,6 +44,12 @@ enum SmartParkTriggerType: String, AppEnum, CaseIterable, Codable {
     ]
 }
 
+// MARK: - Legacy Parking Trigger Type (for compatibility with ParkingLocationManager)
+enum ParkingTriggerType: String, CaseIterable, Codable {
+    case carPlay = "CarPlay"
+    case bluetooth = "Bluetooth"
+}
+
 // MARK: - Main Smart Park 2.0 Intent
 struct SmartParkIntent: AppIntent {
     static var title: LocalizedStringResource = "Smart Park 2.0"
@@ -104,22 +110,6 @@ struct SmartParkIntent: AppIntent {
     }
 }
 
-// MARK: - Setup Smart Park Intent (for initial configuration)
-struct SetupSmartParkIntent: AppIntent {
-    static var title: LocalizedStringResource = "Setup Smart Park 2.0"
-    static var description = IntentDescription("Initial setup for Smart Park 2.0 - run this once to configure")
-    
-    static var openAppWhenRun: Bool = true // Open app for guided setup
-    
-    func perform() async throws -> some IntentResult & ProvidesDialog {
-        print("🚗 [Smart Park 2.0] Setup intent triggered - opening app for guided setup")
-        
-        // Set a flag to show setup screen when app opens
-        UserDefaults.standard.set(true, forKey: "showSmartParkSetup")
-        
-        return .result(dialog: "Opening SF Parking App for Smart Park 2.0 setup...")
-    }
-}
 
 // MARK: - Smart Park Errors
 enum SmartParkError: Swift.Error, LocalizedError {
@@ -135,6 +125,82 @@ enum SmartParkError: Swift.Error, LocalizedError {
             return "Smart Park 2.0 is not configured. Please run the setup first."
         case .featureDisabled:
             return "Smart Park 2.0 is disabled. Enable it in the app settings."
+        }
+    }
+}
+
+// MARK: - Legacy Intent Errors (for compatibility with ParkingLocationManager)
+enum IntentError: Swift.Error, LocalizedError {
+    case locationUnavailable
+    case parkingNotFound
+    case saveFailed
+    case invalidCoordinates
+    
+    var errorDescription: String? {
+        switch self {
+        case .locationUnavailable:
+            return "Unable to determine current location. Please ensure location services are enabled."
+        case .parkingNotFound:
+            return "Could not find the parking record to update."
+        case .saveFailed:
+            return "Failed to save parking location."
+        case .invalidCoordinates:
+            return "Invalid location coordinates provided."
+        }
+    }
+}
+
+// MARK: - Car Connection Detector
+struct CarConnectionDetector {
+    func isCarConnected(type: ParkingTriggerType, bluetoothDeviceName: String?) async -> Bool {
+        return await withCheckedContinuation { continuation in
+            DispatchQueue.main.async {
+                let audioSession = AVAudioSession.sharedInstance()
+                let currentRoute = audioSession.currentRoute
+                
+                print("🚗 [Smart Park 2.0] CarConnectionDetector checking audio routes...")
+                print("🚗 [Smart Park 2.0] Current route outputs: \(currentRoute.outputs.map { "\($0.portType.rawValue): \($0.portName)" })")
+                
+                switch type {
+                case .carPlay:
+                    // Check if any output is CarPlay
+                    let hasCarPlay = currentRoute.outputs.contains { output in
+                        output.portType == .carAudio
+                    }
+                    print("🚗 [Smart Park 2.0] CarPlay check result: \(hasCarPlay)")
+                    continuation.resume(returning: hasCarPlay)
+                    
+                case .bluetooth:
+                    // Check for specific Bluetooth device if name provided
+                    guard let deviceName = bluetoothDeviceName, !deviceName.isEmpty else {
+                        print("❌ [Smart Park 2.0] No Bluetooth device name provided")
+                        continuation.resume(returning: false)
+                        return
+                    }
+                    
+                    print("🚗 [Smart Park 2.0] Looking for Bluetooth device: \(deviceName)")
+                    
+                    // Check if the specific Bluetooth device is connected
+                    let hasSpecificBluetooth = currentRoute.outputs.contains { output in
+                        let bluetoothTypes: [AVAudioSession.Port] = [
+                            .bluetoothA2DP,
+                            .bluetoothHFP,
+                            .bluetoothLE
+                        ]
+                        let isBluetoothType = bluetoothTypes.contains(output.portType)
+                        let nameMatches = output.portName == deviceName
+                        
+                        if isBluetoothType {
+                            print("🚗 [Smart Park 2.0] Found Bluetooth device: \(output.portName) (looking for: \(deviceName))")
+                        }
+                        
+                        return isBluetoothType && nameMatches
+                    }
+                    
+                    print("🚗 [Smart Park 2.0] Specific Bluetooth device check result: \(hasSpecificBluetooth)")
+                    continuation.resume(returning: hasSpecificBluetooth)
+                }
+            }
         }
     }
 }

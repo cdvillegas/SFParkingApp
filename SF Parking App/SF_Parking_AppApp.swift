@@ -63,7 +63,7 @@ struct SF_Parking_AppApp: App {
             
             // Force evaluation of our App Shortcuts Provider
             let shortcuts = SmartParkAppShortcutsProvider.appShortcuts
-            print("🚗 [Smart Park 2.0] Found \(shortcuts.count) shortcuts")
+            print("🚗 [Smart Park 2.0] Found \(shortcuts.count) shortcut (Smart Park 2.0 only)")
             
             // The system automatically registers AppShortcutsProvider implementations
             print("🚗 [Smart Park 2.0] App Intents registration completed")
