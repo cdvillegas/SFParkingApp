@@ -10,6 +10,9 @@ import CoreLocation
 import Combine
 
 class VehicleManager: ObservableObject {
+    // Singleton for background operations (Smart Park 2.0)
+    static let shared = VehicleManager()
+    
     @Published var vehicles: [Vehicle] = []
     @Published var selectedVehicle: Vehicle?
     

@@ -148,7 +148,38 @@ class NotificationManager: NSObject, ObservableObject {
             options: [.customDismissAction]
         )
         
-        center.setNotificationCategories([streetCleaningCategory, parkingConfirmationCategory, parkingSavedCategory])
+        // Smart Park 2.0 confirmation category
+        let updateLocationAction = UNNotificationAction(
+            identifier: "UPDATE_SMART_PARK_LOCATION",
+            title: "Update Location",
+            options: [.foreground]
+        )
+        
+        let confirmSmartParkAction = UNNotificationAction(
+            identifier: "CONFIRM_SMART_PARK",
+            title: "Confirm",
+            options: []
+        )
+        
+        let dismissSmartParkAction = UNNotificationAction(
+            identifier: "DISMISS_SMART_PARK",
+            title: "Cancel",
+            options: [.destructive]
+        )
+        
+        let smartParkConfirmationCategory = UNNotificationCategory(
+            identifier: "SMART_PARK_CONFIRMATION",
+            actions: [confirmSmartParkAction, updateLocationAction, dismissSmartParkAction],
+            intentIdentifiers: [],
+            options: [.customDismissAction]
+        )
+        
+        center.setNotificationCategories([
+            streetCleaningCategory, 
+            parkingConfirmationCategory, 
+            parkingSavedCategory,
+            smartParkConfirmationCategory
+        ])
     }
     
     // MARK: - Street Cleaning Notifications
@@ -476,6 +507,58 @@ class NotificationManager: NSObject, ObservableObject {
         
         return (hour: 8, minute: 0) // Default to 8 AM
     }
+    
+    // MARK: - Smart Park 2.0 Notifications
+    
+    func sendParkingConfirmation(for location: SmartParkLocation) async {
+        guard notificationPermissionStatus == .authorized else {
+            print("⚠️ Cannot send Smart Park notification - permission not granted")
+            return
+        }
+        
+        let content = UNMutableNotificationContent()
+        content.title = "Parking Location Confirmed"
+        
+        let triggerTypeText = location.triggerType == "carPlay" ? "CarPlay" : "Bluetooth"
+        let deviceText = location.bluetoothDeviceName != nil ? " (\(location.bluetoothDeviceName!))" : ""
+        
+        if let address = location.address {
+            content.body = "Your parking location has been saved at \(address). Detected via \(triggerTypeText)\(deviceText) disconnect."
+        } else {
+            content.body = "Your parking location has been saved. Detected via \(triggerTypeText)\(deviceText) disconnect."
+        }
+        
+        content.categoryIdentifier = "SMART_PARK_CONFIRMATION"
+        content.sound = .default
+        
+        // Add location data to userInfo for handling taps
+        content.userInfo = [
+            "type": "smart_park_confirmation",
+            "parkingId": location.id,
+            "latitude": location.coordinate.latitude,
+            "longitude": location.coordinate.longitude,
+            "address": location.address ?? "",
+            "triggerType": location.triggerType,
+            "bluetoothDeviceName": location.bluetoothDeviceName ?? "",
+            "timestamp": location.timestamp.timeIntervalSince1970
+        ]
+        
+        // Use immediate trigger for confirmation notifications
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 0.1, repeats: false)
+        let request = UNNotificationRequest(
+            identifier: "smart_park_confirmation_\(location.id)",
+            content: content,
+            trigger: trigger
+        )
+        
+        do {
+            try await center.add(request)
+            print("✅ Smart Park confirmation notification sent for \(location.address ?? "location")")
+        } catch {
+            print("❌ Failed to send Smart Park confirmation notification: \(error)")
+        }
+    }
+    
     
     // MARK: - Custom Reminders Management
     
@@ -835,6 +918,24 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
         let userInfo = response.notification.request.content.userInfo
         print("📱 Notification tapped - App state: \(UIApplication.shared.applicationState.rawValue)")
         
+        // Handle Smart Park 2.0 notification actions
+        switch response.actionIdentifier {
+        case "CONFIRM_SMART_PARK":
+            handleSmartParkConfirmAction(userInfo: userInfo)
+            completionHandler()
+            return
+        case "UPDATE_SMART_PARK_LOCATION":
+            handleSmartParkUpdateAction(userInfo: userInfo)
+            completionHandler()
+            return
+        case "DISMISS_SMART_PARK":
+            handleSmartParkDismissAction(userInfo: userInfo)
+            completionHandler()
+            return
+        default:
+            break
+        }
+        
         if let type = userInfo["type"] as? String {
             switch type {
             case "street_cleaning":
@@ -854,6 +955,9 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
             case "parking_location_update":
                 print("📱 Handling parking location update notification tap")
                 handleParkingLocationUpdateTap(userInfo: userInfo)
+            case "smart_park_confirmation", "smart_park_delay":
+                print("📱 Handling Smart Park 2.0 notification tap")
+                handleSmartParkNotificationTap(userInfo: userInfo)
             default:
                 break
             }
@@ -933,6 +1037,75 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
         
         print("📱 Posted notification to open parking confirmation screen")
     }
+    
+    private func handleSmartParkNotificationTap(userInfo: [AnyHashable: Any]) {
+        // Handle tapping the notification body (not action buttons)
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(
+                name: .openParkingConfirmation,
+                object: nil,
+                userInfo: userInfo
+            )
+        }
+        
+        print("📱 Posted notification to open Smart Park confirmation screen")
+    }
+    
+    private func handleSmartParkConfirmAction(userInfo: [AnyHashable: Any]) {
+        guard let parkingId = userInfo["parkingId"] as? String else {
+            print("❌ Invalid Smart Park confirmation data")
+            return
+        }
+        
+        // Confirm the parking location immediately
+        Task { @MainActor in
+            let manager = ParkingLocationManager.shared
+            if let pending = manager.pendingSmartParkLocation,
+               pending.id == parkingId {
+                
+                // Create confirmed location
+                var confirmedLocation = pending
+                confirmedLocation.confirmationStatus = .confirmed
+                
+                // Clear pending and save to vehicle manager
+                manager.pendingSmartParkLocation = nil
+                await manager.saveToVehicleManager(confirmedLocation)
+                
+                print("✅ Smart Park location confirmed via notification action")
+            }
+        }
+    }
+    
+    private func handleSmartParkUpdateAction(userInfo: [AnyHashable: Any]) {
+        // Open the app to update location
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(
+                name: .smartParkLocationUpdate,
+                object: nil,
+                userInfo: userInfo
+            )
+        }
+        
+        print("📱 Posted notification to update Smart Park location")
+    }
+    
+    private func handleSmartParkDismissAction(userInfo: [AnyHashable: Any]) {
+        guard let parkingId = userInfo["parkingId"] as? String else {
+            print("❌ Invalid Smart Park dismiss data")
+            return
+        }
+        
+        // Cancel the pending parking location
+        Task { @MainActor in
+            let manager = ParkingLocationManager.shared
+            if let pending = manager.pendingSmartParkLocation,
+               pending.id == parkingId {
+                
+                manager.pendingSmartParkLocation = nil
+                print("✅ Smart Park location dismissed via notification action")
+            }
+        }
+    }
 }
 
 // MARK: - Data Models
@@ -987,6 +1160,7 @@ extension Notification.Name {
     static let parkingDetected = Notification.Name("parkingDetected")
     static let openParkingConfirmation = Notification.Name("openParkingConfirmation")
     static let smartParkLocationSaved = Notification.Name("smartParkLocationSaved")
+    static let smartParkLocationUpdate = Notification.Name("smartParkLocationUpdate")
 }
 
 // MARK: - Placeholder Models (assuming these exist in your app)

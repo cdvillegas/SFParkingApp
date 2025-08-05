@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5134716F2E41BC3F0033D06C /* AppIntents.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5134716E2E41BC3F0033D06C /* AppIntents.framework */; };
 		51A7FD1B2E34988000D2274B /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 51A7FD1A2E34988000D2274B /* FirebaseAnalytics */; };
 		51A7FD1D2E34989400D2274B /* FirebaseAnalyticsCore in Frameworks */ = {isa = PBXBuildFile; productRef = 51A7FD1C2E34989400D2274B /* FirebaseAnalyticsCore */; };
 		51A7FD2B2E3498A200D2274B /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 51A7FD2A2E3498A200D2274B /* FirebaseCore */; };
@@ -33,6 +34,7 @@
 		4128205B2E08BE0D0082050C /* SF Parking App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "SF Parking App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4128206A2E08BE0E0082050C /* SF Parking AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "SF Parking AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		412820742E08BE0E0082050C /* SF Parking AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "SF Parking AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		5134716E2E41BC3F0033D06C /* AppIntents.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppIntents.framework; path = System/Library/Frameworks/AppIntents.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -81,6 +83,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5134716F2E41BC3F0033D06C /* AppIntents.framework in Frameworks */,
 				51A7FD1B2E34988000D2274B /* FirebaseAnalytics in Frameworks */,
 				51A7FD1D2E34989400D2274B /* FirebaseAnalyticsCore in Frameworks */,
 				51A7FD2B2E3498A200D2274B /* FirebaseCore in Frameworks */,
@@ -128,6 +131,7 @@
 		51A7FD192E34988000D2274B /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				5134716E2E41BC3F0033D06C /* AppIntents.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -439,6 +443,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "SF Parking App/SF Parking App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = T97B2349CB;
@@ -474,6 +479,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "SF Parking App/SF Parking App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = T97B2349CB;

@@ -10,6 +10,7 @@ import CoreLocation
 import FirebaseCore
 import FirebaseAnalytics
 import CarPlay
+import AppIntents
 
 class AppDelegate: NSObject, UIApplicationDelegate {
   func application(_ application: UIApplication,
@@ -23,6 +24,10 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         // Initialize ParkingDetector to handle the location event
         _ = ParkingDetector.shared
     }
+    
+    // Initialize Smart Park 2.0 Manager for App Intents
+    _ = ParkingLocationManager.shared
+    print("🚗 [Smart Park 2.0] ParkingLocationManager initialized")
 
     return true
   }
@@ -47,6 +52,21 @@ struct SF_Parking_AppApp: App {
     init() {
         // Initialize comprehensive parking detection system
         _ = ParkingDetector.shared
+        
+        // Register App Shortcuts for Siri and Shortcuts app
+        SmartParkAppShortcutsProvider.updateAppShortcutParameters()
+        
+        // Force App Intents registration
+        Task {
+            print("🚗 [Smart Park 2.0] Requesting App Intents registration...")
+            
+            // Force evaluation of our App Shortcuts Provider
+            let shortcuts = SmartParkAppShortcutsProvider.appShortcuts
+            print("🚗 [Smart Park 2.0] Found \(shortcuts.count) shortcuts")
+            
+            // The system automatically registers AppShortcutsProvider implementations
+            print("🚗 [Smart Park 2.0] App Intents registration completed")
+        }
     }
     var body: some Scene {
         WindowGroup {
