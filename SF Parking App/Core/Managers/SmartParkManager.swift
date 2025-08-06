@@ -17,6 +17,9 @@ class SmartParkManager: ObservableObject {
     @Published var isSetupComplete: Bool = false
     @Published var setupStep: SetupStep = .welcome
     
+    // Track which connection types have been configured
+    @Published var configuredConnections: Set<SmartParkTriggerType> = []
+    
     private init() {
         loadConfiguration()
         
@@ -33,9 +36,10 @@ class SmartParkManager: ObservableObject {
         let config = SmartParkConfig.current
         isEnabled = config.isEnabled
         triggerType = config.triggerType
-        isSetupComplete = config.isEnabled // If enabled, setup was completed
+        configuredConnections = config.configuredConnections ?? []
+        isSetupComplete = config.isEnabled || !configuredConnections.isEmpty // If enabled or has configured connections
         
-        print("🚗 [Smart Park 2.0] Loaded config - Enabled: \(isEnabled), Type: \(triggerType.rawValue)")
+        print("🚗 [Smart Park 2.0] Loaded config - Enabled: \(isEnabled), Type: \(triggerType.rawValue), Configured: \(configuredConnections)")
     }
     
     func saveConfiguration() {
@@ -43,10 +47,11 @@ class SmartParkManager: ObservableObject {
             isEnabled: isEnabled,
             triggerType: triggerType,
             bluetoothDeviceName: nil, // No device name needed
-            delayConfirmation: true // Always use 2-minute delay
+            delayConfirmation: true, // Always use 2-minute delay
+            configuredConnections: configuredConnections
         )
         config.save()
-        print("🚗 [Smart Park 2.0] Saved config - Enabled: \(isEnabled), Type: \(triggerType.rawValue)")
+        print("🚗 [Smart Park 2.0] Saved config - Enabled: \(isEnabled), Type: \(triggerType.rawValue), Configured: \(configuredConnections)")
     }
     
     // MARK: - Setup Flow Management
@@ -104,27 +109,43 @@ class SmartParkManager: ObservableObject {
     
     // MARK: - Shortcut Creation Helper
     
+    func createShortcutInstructions() -> [String] {
+        return [
+            "Open the Shortcuts App",
+            "Search for 'Smart Park 2.0'",
+            "Tap it",
+            "Make sure 'Show When Run' is disabled",
+            "Tap 'Done'",
+            "Return to Smart Park Setup guide"
+        ]
+    }
+    
     func createAutomationInstructions() -> [String] {
         switch triggerType {
         case .carPlay:
             return [
-                "1. Open the Shortcuts app",
-                "2. Tap the 'Automation' tab at the bottom",
-                "3. Tap the '+' button to create a new automation",
-                "4. Choose 'CarPlay' as the trigger",
-                "5. Select 'When CarPlay Disconnects'",
-                "6. Add the 'Smart Park 2.0' shortcut",
-                "7. Turn off 'Ask Before Running' for automatic operation"
+                "Open Shortcuts app and go to Automation tab",
+                "Select 'New Automation'",
+                "Choose 'CarPlay' as the trigger",
+                "Ensure 'Disconnects' is selected and 'Connects' is not",
+                "Select 'Run Immediately'",
+                "Hit Next",
+                "Search for 'Smart Park 2.0'",
+                "Make sure 'Show When Run' is NOT selected",
+                "Return to App"
             ]
         case .bluetooth:
             return [
-                "1. Open the Shortcuts app",
-                "2. Tap the 'Automation' tab at the bottom",
-                "3. Tap the '+' button to create a new automation",
-                "4. Choose 'Bluetooth' as the trigger",
-                "5. Select 'When [Your Car] Disconnects'",
-                "6. Add the 'Smart Park 2.0' shortcut",
-                "7. Turn off 'Ask Before Running' for automatic operation"
+                "Open Shortcuts app and go to Automation tab",
+                "Select 'New Automation'", 
+                "Choose 'Bluetooth' as the trigger",
+                "Tap 'Choose' and select your car's Bluetooth name from the device list",
+                "Ensure 'Disconnects' is selected and 'Connects' is not",
+                "Select 'Run Immediately'",
+                "Hit Next",
+                "Search for 'Smart Park 2.0'",
+                "Make sure 'Show When Run' is NOT selected",
+                "Return to App"
             ]
         }
     }
@@ -133,38 +154,43 @@ class SmartParkManager: ObservableObject {
 // MARK: - Setup Steps
 enum SetupStep: CaseIterable {
     case welcome
-    case connectionType
     case permissions
+    case shortcut
+    case connectionType
     case automation
     case complete
     
     var title: String {
         switch self {
         case .welcome:
-            return "Welcome to Smart Park 2.0"
+            return "Welcome"
         case .connectionType:
-            return "How do you connect to your car?"
+            return "Connection Type"
         case .permissions:
             return "Permissions"
+        case .shortcut:
+            return "Add Shortcut"
         case .automation:
             return "Create Automation"
         case .complete:
-            return "Setup Complete!"
+            return "Complete"
         }
     }
     
     var description: String {
         switch self {
         case .welcome:
-            return "Smart Park 2.0 automatically saves your parking location when you disconnect from your car."
+            return "It automatically saves your location and updates your sweep reminders whenever you park so you don't have to remember to do it!"
         case .connectionType:
-            return "Choose how your phone connects to your car's audio system."
+            return "Select your car's connection type. You can set up multiple connections if needed."
         case .permissions:
-            return "Smart Park needs location and notification permissions to work properly."
+            return "Grant required permissions."
+        case .shortcut:
+            return "First, add Smart Park to your shortcuts."
         case .automation:
-            return "Create a Shortcuts automation to trigger Smart Park automatically."
+            return "Now create the automation trigger."
         case .complete:
-            return "Smart Park 2.0 is now ready to use!"
+            return "Smart Park is ready to use!"
         }
     }
     

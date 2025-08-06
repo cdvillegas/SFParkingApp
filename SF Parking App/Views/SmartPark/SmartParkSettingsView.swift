@@ -6,14 +6,14 @@ struct SmartParkSettingsView: View {
     
     var body: some View {
         List {
-            // Status Section
+            // Enable/Disable Section
             Section {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Smart Park 2.0")
+                        Text("Smart Park")
                             .font(.headline)
                         
-                        Text(manager.configurationStatus)
+                        Text(statusText)
                             .font(.caption)
                             .foregroundColor(statusColor)
                     }
@@ -26,42 +26,8 @@ struct SmartParkSettingsView: View {
                             manager.saveConfiguration()
                         }
                 }
-                
-                if !manager.isSetupComplete {
-                    Button("Setup Smart Park 2.0") {
-                        showingSetup = true
-                    }
-                    .foregroundColor(.blue)
-                }
-            } header: {
-                Text("Status")
             } footer: {
                 Text("Automatically saves your parking location when you disconnect from your car.")
-            }
-            
-            // Configuration Section (only show if setup is complete)
-            if manager.isSetupComplete {
-                Section("Configuration") {
-                    ConfigurationRow(
-                        icon: manager.triggerType == .carPlay ? "carplay" : "bluetooth",
-                        title: "Connection Type",
-                        value: manager.triggerType.rawValue,
-                        systemImage: true
-                    )
-                    
-                    
-                    ConfigurationRow(
-                        icon: "clock",
-                        title: "Confirmation Delay",
-                        value: "2 minutes (always enabled)",
-                        systemImage: true
-                    )
-                    
-                    Button("Reconfigure") {
-                        showingSetup = true
-                    }
-                    .foregroundColor(.blue)
-                }
             }
             
             // How It Works Section
@@ -70,75 +36,48 @@ struct SmartParkSettingsView: View {
                     StepView(
                         number: 1,
                         title: "Car Disconnection",
-                        description: "Smart Park detects when you disconnect from \(manager.triggerType.rawValue.lowercased())"
+                        description: "Detects when you disconnect from CarPlay or Bluetooth"
                     )
                     
                     StepView(
                         number: 2,
-                        title: "2-Minute Safety Wait",
-                        description: "Waits 2 minutes to avoid false detections if you reconnect to your car"
+                        title: "Safety Wait",
+                        description: "Waits 2 minutes to avoid false detections"
                     )
                     
                     StepView(
                         number: 3,
                         title: "Location Saved",
-                        description: "Your parking spot is saved and you receive a notification"
+                        description: "Saves your parking spot and sends a notification"
                     )
                 }
                 .padding(.vertical, 8)
             }
             
-            // Automation Setup Section
-            if manager.isSetupComplete {
-                Section("Automation") {
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Image(systemName: "shortcuts")
-                                .foregroundColor(.blue)
-                            
-                            Text("iOS Shortcuts Automation")
-                                .font(.headline)
-                        }
-                        
-                        Text("Create an automation in the Shortcuts app to trigger Smart Park 2.0 automatically when you disconnect from your car.")
-                            .font(.body)
-                            .foregroundColor(.secondary)
-                        
-                        Button("View Setup Instructions") {
-                            showingSetup = true
-                        }
-                        .foregroundColor(.blue)
+            // Setup Section
+            Section {
+                if manager.isSetupComplete {
+                    Button("Setup Instructions") {
+                        showingSetup = true
                     }
-                    .padding(.vertical, 8)
+                    .foregroundColor(.blue)
+                } else {
+                    Button("Set Up Smart Park") {
+                        showingSetup = true
+                    }
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.blue)
+                    .cornerRadius(10)
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
                 }
             }
             
-            // Recent Activity Section (if there's activity to show)
-            Section("Recent Activity") {
-                if manager.isEnabled {
-                    HStack {
-                        Image(systemName: "clock")
-                            .foregroundColor(.secondary)
-                        
-                        Text("No recent Smart Park activity")
-                            .foregroundColor(.secondary)
-                        
-                        Spacer()
-                    }
-                } else {
-                    HStack {
-                        Image(systemName: "pause.circle")
-                            .foregroundColor(.orange)
-                        
-                        Text("Smart Park is disabled")
-                            .foregroundColor(.secondary)
-                        
-                        Spacer()
-                    }
-                }
-            }
         }
-        .navigationTitle("Smart Park 2.0")
+        .navigationTitle("Smart Park")
         .navigationBarTitleDisplayMode(.large)
         .sheet(isPresented: $showingSetup) {
             SmartParkSetupView()
@@ -148,16 +87,23 @@ struct SmartParkSettingsView: View {
         }
     }
     
+    private var statusText: String {
+        if !manager.isSetupComplete {
+            return "Not Set Up"
+        } else if manager.isEnabled {
+            return "Active"
+        } else {
+            return "Disabled"
+        }
+    }
+    
     private var statusColor: Color {
-        switch manager.configurationStatus {
-        case "Active":
+        if !manager.isSetupComplete {
+            return .blue
+        } else if manager.isEnabled {
             return .green
-        case "Disabled":
+        } else {
             return .orange
-        case "Not configured", "Invalid configuration":
-            return .red
-        default:
-            return .secondary
         }
     }
 }

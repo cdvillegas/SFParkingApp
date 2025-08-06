@@ -9,6 +9,7 @@ struct SmartParkConfig: Codable {
     let triggerType: SmartParkTriggerType
     let bluetoothDeviceName: String?
     let delayConfirmation: Bool
+    let configuredConnections: Set<SmartParkTriggerType>?
     
     static var current: SmartParkConfig {
         if let data = UserDefaults.standard.data(forKey: "smartPark2Config"),
@@ -20,7 +21,8 @@ struct SmartParkConfig: Codable {
             isEnabled: false,
             triggerType: .carPlay,
             bluetoothDeviceName: nil,
-            delayConfirmation: true
+            delayConfirmation: true,
+            configuredConnections: []
         )
     }
     
