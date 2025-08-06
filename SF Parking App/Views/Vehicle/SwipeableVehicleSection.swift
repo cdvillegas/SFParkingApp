@@ -121,7 +121,7 @@ struct VehicleSwipeCard: View {
                             .foregroundColor(.secondary)
                             .lineLimit(1)
                         
-                        Text("Press \"Set Vehicle Location\"")
+                        Text("Press \"Move\" to set vehicle location")
                             .font(.system(size: 16))
                             .foregroundColor(.secondary)
                             .lineLimit(1)
@@ -204,66 +204,72 @@ struct VehicleSwipeCard: View {
         
         let calendar = Calendar.current
         let now = Date()
-        let timeInterval = nextSchedule.date.timeIntervalSince(now)
-        let hours = timeInterval / 3600
-        let minutes = Int(timeInterval / 60)
         
-        // Very close (less than 2 hours)
-        if hours < 2 {
-            if minutes <= 30 {
-                return "Move in \(minutes) Minutes"
-            } else if minutes <= 60 {
-                return "Move in 1 Hour"
-            } else {
-                let roundedHours = Int(ceil(hours))
-                return "Move in \(roundedHours) Hours"
-            }
-        }
-        
-        // Today
-        if calendar.isDateInToday(nextSchedule.date) {
-            return "Move by Today, \(nextSchedule.startTime)"
-        }
-        
-        // Tomorrow
-        if calendar.isDateInTomorrow(nextSchedule.date) {
-            return "Move by Tomorrow, \(nextSchedule.startTime)"
-        }
-        
-        // Calculate days more accurately
+        // Calculate calendar days between now and schedule
         let startOfToday = calendar.startOfDay(for: now)
         let startOfScheduleDay = calendar.startOfDay(for: nextSchedule.date)
         let daysUntil = calendar.dateComponents([.day], from: startOfToday, to: startOfScheduleDay).day ?? 0
         
+        // Calculate time interval for very close times
+        let timeInterval = nextSchedule.date.timeIntervalSince(now)
+        let hours = timeInterval / 3600
+        let minutes = Int(timeInterval / 60)
         
-        if daysUntil == 2 {
-            return "Move in 2 Days, \(nextSchedule.startTime)"
+        // If it's today (same calendar day), always show hours/minutes
+        if daysUntil == 0 {
+            if minutes <= 0 {
+                return "Move Now!"
+            } else if minutes <= 30 {
+                return "Move in \(minutes) Minutes"
+            } else if minutes <= 90 {
+                return "Move in 1 Hour"
+            } else {
+                let roundedHours = Int(ceil(hours))
+                if roundedHours == 1 {
+                    return "Move in 1 Hour"
+                } else {
+                    return "Move in \(roundedHours) Hours"
+                }
+            }
         }
         
-        // Perfect logic based on your requirements:
-        // - Within 6 days: show day name with time
-        // - Exactly 7 days (next week same day): show "Next [Day]" without time  
-        // - 8+ days but < 2 weeks: show "Next [Day]" without time
-        // - 2+ weeks: show weeks
+        // Tomorrow (next calendar day)
+        if daysUntil == 1 {
+            return "Move by Tomorrow, \(nextSchedule.startTime)"
+        }
         
-        if daysUntil <= 6 {
-            // Within 6 days - show day name with time
+        // 2-6 days away - show specific day count or day name
+        if daysUntil == 2 {
+            return "Move in 2 Days, \(nextSchedule.startTime)"
+        } else if daysUntil <= 6 {
+            // 3-6 days - show day name with time
             let formatter = DateFormatter()
             formatter.dateFormat = "EEEE"
             let dayString = formatter.string(from: nextSchedule.date)
             return "Move by \(dayString), \(nextSchedule.startTime)"
-        } else if daysUntil <= 13 {
-            // 7-13 days (next week) - show "Next [Day]" with time
+        }
+        
+        // 7-13 days - show "Next [Day]" 
+        if daysUntil >= 7 && daysUntil <= 13 {
             let formatter = DateFormatter()
             formatter.dateFormat = "EEEE"
             let dayString = formatter.string(from: nextSchedule.date)
             return "Move by Next \(dayString), \(nextSchedule.startTime)"
+        }
+        
+        // 14+ days - show in weeks (round up)
+        // Use ceiling division to round up weeks
+        let weeks = (daysUntil + 6) / 7  // This rounds up
+        
+        if weeks == 2 {
+            return "Move in 2 Weeks, \(nextSchedule.startTime)"
+        } else if weeks == 3 {
+            return "Move in 3 Weeks, \(nextSchedule.startTime)"
+        } else if weeks == 4 {
+            return "Move in 4 Weeks, \(nextSchedule.startTime)"
         } else {
-            // 14+ days - show actual date with time
-            let formatter = DateFormatter()
-            formatter.dateFormat = "MMMM d"  // e.g., "August 12"
-            let dateString = formatter.string(from: nextSchedule.date)
-            return "Move by \(dateString), \(nextSchedule.startTime)"
+            // For anything more than 4 weeks
+            return "Move in \(weeks) Weeks, \(nextSchedule.startTime)"
         }
     }
     
