@@ -92,20 +92,14 @@ struct SmartParkIntent: AppIntent {
             throw SmartParkError.locationUnavailable
         }
         
-        // Save parking location
+        // Save parking location (TESTING: disable 2-minute delay)
         let savedLocation = try await manager.saveParkingLocation(
             at: currentLocation,
             triggerType: parkingTriggerType,
-            delayConfirmation: config.delayConfirmation
+            delayConfirmation: false // TESTING: Force immediate confirmation
         )
         
-        // Schedule confirmation check if delay is enabled
-        if config.delayConfirmation {
-            await manager.scheduleConfirmationCheck(for: savedLocation)
-            return .result(dialog: "Smart Park 2.0 activated! You'll get a confirmation in 2 minutes if you don't reconnect.")
-        } else {
-            return .result(dialog: "Parking location saved at \(savedLocation.address ?? "current location")")
-        }
+        return .result(dialog: "Parking location saved at \(savedLocation.address ?? "current location")")
     }
 }
 
