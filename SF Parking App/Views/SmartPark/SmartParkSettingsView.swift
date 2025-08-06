@@ -49,14 +49,6 @@ struct SmartParkSettingsView: View {
                         systemImage: true
                     )
                     
-                    if manager.triggerType == .bluetooth {
-                        ConfigurationRow(
-                            icon: "bluetooth",
-                            title: "Bluetooth Device",
-                            value: manager.bluetoothDeviceName.isEmpty ? "Not set" : manager.bluetoothDeviceName,
-                            systemImage: true
-                        )
-                    }
                     
                     ConfigurationRow(
                         icon: "clock",

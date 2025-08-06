@@ -72,10 +72,7 @@ struct SmartParkIntent: AppIntent {
         // Check if we're actually disconnected from the car
         let detector = CarConnectionDetector()
         let parkingTriggerType = ParkingTriggerType(rawValue: config.triggerType.rawValue) ?? .carPlay
-        let isConnected = await detector.isCarConnected(
-            type: parkingTriggerType,
-            bluetoothDeviceName: config.bluetoothDeviceName
-        )
+        let isConnected = await detector.isCarConnected(type: parkingTriggerType)
         
         if isConnected {
             print("🚗 [Smart Park 2.0] Still connected to car - not saving location")
@@ -152,7 +149,7 @@ enum IntentError: Swift.Error, LocalizedError {
 
 // MARK: - Car Connection Detector
 struct CarConnectionDetector {
-    func isCarConnected(type: ParkingTriggerType, bluetoothDeviceName: String?) async -> Bool {
+    func isCarConnected(type: ParkingTriggerType) async -> Bool {
         return await withCheckedContinuation { continuation in
             DispatchQueue.main.async {
                 let audioSession = AVAudioSession.sharedInstance()
@@ -171,45 +168,19 @@ struct CarConnectionDetector {
                     continuation.resume(returning: hasCarPlay)
                     
                 case .bluetooth:
-                    // If no specific device name, check for ANY Bluetooth audio connection
-                    if let deviceName = bluetoothDeviceName, !deviceName.isEmpty {
-                        print("🚗 [Smart Park 2.0] Looking for specific Bluetooth device: \(deviceName)")
-                        
-                        // Check for specific device
-                        let hasSpecificBluetooth = currentRoute.outputs.contains { output in
-                            let bluetoothTypes: [AVAudioSession.Port] = [
-                                .bluetoothA2DP,
-                                .bluetoothHFP,
-                                .bluetoothLE
-                            ]
-                            let isBluetoothType = bluetoothTypes.contains(output.portType)
-                            let nameMatches = output.portName == deviceName
-                            
-                            if isBluetoothType {
-                                print("🚗 [Smart Park 2.0] Found Bluetooth device: \(output.portName) (looking for: \(deviceName))")
-                            }
-                            
-                            return isBluetoothType && nameMatches
-                        }
-                        
-                        print("🚗 [Smart Park 2.0] Specific Bluetooth device check result: \(hasSpecificBluetooth)")
-                        continuation.resume(returning: hasSpecificBluetooth)
-                    } else {
-                        print("🚗 [Smart Park 2.0] No specific device - checking for ANY Bluetooth audio connection")
-                        
-                        // Check for any Bluetooth audio connection (simpler mode)
-                        let hasAnyBluetooth = currentRoute.outputs.contains { output in
-                            let bluetoothTypes: [AVAudioSession.Port] = [
-                                .bluetoothA2DP,
-                                .bluetoothHFP,
-                                .bluetoothLE
-                            ]
-                            return bluetoothTypes.contains(output.portType)
-                        }
-                        
-                        print("🚗 [Smart Park 2.0] Any Bluetooth audio check result: \(hasAnyBluetooth)")
-                        continuation.resume(returning: hasAnyBluetooth)
+                    // Check for any Bluetooth audio connection
+                    // The Shortcuts automation already filtered to the specific device
+                    let hasAnyBluetooth = currentRoute.outputs.contains { output in
+                        let bluetoothTypes: [AVAudioSession.Port] = [
+                            .bluetoothA2DP,
+                            .bluetoothHFP,
+                            .bluetoothLE
+                        ]
+                        return bluetoothTypes.contains(output.portType)
                     }
+                    
+                    print("🚗 [Smart Park 2.0] Bluetooth audio check result: \(hasAnyBluetooth)")
+                    continuation.resume(returning: hasAnyBluetooth)
                 }
             }
         }

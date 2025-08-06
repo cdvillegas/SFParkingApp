@@ -50,8 +50,6 @@ struct SmartParkSetupView: View {
             welcomeStep
         case .connectionType:
             connectionTypeStep
-        case .bluetoothConfig:
-            bluetoothConfigStep
         case .permissions:
             permissionsStep
         case .automation:
@@ -106,37 +104,6 @@ struct SmartParkSetupView: View {
         }
     }
     
-    private var bluetoothConfigStep: some View {
-        VStack(spacing: 24) {
-            Text(manager.setupStep.description)
-                .font(.body)
-                .multilineTextAlignment(.center)
-                .foregroundColor(.secondary)
-            
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Bluetooth Device Name")
-                    .font(.headline)
-                
-                TextField("e.g., BMW, Toyota, My Car", text: $manager.bluetoothDeviceName)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .autocapitalization(.words)
-                    .disableAutocorrection(true)
-                
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("💡 How to find your device name:")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                    
-                    Text("1. Go to Settings → Bluetooth\n2. Look for your car in the list\n3. The name shown is what you should enter")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                .padding()
-                .background(Color(.systemBlue).opacity(0.1))
-                .cornerRadius(8)
-            }
-        }
-    }
     
     
     private var permissionsStep: some View {
@@ -223,10 +190,6 @@ struct SmartParkSetupView: View {
                 
                 ConfigSummaryRow(label: "Trigger", value: manager.triggerType.rawValue)
                 
-                if manager.triggerType == .bluetooth {
-                    ConfigSummaryRow(label: "Device", value: manager.bluetoothDeviceName)
-                }
-                
                 ConfigSummaryRow(
                     label: "Confirmation",
                     value: "2-minute delay (for safety)"
@@ -280,12 +243,8 @@ struct SmartParkSetupView: View {
     }
     
     private var canProceed: Bool {
-        switch manager.setupStep {
-        case .welcome, .connectionType, .permissions, .automation, .complete:
-            return true
-        case .bluetoothConfig:
-            return !manager.bluetoothDeviceName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        }
+        // All steps can proceed without additional validation
+        return true
     }
     
     // MARK: - Navigation Methods
@@ -295,16 +254,8 @@ struct SmartParkSetupView: View {
         let currentIndex = currentStepIndex
         
         if currentIndex < allSteps.count - 1 {
-            var nextIndex = currentIndex + 1
-            
-            // Skip Bluetooth config if CarPlay is selected
-            if allSteps[nextIndex] == .bluetoothConfig && manager.triggerType == .carPlay {
-                nextIndex += 1
-            }
-            
-            if nextIndex < allSteps.count {
-                manager.setupStep = allSteps[nextIndex]
-            }
+            let nextIndex = currentIndex + 1
+            manager.setupStep = allSteps[nextIndex]
         }
     }
     
@@ -313,16 +264,8 @@ struct SmartParkSetupView: View {
         let currentIndex = currentStepIndex
         
         if currentIndex > 0 {
-            var previousIndex = currentIndex - 1
-            
-            // Skip Bluetooth config if CarPlay is selected
-            if allSteps[previousIndex] == .bluetoothConfig && manager.triggerType == .carPlay {
-                previousIndex -= 1
-            }
-            
-            if previousIndex >= 0 {
-                manager.setupStep = allSteps[previousIndex]
-            }
+            let previousIndex = currentIndex - 1
+            manager.setupStep = allSteps[previousIndex]
         }
     }
 }

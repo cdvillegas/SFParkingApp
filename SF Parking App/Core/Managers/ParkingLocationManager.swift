@@ -273,8 +273,7 @@ class ParkingLocationManager: ObservableObject {
         // Check car connection
         let detector = CarConnectionDetector()
         let isConnected = await detector.isCarConnected(
-            type: ParkingTriggerType(rawValue: location.triggerType) ?? .carPlay,
-            bluetoothDeviceName: location.bluetoothDeviceName
+            type: ParkingTriggerType(rawValue: location.triggerType) ?? .carPlay
         )
         
         print("🚗 [Smart Park 2.0] Car connection status after 2 minutes: \(isConnected ? "CONNECTED" : "DISCONNECTED")")

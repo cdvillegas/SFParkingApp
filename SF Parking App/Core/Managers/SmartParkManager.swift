@@ -9,7 +9,6 @@ class SmartParkManager: ObservableObject {
     
     @Published var isEnabled: Bool = false
     @Published var triggerType: SmartParkTriggerType = .carPlay
-    @Published var bluetoothDeviceName: String = ""
     // Always use 2-minute delay for safety - no user configuration needed
     private let delayConfirmation: Bool = true
     @Published var showSetup: Bool = false
@@ -34,7 +33,6 @@ class SmartParkManager: ObservableObject {
         let config = SmartParkConfig.current
         isEnabled = config.isEnabled
         triggerType = config.triggerType
-        bluetoothDeviceName = config.bluetoothDeviceName ?? ""
         isSetupComplete = config.isEnabled // If enabled, setup was completed
         
         print("🚗 [Smart Park 2.0] Loaded config - Enabled: \(isEnabled), Type: \(triggerType.rawValue)")
@@ -44,7 +42,7 @@ class SmartParkManager: ObservableObject {
         let config = SmartParkConfig(
             isEnabled: isEnabled,
             triggerType: triggerType,
-            bluetoothDeviceName: bluetoothDeviceName.isEmpty ? nil : bluetoothDeviceName,
+            bluetoothDeviceName: nil, // No device name needed
             delayConfirmation: true // Always use 2-minute delay
         )
         config.save()
@@ -88,12 +86,8 @@ class SmartParkManager: ObservableObject {
     // MARK: - Validation
     
     var isConfigurationValid: Bool {
-        switch triggerType {
-        case .carPlay:
-            return true
-        case .bluetooth:
-            return !bluetoothDeviceName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        }
+        // Both CarPlay and Bluetooth are valid - no device name needed for Bluetooth
+        return true
     }
     
     var configurationStatus: String {
@@ -128,7 +122,7 @@ class SmartParkManager: ObservableObject {
                 "2. Tap the 'Automation' tab at the bottom",
                 "3. Tap the '+' button to create a new automation",
                 "4. Choose 'Bluetooth' as the trigger",
-                "5. Select 'When \(bluetoothDeviceName) Disconnects'",
+                "5. Select 'When [Your Car] Disconnects'",
                 "6. Add the 'Smart Park 2.0' shortcut",
                 "7. Turn off 'Ask Before Running' for automatic operation"
             ]
@@ -140,7 +134,6 @@ class SmartParkManager: ObservableObject {
 enum SetupStep: CaseIterable {
     case welcome
     case connectionType
-    case bluetoothConfig
     case permissions
     case automation
     case complete
@@ -151,8 +144,6 @@ enum SetupStep: CaseIterable {
             return "Welcome to Smart Park 2.0"
         case .connectionType:
             return "How do you connect to your car?"
-        case .bluetoothConfig:
-            return "Bluetooth Configuration"
         case .permissions:
             return "Permissions"
         case .automation:
@@ -168,8 +159,6 @@ enum SetupStep: CaseIterable {
             return "Smart Park 2.0 automatically saves your parking location when you disconnect from your car."
         case .connectionType:
             return "Choose how your phone connects to your car's audio system."
-        case .bluetoothConfig:
-            return "Enter the exact name of your car's Bluetooth connection."
         case .permissions:
             return "Smart Park needs location and notification permissions to work properly."
         case .automation:
@@ -180,11 +169,7 @@ enum SetupStep: CaseIterable {
     }
     
     var isOptional: Bool {
-        switch self {
-        case .bluetoothConfig:
-            return false // Required if Bluetooth is selected
-        default:
-            return false
-        }
+        // All steps are required
+        return false
     }
 }
