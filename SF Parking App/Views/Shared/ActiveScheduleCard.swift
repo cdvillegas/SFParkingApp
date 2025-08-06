@@ -53,10 +53,12 @@ struct ActiveScheduleCard: View {
         endDate: Date().addingTimeInterval(7 * 24 * 3600 + 7200), // 2 hours later
         dayOfWeek: "WEDNESDAY",
         startTime: "9:00 AM",
-        endTime: "11:00 AM"
+        endTime: "11:00 AM",
+        avgSweeperTime: 9.5, // 9:30 AM
+        medianSweeperTime: 9.5 // 9:30 AM
     )
     
-    return VStack(spacing: 20) {
+    VStack(spacing: 20) {
         ActiveScheduleCard(schedule: sampleSchedule)
             .padding(16)
             .background(Color.clear)
