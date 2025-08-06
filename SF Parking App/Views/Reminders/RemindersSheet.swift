@@ -36,7 +36,7 @@ struct RemindersSheet: View {
                 // Fixed street info card - only show if there's a real upcoming schedule
                 if let schedule = schedule, schedule.dayOfWeek != "Next Week" {
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("UPCOMING SCHEDULE")
+                        Text("ACTIVE SCHEDULE")
                             .font(.footnote)
                             .fontWeight(.medium)
                             .foregroundColor(.secondary)
@@ -50,7 +50,7 @@ struct RemindersSheet: View {
                         
                         VStack(spacing: 0) {
                             streetInfoCard
-                                .padding(20)
+                                .padding(16)
                         }
                         .background(Color.clear)
                         .overlay(
@@ -102,7 +102,7 @@ struct RemindersSheet: View {
                                         CustomRemindersListView(
                                             showingCustomReminderEditor: $showingCustomReminderEditor,
                                             customReminderToEdit: $customReminderToEdit,
-                                            nextCleaningDate: schedule?.date ?? Date()
+                                            nextCleaningDate: (schedule?.dayOfWeek == "Next Week") ? nil : schedule?.date
                                         )
                                     }
                                     .background(Color.clear)
@@ -189,7 +189,7 @@ struct RemindersSheet: View {
         .alert("Duplicate Reminder", isPresented: $showingDuplicateAlert) {
             Button("Keep Both") {
                 if let reminder = pendingReminder {
-                    let _ = notificationManager.addCustomReminderForced(reminder)
+                    let _ = notificationManager.addCustomReminderForced(reminder, cleaningDate: (schedule?.dayOfWeek == "Next Week") ? nil : schedule?.date)
                     let impactFeedback = UIImpactFeedbackGenerator(style: .light)
                     impactFeedback.impactOccurred()
                 }
@@ -298,33 +298,7 @@ struct RemindersSheet: View {
             print("  Next cleaning: \(debugFormatter.string(from: schedule.date))")
         }
         
-        let timeUntil = formatPreciseTimeUntil(schedule?.date ?? Date())
-        
-        return HStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .fill(Color.blue)
-                    .frame(width: 40, height: 40)
-                
-                Image(systemName: "calendar.badge.clock")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white)
-            }
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Street Cleaning \(timeUntil)")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.primary)
-                
-                Text(formatDateAndTime(schedule?.date ?? Date(), startTime: schedule?.startTime ?? "8:00 AM", endTime: schedule?.endTime ?? "10:00 AM"))
-                    .font(.system(size: 15))
-                    .foregroundColor(.secondary)
-                    .lineLimit(1)
-            }
-            
-            Spacer()
-        }
-        .background(.clear)
+        return ActiveScheduleCard(schedule: schedule)
     }
     
     private var actionButton: some View {
@@ -489,7 +463,7 @@ struct RemindersSheet: View {
             isActive: true
         )
         
-        let result = notificationManager.addCustomReminder(newReminder)
+        let result = notificationManager.addCustomReminder(newReminder, cleaningDate: (schedule?.dayOfWeek == "Next Week") ? nil : schedule?.date)
         
         switch result {
         case .success:
@@ -503,6 +477,7 @@ struct RemindersSheet: View {
             impactFeedback.impactOccurred()
         }
     }
+    
     
     private func formatPreciseTimeUntil(_ date: Date) -> String {
         let timeInterval = date.timeIntervalSinceNow
