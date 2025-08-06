@@ -511,6 +511,37 @@ class NotificationManager: NSObject, ObservableObject {
     // MARK: - Smart Park 2.0 Notifications
     
     func sendParkingConfirmation(for location: SmartParkLocation) async {
+        print("🔔 [Smart Park 2.0] Sending parking confirmation for: \(location.address ?? "Unknown")")
+        
+        // CRITICAL FIX: Also trigger the in-app UI update through ParkingDetectionHandler
+        await MainActor.run {
+            if let handler = self.parkingDetectionHandler {
+                print("🎯 [Smart Park 2.0] Triggering in-app UI update via ParkingDetectionHandler")
+                
+                // Convert Smart Park trigger type to ParkingSource
+                let source: ParkingSource = location.triggerType == "carPlay" ? .carplay : .bluetooth
+                
+                handler.handleParkingDetection(
+                    coordinate: location.coordinate,
+                    address: location.address ?? "Unknown Location",
+                    source: source
+                )
+            } else {
+                print("⚠️ [Smart Park 2.0] No ParkingDetectionHandler available - storing for app launch")
+                
+                // Store notification data for when app launches (fallback)
+                let notificationData: [String: Any] = [
+                    "coordinate": [
+                        "latitude": location.coordinate.latitude,
+                        "longitude": location.coordinate.longitude
+                    ],
+                    "address": location.address ?? "Unknown Location",
+                    "source": location.triggerType == "carPlay" ? "carplay" : "bluetooth"
+                ]
+                UserDefaults.standard.set(notificationData, forKey: "pendingParkingLocation")
+            }
+        }
+        
         guard notificationPermissionStatus == .authorized else {
             print("⚠️ Cannot send Smart Park notification - permission not granted")
             return

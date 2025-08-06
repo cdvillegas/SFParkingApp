@@ -734,6 +734,36 @@ final class StreetDataService {
     }
     
     // MARK: - Public API (matches your existing interface)
+    // New method for Smart Park 2.0 geometric side detection
+    func getClosestScheduleWithGeometry(for coordinate: CLLocationCoordinate2D, completion: @escaping (Result<([AggregatedSweepSchedule], SweepSchedule)?, ParkingError>) -> Void) {
+        guard isLoaded else {
+            completion(.failure(.noData))
+            return
+        }
+        
+        guard useNewDataset else {
+            completion(.success(nil))
+            return
+        }
+        
+        // Get candidates from spatial grid
+        let candidates = spatialGrid.getAggregatedSchedulesNear(coordinate)
+        
+        // Find closest schedule and return both raw data and converted schedule
+        if let closest = findClosestAggregatedSchedule(from: coordinate, schedules: candidates),
+           let convertedSchedule = convertAggregatedToAPIFormat(closest) {
+            
+            // Get all schedules for the same street for side comparison
+            let streetSchedules = candidates.filter { $0.corridor == closest.corridor }
+            
+            print("📐 [StreetDataService] Found \(streetSchedules.count) schedules for \(closest.corridor) with geometry data")
+            
+            completion(.success((streetSchedules, convertedSchedule)))
+        } else {
+            completion(.success(nil))
+        }
+    }
+
     func getClosestSchedule(for coordinate: CLLocationCoordinate2D, completion: @escaping (Result<SweepSchedule?, ParkingError>) -> Void) {
         guard isLoaded else {
             print("❌ StreetDataService not loaded yet")

@@ -72,7 +72,7 @@ class VehicleParkingViewModel: ObservableObject {
     init(
         locationManager: LocationManager = LocationManager(),
         streetDataManager: StreetDataManager = StreetDataManager(),
-        vehicleManager: VehicleManager = VehicleManager(),
+        vehicleManager: VehicleManager = VehicleManager.shared, // CRITICAL FIX: Use shared instance
         debouncedGeocoder: DebouncedGeocodingHandler = DebouncedGeocodingHandler(),
         notificationManager: NotificationManager = NotificationManager.shared
     ) {

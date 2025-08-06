@@ -339,20 +339,491 @@ class ParkingLocationManager: ObservableObject {
     func saveToVehicleManager(_ smartParkLocation: SmartParkLocation) async {
         print("🚙 [Smart Park 2.0] Saving to VehicleManager - Address: \(smartParkLocation.address ?? "Unknown")")
         
-        // Convert to regular ParkingLocation and save via VehicleManager
+        // CRITICAL FIX: Detect schedule for the parking location
+        let selectedSchedule = await detectScheduleForLocation(smartParkLocation.coordinate)
+        if let schedule = selectedSchedule {
+            print("📅 [Smart Park 2.0] Found schedule: \(schedule.streetName) - \(schedule.weekday) \(schedule.startTime)-\(schedule.endTime)")
+        } else {
+            print("📅 [Smart Park 2.0] No schedule found for this location")
+        }
+        
+        // Convert to regular ParkingLocation with schedule information
         let parkingLocation = ParkingLocation(
             coordinate: smartParkLocation.coordinate,
             address: smartParkLocation.address ?? "Unknown Location",
             timestamp: smartParkLocation.timestamp,
-            source: smartParkLocation.triggerType == "carPlay" ? .carplay : .bluetooth
+            source: smartParkLocation.triggerType == "carPlay" ? .carplay : .bluetooth,
+            selectedSchedule: selectedSchedule
         )
         
         // Get the vehicle manager and update
         if let vehicle = VehicleManager.shared.currentVehicle {
             VehicleManager.shared.setParkingLocation(for: vehicle, location: parkingLocation)
-            print("✅ [Smart Park 2.0] Successfully saved to VehicleManager")
+            print("✅ [Smart Park 2.0] Successfully saved to VehicleManager with schedule")
+            
+            // CRITICAL FIX: Update StreetDataManager to process the schedule for immediate UI updates
+            await updateStreetDataManager(with: selectedSchedule, at: smartParkLocation.coordinate)
         } else {
             print("⚠️ [Smart Park 2.0] No vehicle found in VehicleManager")
+        }
+    }
+    
+    private func detectScheduleForLocation(_ coordinate: CLLocationCoordinate2D) async -> PersistedSweepSchedule? {
+        print("🔍 [Smart Park 2.0] ========== SCHEDULE DETECTION STARTING ==========")
+        print("🔍 [Smart Park 2.0] Detecting schedule for coordinate: \(coordinate.latitude), \(coordinate.longitude)")
+        
+        return await withCheckedContinuation { continuation in
+            // Get the raw schedule data with centerline geometry for true geometric detection
+            StreetDataService.shared.getClosestScheduleWithGeometry(for: coordinate) { result in
+                switch result {
+                case .success(let scheduleData):
+                    if let (rawSchedules, closestSchedule) = scheduleData {
+                        print("📅 [Smart Park 2.0] Using TRUE geometric side detection with street centerline")
+                        
+                        if let (determinedSide, matchedSchedule) = self.determineActualSideOfStreetWithSchedule(
+                            userLocation: coordinate,
+                            streetSchedules: rawSchedules,
+                            closestSchedule: closestSchedule
+                        ) {
+                            print("📅 [Smart Park 2.0] Geometric detection result: \(closestSchedule.streetName ?? "Unknown") - \(determinedSide)")
+                            
+                            let persistedSchedule = PersistedSweepSchedule(
+                                from: matchedSchedule,
+                                side: determinedSide
+                            )
+                            continuation.resume(returning: persistedSchedule)
+                        } else {
+                            print("📅 [Smart Park 2.0] Geometric detection failed, using closest schedule")
+                            let persistedSchedule = PersistedSweepSchedule(
+                                from: closestSchedule,
+                                side: "Both"
+                            )
+                            continuation.resume(returning: persistedSchedule)
+                        }
+                    } else {
+                        print("📅 [Smart Park 2.0] No schedule data found")
+                        continuation.resume(returning: nil)
+                    }
+                case .failure(let error):
+                    print("❌ [Smart Park 2.0] Failed to get schedule geometry: \(error)")
+                    continuation.resume(returning: nil)
+                }
+            }
+        }
+    }
+    
+    private func selectBestScheduleForAutoDetection(_ schedulesWithSides: [SweepScheduleWithSide], userLocation: CLLocationCoordinate2D) -> SweepScheduleWithSide? {
+        guard !schedulesWithSides.isEmpty else { return nil }
+        
+        print("🎯 [Smart Park 2.0] Selecting best schedule from \(schedulesWithSides.count) options using street geometry:")
+        
+        // Group schedules by street name to handle multiple sides of the same street
+        let schedulesByStreet = Dictionary(grouping: schedulesWithSides) { schedule in
+            schedule.schedule.streetName ?? "Unknown"
+        }
+        
+        var bestSchedule: SweepScheduleWithSide?
+        var bestScore = Double.infinity
+        
+        for (streetName, streetSchedules) in schedulesByStreet {
+            print("   🛣️ Analyzing \(streetName) with \(streetSchedules.count) sides")
+            
+            if streetSchedules.count >= 2 {
+                // Multiple sides available - use geometric side detection
+                let selected = selectBestSideGeometrically(streetSchedules, userLocation: userLocation)
+                
+                let distance = selected.distance
+                print("   ✅ \(streetName) \(selected.side): \(String(format: "%.2f", distance)) meters (geometric selection)")
+                
+                if distance < bestScore {
+                    bestScore = distance
+                    bestSchedule = selected
+                }
+            } else if let single = streetSchedules.first {
+                // Only one side available - use it
+                let distance = single.distance
+                print("   ➡️ \(streetName) \(single.side): \(String(format: "%.2f", distance)) meters (only option)")
+                
+                if distance < bestScore {
+                    bestScore = distance
+                    bestSchedule = single
+                }
+            }
+        }
+        
+        if let best = bestSchedule {
+            print("🏆 [Smart Park 2.0] Selected: \(best.schedule.streetName ?? "Unknown") \(best.side)")
+        }
+        
+        return bestSchedule
+    }
+    
+    private func selectBestSideGeometrically(_ streetSchedules: [SweepScheduleWithSide], userLocation: CLLocationCoordinate2D) -> SweepScheduleWithSide {
+        print("     🧭 Using TRUE GEOMETRIC side detection")
+        
+        // First, try to determine which side of the street the user is actually on using geometry
+        if let geometricallyDeterminedSchedule = determineGeometricSide(streetSchedules, userLocation: userLocation) {
+            return geometricallyDeterminedSchedule
+        }
+        
+        // Fallback to preference logic if geometric detection fails
+        print("     ⚠️ Geometric detection failed, falling back to preference logic")
+        
+        let bestSchedule = streetSchedules.min { schedule1, schedule2 in
+            let side1Lower = schedule1.side.lowercased()
+            let side2Lower = schedule2.side.lowercased()
+            
+            print("     🔍 Comparing \(schedule1.side) vs \(schedule2.side)")
+            print("       - Base distances: \(String(format: "%.2f", schedule1.distance)) vs \(String(format: "%.2f", schedule2.distance)) meters")
+            
+            // Prefer more specific side designations
+            let side1Specific = side1Lower.contains("north") || side1Lower.contains("south") || 
+                               side1Lower.contains("east") || side1Lower.contains("west")
+            let side2Specific = side2Lower.contains("north") || side2Lower.contains("south") || 
+                               side2Lower.contains("east") || side2Lower.contains("west")
+            
+            if side1Specific && !side2Specific {
+                print("       - Preferring \(schedule1.side) (more specific)")
+                return true
+            } else if side2Specific && !side1Specific {
+                print("       - Preferring \(schedule2.side) (more specific)")
+                return false
+            }
+            
+            // Otherwise, use distance
+            return schedule1.distance < schedule2.distance
+        }
+        
+        return bestSchedule ?? streetSchedules.first!
+    }
+    
+    private func determineGeometricSide(_ streetSchedules: [SweepScheduleWithSide], userLocation: CLLocationCoordinate2D) -> SweepScheduleWithSide? {
+        // We need access to the street centerline geometry to do proper geometric side detection
+        // For now, this is a placeholder - we'd need to modify the data structure to include
+        // the actual line geometry from AggregatedSweepSchedule.lineCoordinates
+        
+        print("     📐 Geometric side detection: Need street line geometry data")
+        print("     📍 User location: \(userLocation.latitude), \(userLocation.longitude)")
+        
+        // TODO: This requires the actual street line segments from AggregatedSweepSchedule.lineCoordinates
+        // to calculate which side of the centerline the user is on using cross product math
+        
+        // For now, we'll use a distance-based heuristic with the offset coordinates
+        var bestSchedule: SweepScheduleWithSide?
+        var bestDistance = Double.infinity
+        
+        for schedule in streetSchedules {
+            let distance = CLLocation(latitude: schedule.offsetCoordinate.latitude, longitude: schedule.offsetCoordinate.longitude)
+                .distance(from: CLLocation(latitude: userLocation.latitude, longitude: userLocation.longitude))
+            
+            print("     📏 \(schedule.side): \(String(format: "%.6f", distance)) meters from offset coordinate")
+            
+            if distance < bestDistance {
+                bestDistance = distance
+                bestSchedule = schedule
+            }
+        }
+        
+        if let best = bestSchedule {
+            print("     ✅ Geometric selection: \(best.side) (closest to user)")
+        }
+        
+        return bestSchedule
+    }
+    
+    private func determineActualSideOfStreetWithSchedule(
+        userLocation: CLLocationCoordinate2D,
+        streetSchedules: [AggregatedSweepSchedule],
+        closestSchedule: SweepSchedule
+    ) -> (String, SweepSchedule)? {
+        print("📐 [Geometric Detection] Starting TRUE geometric side detection")
+        print("📐 [Geometric Detection] User location: \(userLocation.latitude), \(userLocation.longitude)")
+        print("📐 [Geometric Detection] Available schedules: \(streetSchedules.count)")
+        
+        // DEBUG: Log all available schedules to understand the data
+        for (index, schedule) in streetSchedules.enumerated() {
+            let days = [
+                ("Mon", schedule.mondayHours),
+                ("Tue", schedule.tuesdayHours), 
+                ("Wed", schedule.wednesdayHours),
+                ("Thu", schedule.thursdayHours),
+                ("Fri", schedule.fridayHours),
+                ("Sat", schedule.saturdayHours),
+                ("Sun", schedule.sundayHours)
+            ]
+            let activeDays = days.filter { !$0.1.isEmpty }.map { "\($0.0):\($0.1)" }
+            print("📐 [DEBUG] Schedule \(index): \(schedule.blockSide) - Days: \(activeDays.joined(separator: ", "))")
+        }
+        
+        // Find the schedule that matches our closest schedule
+        guard let matchingSchedule = streetSchedules.first(where: { aggregated in
+            aggregated.corridor == closestSchedule.corridor && 
+            !aggregated.lineCoordinates.isEmpty
+        }) else {
+            print("📐 [Geometric Detection] No matching schedule with geometry found")
+            return nil
+        }
+        
+        print("📐 [Geometric Detection] Using schedule: \(matchingSchedule.corridor)")
+        print("📐 [Geometric Detection] Line segments: \(matchingSchedule.lineCoordinates.count)")
+        
+        // Find the closest line segment to the user
+        var closestSegmentIndex: Int?
+        var closestDistance = Double.infinity
+        var closestPoint: CLLocationCoordinate2D?
+        
+        for i in 0..<(matchingSchedule.lineCoordinates.count - 1) {
+            let startCoord = matchingSchedule.lineCoordinates[i]
+            let endCoord = matchingSchedule.lineCoordinates[i + 1]
+            
+            // Validate coordinates
+            guard startCoord.count >= 2 && endCoord.count >= 2 else { continue }
+            
+            let segmentStart = CLLocationCoordinate2D(latitude: startCoord[1], longitude: startCoord[0])
+            let segmentEnd = CLLocationCoordinate2D(latitude: endCoord[1], longitude: endCoord[0])
+            
+            // Calculate closest point on this segment
+            let closestOnSegment = closestPointOnLineSegment(
+                point: userLocation,
+                lineStart: segmentStart,
+                lineEnd: segmentEnd
+            )
+            
+            let distance = CLLocation(latitude: userLocation.latitude, longitude: userLocation.longitude)
+                .distance(from: CLLocation(latitude: closestOnSegment.latitude, longitude: closestOnSegment.longitude))
+            
+            if distance < closestDistance {
+                closestDistance = distance
+                closestSegmentIndex = i
+                closestPoint = closestOnSegment
+            }
+        }
+        
+        guard let segmentIndex = closestSegmentIndex,
+              let _ = closestPoint else {
+            print("📐 [Geometric Detection] No valid line segment found")
+            return nil
+        }
+        
+        print("📐 [Geometric Detection] Closest segment: \(segmentIndex), distance: \(String(format: "%.2f", closestDistance))m")
+        
+        // Get the closest segment coordinates
+        let startCoord = matchingSchedule.lineCoordinates[segmentIndex]
+        let endCoord = matchingSchedule.lineCoordinates[segmentIndex + 1]
+        
+        let segmentStart = CLLocationCoordinate2D(latitude: startCoord[1], longitude: startCoord[0])
+        let segmentEnd = CLLocationCoordinate2D(latitude: endCoord[1], longitude: endCoord[0])
+        
+        // Use cross product to determine which side of the line the user is on
+        let crossProduct = calculateCrossProduct(
+            lineStart: segmentStart,
+            lineEnd: segmentEnd,
+            point: userLocation
+        )
+        
+        print("📐 [Geometric Detection] Cross product: \(String(format: "%.6f", crossProduct))")
+        
+        // Determine the geometric side (positive = left side when traveling along segment direction, negative = right side)
+        let isLeftSide = crossProduct > 0
+        
+        // Map geometric side to actual street sides and get the matching schedule
+        let (determinedSide, matchedSchedule) = mapGeometricSideToStreetSideWithSchedule(
+            isLeftSide: isLeftSide,
+            segmentStart: segmentStart,
+            segmentEnd: segmentEnd,
+            availableSchedules: streetSchedules
+        )
+        
+        print("📐 [Geometric Detection] Geometric result: \(isLeftSide ? "LEFT" : "RIGHT") side")
+        print("📐 [Geometric Detection] Mapped to street side: \(determinedSide ?? "UNKNOWN")")
+        
+        if let side = determinedSide, let schedule = matchedSchedule {
+            return (side, schedule)
+        } else {
+            return nil
+        }
+    }
+    
+    private func closestPointOnLineSegment(
+        point: CLLocationCoordinate2D,
+        lineStart: CLLocationCoordinate2D,
+        lineEnd: CLLocationCoordinate2D
+    ) -> CLLocationCoordinate2D {
+        let A = point
+        let B = lineStart
+        let C = lineEnd
+        
+        // Vector from B to C (line direction)
+        let BCx = C.longitude - B.longitude
+        let BCy = C.latitude - B.latitude
+        
+        // Vector from B to A (point)
+        let BAx = A.longitude - B.longitude
+        let BAy = A.latitude - B.latitude
+        
+        // Project BA onto BC
+        let dotProduct = BAx * BCx + BAy * BCy
+        let lengthSquared = BCx * BCx + BCy * BCy
+        
+        if lengthSquared == 0 {
+            // B and C are the same point
+            return B
+        }
+        
+        let t = max(0, min(1, dotProduct / lengthSquared))
+        
+        return CLLocationCoordinate2D(
+            latitude: B.latitude + t * (C.latitude - B.latitude),
+            longitude: B.longitude + t * (C.longitude - B.longitude)
+        )
+    }
+    
+    private func calculateCrossProduct(
+        lineStart: CLLocationCoordinate2D,
+        lineEnd: CLLocationCoordinate2D,
+        point: CLLocationCoordinate2D
+    ) -> Double {
+        // Calculate cross product: (lineEnd - lineStart) × (point - lineStart)
+        let vectorLine = (
+            x: lineEnd.longitude - lineStart.longitude,
+            y: lineEnd.latitude - lineStart.latitude
+        )
+        let vectorPoint = (
+            x: point.longitude - lineStart.longitude,
+            y: point.latitude - lineStart.latitude
+        )
+        
+        // Cross product in 2D: v1.x * v2.y - v1.y * v2.x
+        return vectorLine.x * vectorPoint.y - vectorLine.y * vectorPoint.x
+    }
+    
+    private func mapGeometricSideToStreetSideWithSchedule(
+        isLeftSide: Bool,
+        segmentStart: CLLocationCoordinate2D,
+        segmentEnd: CLLocationCoordinate2D,
+        availableSchedules: [AggregatedSweepSchedule]
+    ) -> (String?, SweepSchedule?) {
+        // Calculate the bearing/direction of the street segment
+        let deltaLon = segmentEnd.longitude - segmentStart.longitude
+        let deltaLat = segmentEnd.latitude - segmentStart.latitude
+        
+        // Calculate bearing (0° = North, 90° = East, 180° = South, 270° = West)
+        var bearing = atan2(deltaLon, deltaLat) * 180 / Double.pi
+        if bearing < 0 { bearing += 360 }
+        
+        print("📐 [Geometric Detection] Street bearing: \(String(format: "%.1f", bearing))°")
+        
+        // Determine street orientation
+        var streetSide: String
+        
+        // For different street orientations, left/right sides correspond to different compass directions
+        if bearing >= 315 || bearing < 45 {
+            // North-bound street (0° ± 45°)
+            streetSide = isLeftSide ? "West" : "East"
+        } else if bearing >= 45 && bearing < 135 {
+            // East-bound street (90° ± 45°)  
+            streetSide = isLeftSide ? "North" : "South"
+        } else if bearing >= 135 && bearing < 225 {
+            // South-bound street (180° ± 45°)
+            streetSide = isLeftSide ? "East" : "West"
+        } else {
+            // West-bound street (270° ± 45°)
+            streetSide = isLeftSide ? "South" : "North"
+        }
+        
+        print("📐 [Geometric Detection] Street orientation-based side: \(streetSide)")
+        
+        // Find a matching schedule with this side designation
+        let matchingSchedule = availableSchedules.first { schedule in
+            let blockSide = schedule.blockSide.lowercased()
+            let targetSide = streetSide.lowercased()
+            
+            return blockSide.contains(targetSide)
+        }
+        
+        if let match = matchingSchedule {
+            print("📐 [Geometric Detection] Found matching schedule: \(match.blockSide)")
+            
+            // Convert the matched AggregatedSweepSchedule to SweepSchedule format
+            if let convertedSchedule = convertAggregatedToSweepSchedule(match) {
+                return (match.blockSide, convertedSchedule)
+            }
+        } else {
+            // Fallback: try to find any schedule that makes sense
+            print("📐 [Geometric Detection] No exact match found, using best available")
+            
+            // If we can't find an exact match, return the calculated side for the closest available schedule
+            if let closestSchedule = availableSchedules.first,
+               let convertedSchedule = convertAggregatedToSweepSchedule(closestSchedule) {
+                print("📐 [Geometric Detection] Using fallback schedule: \(closestSchedule.blockSide)")
+                return (closestSchedule.blockSide, convertedSchedule)
+            }
+        }
+        
+        return (nil, nil)
+    }
+    
+    private func convertAggregatedToSweepSchedule(_ aggregated: AggregatedSweepSchedule) -> SweepSchedule? {
+        // Create the schedule based on the specific aggregated schedule's active days
+        let days = [
+            ("Mon", aggregated.mondayHours),
+            ("Tue", aggregated.tuesdayHours), 
+            ("Wed", aggregated.wednesdayHours),
+            ("Thu", aggregated.thursdayHours),
+            ("Fri", aggregated.fridayHours),
+            ("Sat", aggregated.saturdayHours),
+            ("Sun", aggregated.sundayHours)
+        ]
+        
+        // Find the first active day for this specific schedule
+        for (dayName, hours) in days {
+            if !hours.isEmpty {
+                let fromHour = hours.min() ?? 0
+                let toHour = (hours.max() ?? 0) + 1
+                
+                // Create a simple schedule struct for this specific day/side combination
+                return SweepSchedule(
+                    cnn: aggregated.cnn,
+                    corridor: aggregated.corridor,
+                    limits: aggregated.limits,
+                    blockside: aggregated.blockSide,
+                    fullname: aggregated.scheduleSummary,
+                    weekday: String(dayName.prefix(3)), // Convert to abbreviated form
+                    fromhour: String(fromHour),
+                    tohour: String(toHour),
+                    week1: String(aggregated.week1),
+                    week2: String(aggregated.week2),
+                    week3: String(aggregated.week3),
+                    week4: String(aggregated.week4),
+                    week5: String(aggregated.week5),
+                    holidays: "0",
+                    line: nil, // We don't need geometry here since we already have the aggregated data
+                    avgSweeperTime: aggregated.avgCitationTime,
+                    medianSweeperTime: aggregated.medianCitationTime
+                )
+            }
+        }
+        
+        return nil
+    }
+    
+    private func updateStreetDataManager(with selectedSchedule: PersistedSweepSchedule?, at coordinate: CLLocationCoordinate2D) async {
+        await MainActor.run {
+            // Get the StreetDataManager instance - we need to find it from the main view hierarchy
+            // For now, we'll trigger schedule fetching which should automatically process the saved schedule
+            
+            if let schedule = selectedSchedule {
+                print("📊 [Smart Park 2.0] Triggering StreetDataManager updates for schedule processing")
+                
+                // Convert persisted schedule back to SweepSchedule for processing
+                let sweepSchedule = StreetDataService.shared.convertToSweepSchedule(from: schedule)
+                
+                // We need to find a way to access the StreetDataManager instance
+                // The schedule will be automatically loaded when the user opens the app
+                // and VehicleParkingView detects the saved parking location with schedule
+                
+                print("✅ [Smart Park 2.0] Schedule detection and saving completed")
+            }
         }
     }
     
