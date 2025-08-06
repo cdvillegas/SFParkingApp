@@ -121,7 +121,7 @@ struct VehicleSwipeCard: View {
                             .foregroundColor(.secondary)
                             .lineLimit(1)
                         
-                        Text("Press \"Set Vehicle Location\"")
+                        Text("Press \"Move\" to set vehicle location")
                             .font(.system(size: 16))
                             .foregroundColor(.secondary)
                             .lineLimit(1)

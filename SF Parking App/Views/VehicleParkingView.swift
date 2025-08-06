@@ -715,7 +715,7 @@ struct VehicleParkingView: View {
                     viewModel.isSettingLocationForNewVehicle = false
                     viewModel.startSettingLocationForVehicle(currentVehicle)
                 }) {
-                    Text(currentVehicle.parkingLocation != nil ? "Move" : "Set Location")
+                    Text("Move")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.white)
                         .lineLimit(1)
