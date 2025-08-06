@@ -818,29 +818,48 @@ struct VehicleParkingView: View {
             return 
         }
         
-        // Ensure we have a vehicle to set the location for
-        if viewModel.vehicleManager.currentVehicle == nil {
-            // Create a default vehicle if none exists
-            if viewModel.vehicleManager.activeVehicles.isEmpty {
-                // Will need to show add vehicle sheet first
-                viewModel.showingAddVehicle = true
-                return
-            }
+        // Ensure we have a vehicle to check
+        guard let currentVehicle = viewModel.vehicleManager.currentVehicle else {
+            print("🎯 VehicleParkingView - No current vehicle available")
+            return
         }
         
-        // Start the location setting flow with the auto-detected location
-        viewModel.startSettingLocation()
-        viewModel.settingCoordinate = coordinate
-        viewModel.settingAddress = address
-        viewModel.centerMapOnLocation(coordinate)
-        
-        // Immediately detect schedules and show confirmation
-        viewModel.performScheduleDetection(for: coordinate)
-        
-        // Set the confirmation mode to show the schedule selection
-        viewModel.isConfirmingSchedule = true
-        viewModel.confirmedLocation = coordinate
-        viewModel.confirmedAddress = address
+        // SMART PARK 2.0 FIX: Check if the parking location is already saved with a schedule
+        if let existingLocation = currentVehicle.parkingLocation,
+           let existingSchedule = existingLocation.selectedSchedule {
+            
+            print("🎯 Smart Park 2.0 location already saved with schedule: \(existingSchedule.streetName) - \(existingSchedule.weekday) \(existingSchedule.startTime)-\(existingSchedule.endTime)")
+            
+            // Update the UI to show the saved location and schedule
+            setupView()
+            
+            // Set up StreetDataManager with the saved schedule
+            let sweepSchedule = StreetDataService.shared.convertToSweepSchedule(from: existingSchedule)
+            viewModel.streetDataManager.schedule = sweepSchedule
+            viewModel.streetDataManager.nextUpcomingSchedule = viewModel.streetDataManager.calculateNextScheduleImmediate(for: sweepSchedule)
+            
+            // Center map on saved location
+            viewModel.centerMapOnLocation(existingLocation.coordinate)
+            
+            print("🎯 Smart Park 2.0 UI updated with existing schedule")
+        } else {
+            print("🎯 No saved schedule found, using legacy auto-detection flow")
+            
+            // Legacy flow for cases where no schedule was detected
+            // Start the location setting flow with the auto-detected location
+            viewModel.startSettingLocation()
+            viewModel.settingCoordinate = coordinate
+            viewModel.settingAddress = address
+            viewModel.centerMapOnLocation(coordinate)
+            
+            // Immediately detect schedules and show confirmation
+            viewModel.performScheduleDetection(for: coordinate)
+            
+            // Set the confirmation mode to show the schedule selection
+            viewModel.isConfirmingSchedule = true
+            viewModel.confirmedLocation = coordinate
+            viewModel.confirmedAddress = address
+        }
         
         // Show a subtle notification that parking was detected
         if let source = autoDetectedSource {
@@ -855,7 +874,7 @@ struct VehicleParkingView: View {
             case .manual:
                 sourceText = "manual input"
             }
-            print("Auto-detected parking via \(sourceText) at \(address)")
+            print("🎯 Auto-detected parking via \(sourceText) at \(address)")
         }
         
         // Mark that we're handling auto parking so we can clear data when done

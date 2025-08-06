@@ -60,6 +60,7 @@ struct SmartParkIntent: AppIntent {
     static var openAppWhenRun: Bool = false
     
     func perform() async throws -> some IntentResult & ProvidesDialog {
+        print("🚗 [Smart Park 2.0] ========== SMART PARK INTENT TRIGGERED ==========")
         print("🚗 [Smart Park 2.0] Main intent triggered")
         
         // Check if Smart Park 2.0 is enabled
