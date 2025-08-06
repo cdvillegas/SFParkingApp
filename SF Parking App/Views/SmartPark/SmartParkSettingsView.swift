@@ -61,7 +61,7 @@ struct SmartParkSettingsView: View {
                     ConfigurationRow(
                         icon: "clock",
                         title: "Confirmation Delay",
-                        value: manager.delayConfirmation ? "2 minutes" : "Immediate",
+                        value: "2 minutes (always enabled)",
                         systemImage: true
                     )
                     
@@ -83,10 +83,8 @@ struct SmartParkSettingsView: View {
                     
                     StepView(
                         number: 2,
-                        title: manager.delayConfirmation ? "2-Minute Wait" : "Immediate Save",
-                        description: manager.delayConfirmation ? 
-                            "Waits 2 minutes to avoid false detections if you reconnect" :
-                            "Immediately saves your parking location"
+                        title: "2-Minute Safety Wait",
+                        description: "Waits 2 minutes to avoid false detections if you reconnect to your car"
                     )
                     
                     StepView(

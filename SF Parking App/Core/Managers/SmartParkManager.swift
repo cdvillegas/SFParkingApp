@@ -10,7 +10,8 @@ class SmartParkManager: ObservableObject {
     @Published var isEnabled: Bool = false
     @Published var triggerType: SmartParkTriggerType = .carPlay
     @Published var bluetoothDeviceName: String = ""
-    @Published var delayConfirmation: Bool = true
+    // Always use 2-minute delay for safety - no user configuration needed
+    private let delayConfirmation: Bool = true
     @Published var showSetup: Bool = false
     
     // Setup progress tracking
@@ -34,7 +35,6 @@ class SmartParkManager: ObservableObject {
         isEnabled = config.isEnabled
         triggerType = config.triggerType
         bluetoothDeviceName = config.bluetoothDeviceName ?? ""
-        delayConfirmation = config.delayConfirmation
         isSetupComplete = config.isEnabled // If enabled, setup was completed
         
         print("🚗 [Smart Park 2.0] Loaded config - Enabled: \(isEnabled), Type: \(triggerType.rawValue)")
@@ -45,7 +45,7 @@ class SmartParkManager: ObservableObject {
             isEnabled: isEnabled,
             triggerType: triggerType,
             bluetoothDeviceName: bluetoothDeviceName.isEmpty ? nil : bluetoothDeviceName,
-            delayConfirmation: delayConfirmation
+            delayConfirmation: true // Always use 2-minute delay
         )
         config.save()
         print("🚗 [Smart Park 2.0] Saved config - Enabled: \(isEnabled), Type: \(triggerType.rawValue)")
@@ -141,7 +141,6 @@ enum SetupStep: CaseIterable {
     case welcome
     case connectionType
     case bluetoothConfig
-    case confirmationDelay
     case permissions
     case automation
     case complete
@@ -154,8 +153,6 @@ enum SetupStep: CaseIterable {
             return "How do you connect to your car?"
         case .bluetoothConfig:
             return "Bluetooth Configuration"
-        case .confirmationDelay:
-            return "Confirmation Settings"
         case .permissions:
             return "Permissions"
         case .automation:
@@ -173,8 +170,6 @@ enum SetupStep: CaseIterable {
             return "Choose how your phone connects to your car's audio system."
         case .bluetoothConfig:
             return "Enter the exact name of your car's Bluetooth connection."
-        case .confirmationDelay:
-            return "Smart Park can wait 2 minutes before confirming your parking spot."
         case .permissions:
             return "Smart Park needs location and notification permissions to work properly."
         case .automation:

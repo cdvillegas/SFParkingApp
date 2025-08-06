@@ -171,34 +171,45 @@ struct CarConnectionDetector {
                     continuation.resume(returning: hasCarPlay)
                     
                 case .bluetooth:
-                    // Check for specific Bluetooth device if name provided
-                    guard let deviceName = bluetoothDeviceName, !deviceName.isEmpty else {
-                        print("❌ [Smart Park 2.0] No Bluetooth device name provided")
-                        continuation.resume(returning: false)
-                        return
-                    }
-                    
-                    print("🚗 [Smart Park 2.0] Looking for Bluetooth device: \(deviceName)")
-                    
-                    // Check if the specific Bluetooth device is connected
-                    let hasSpecificBluetooth = currentRoute.outputs.contains { output in
-                        let bluetoothTypes: [AVAudioSession.Port] = [
-                            .bluetoothA2DP,
-                            .bluetoothHFP,
-                            .bluetoothLE
-                        ]
-                        let isBluetoothType = bluetoothTypes.contains(output.portType)
-                        let nameMatches = output.portName == deviceName
+                    // If no specific device name, check for ANY Bluetooth audio connection
+                    if let deviceName = bluetoothDeviceName, !deviceName.isEmpty {
+                        print("🚗 [Smart Park 2.0] Looking for specific Bluetooth device: \(deviceName)")
                         
-                        if isBluetoothType {
-                            print("🚗 [Smart Park 2.0] Found Bluetooth device: \(output.portName) (looking for: \(deviceName))")
+                        // Check for specific device
+                        let hasSpecificBluetooth = currentRoute.outputs.contains { output in
+                            let bluetoothTypes: [AVAudioSession.Port] = [
+                                .bluetoothA2DP,
+                                .bluetoothHFP,
+                                .bluetoothLE
+                            ]
+                            let isBluetoothType = bluetoothTypes.contains(output.portType)
+                            let nameMatches = output.portName == deviceName
+                            
+                            if isBluetoothType {
+                                print("🚗 [Smart Park 2.0] Found Bluetooth device: \(output.portName) (looking for: \(deviceName))")
+                            }
+                            
+                            return isBluetoothType && nameMatches
                         }
                         
-                        return isBluetoothType && nameMatches
+                        print("🚗 [Smart Park 2.0] Specific Bluetooth device check result: \(hasSpecificBluetooth)")
+                        continuation.resume(returning: hasSpecificBluetooth)
+                    } else {
+                        print("🚗 [Smart Park 2.0] No specific device - checking for ANY Bluetooth audio connection")
+                        
+                        // Check for any Bluetooth audio connection (simpler mode)
+                        let hasAnyBluetooth = currentRoute.outputs.contains { output in
+                            let bluetoothTypes: [AVAudioSession.Port] = [
+                                .bluetoothA2DP,
+                                .bluetoothHFP,
+                                .bluetoothLE
+                            ]
+                            return bluetoothTypes.contains(output.portType)
+                        }
+                        
+                        print("🚗 [Smart Park 2.0] Any Bluetooth audio check result: \(hasAnyBluetooth)")
+                        continuation.resume(returning: hasAnyBluetooth)
                     }
-                    
-                    print("🚗 [Smart Park 2.0] Specific Bluetooth device check result: \(hasSpecificBluetooth)")
-                    continuation.resume(returning: hasSpecificBluetooth)
                 }
             }
         }

@@ -52,8 +52,6 @@ struct SmartParkSetupView: View {
             connectionTypeStep
         case .bluetoothConfig:
             bluetoothConfigStep
-        case .confirmationDelay:
-            confirmationDelayStep
         case .permissions:
             permissionsStep
         case .automation:
@@ -140,32 +138,6 @@ struct SmartParkSetupView: View {
         }
     }
     
-    private var confirmationDelayStep: some View {
-        VStack(spacing: 24) {
-            Text(manager.setupStep.description)
-                .font(.body)
-                .multilineTextAlignment(.center)
-                .foregroundColor(.secondary)
-            
-            VStack(spacing: 16) {
-                DelayOptionCard(
-                    title: "Enable 2-Minute Delay",
-                    subtitle: "Recommended for most users",
-                    description: "Smart Park waits 2 minutes before confirming your parking spot. If you reconnect to your car within that time, it cancels the detection.",
-                    isSelected: manager.delayConfirmation,
-                    onSelect: { manager.delayConfirmation = true }
-                )
-                
-                DelayOptionCard(
-                    title: "Immediate Confirmation",
-                    subtitle: "For advanced users",
-                    description: "Smart Park immediately saves your parking spot when you disconnect. This may cause false detections if you briefly disconnect.",
-                    isSelected: !manager.delayConfirmation,
-                    onSelect: { manager.delayConfirmation = false }
-                )
-            }
-        }
-    }
     
     private var permissionsStep: some View {
         VStack(spacing: 24) {
@@ -257,7 +229,7 @@ struct SmartParkSetupView: View {
                 
                 ConfigSummaryRow(
                     label: "Confirmation",
-                    value: manager.delayConfirmation ? "2-minute delay" : "Immediate"
+                    value: "2-minute delay (for safety)"
                 )
             }
             .padding()
@@ -309,10 +281,10 @@ struct SmartParkSetupView: View {
     
     private var canProceed: Bool {
         switch manager.setupStep {
-        case .welcome, .connectionType, .confirmationDelay, .permissions, .automation, .complete:
+        case .welcome, .connectionType, .permissions, .automation, .complete:
             return true
         case .bluetoothConfig:
-            return manager.triggerType != .bluetooth || !manager.bluetoothDeviceName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            return !manager.bluetoothDeviceName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         }
     }
     
@@ -429,51 +401,6 @@ struct ConnectionTypeCard: View {
     }
 }
 
-struct DelayOptionCard: View {
-    let title: String
-    let subtitle: String
-    let description: String
-    let isSelected: Bool
-    let onSelect: () -> Void
-    
-    var body: some View {
-        Button(action: onSelect) {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(title)
-                            .font(.headline)
-                        
-                        Text(subtitle)
-                            .font(.caption)
-                            .foregroundColor(.blue)
-                            .fontWeight(.medium)
-                    }
-                    
-                    Spacer()
-                    
-                    if isSelected {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.green)
-                    }
-                }
-                
-                Text(description)
-                    .font(.body)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.leading)
-            }
-            .padding()
-            .background(isSelected ? Color.blue.opacity(0.1) : Color(.systemGray6))
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 2)
-            )
-            .cornerRadius(12)
-        }
-        .buttonStyle(.plain)
-    }
-}
 
 struct PermissionCard: View {
     let icon: String
@@ -507,6 +434,7 @@ struct PermissionCard: View {
         .cornerRadius(12)
     }
 }
+
 
 struct ConfigSummaryRow: View {
     let label: String
