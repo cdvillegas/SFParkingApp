@@ -380,7 +380,7 @@ class ParkingLocationManager: ObservableObject {
                     if let (rawSchedules, closestSchedule) = scheduleData {
                         print("📅 [Smart Park 2.0] Using TRUE geometric side detection with street centerline")
                         
-                        if let determinedSide = self.determineActualSideOfStreet(
+                        if let (determinedSide, matchedSchedule) = self.determineActualSideOfStreetWithSchedule(
                             userLocation: coordinate,
                             streetSchedules: rawSchedules,
                             closestSchedule: closestSchedule
@@ -388,7 +388,7 @@ class ParkingLocationManager: ObservableObject {
                             print("📅 [Smart Park 2.0] Geometric detection result: \(closestSchedule.streetName ?? "Unknown") - \(determinedSide)")
                             
                             let persistedSchedule = PersistedSweepSchedule(
-                                from: closestSchedule,
+                                from: matchedSchedule,
                                 side: determinedSide
                             )
                             continuation.resume(returning: persistedSchedule)
@@ -531,14 +531,29 @@ class ParkingLocationManager: ObservableObject {
         return bestSchedule
     }
     
-    private func determineActualSideOfStreet(
+    private func determineActualSideOfStreetWithSchedule(
         userLocation: CLLocationCoordinate2D,
         streetSchedules: [AggregatedSweepSchedule],
         closestSchedule: SweepSchedule
-    ) -> String? {
+    ) -> (String, SweepSchedule)? {
         print("📐 [Geometric Detection] Starting TRUE geometric side detection")
         print("📐 [Geometric Detection] User location: \(userLocation.latitude), \(userLocation.longitude)")
         print("📐 [Geometric Detection] Available schedules: \(streetSchedules.count)")
+        
+        // DEBUG: Log all available schedules to understand the data
+        for (index, schedule) in streetSchedules.enumerated() {
+            let days = [
+                ("Mon", schedule.mondayHours),
+                ("Tue", schedule.tuesdayHours), 
+                ("Wed", schedule.wednesdayHours),
+                ("Thu", schedule.thursdayHours),
+                ("Fri", schedule.fridayHours),
+                ("Sat", schedule.saturdayHours),
+                ("Sun", schedule.sundayHours)
+            ]
+            let activeDays = days.filter { !$0.1.isEmpty }.map { "\($0.0):\($0.1)" }
+            print("📐 [DEBUG] Schedule \(index): \(schedule.blockSide) - Days: \(activeDays.joined(separator: ", "))")
+        }
         
         // Find the schedule that matches our closest schedule
         guard let matchingSchedule = streetSchedules.first(where: { aggregated in
@@ -611,8 +626,8 @@ class ParkingLocationManager: ObservableObject {
         // Determine the geometric side (positive = left side when traveling along segment direction, negative = right side)
         let isLeftSide = crossProduct > 0
         
-        // Map geometric side to actual street sides based on street orientation
-        let determinedSide = mapGeometricSideToStreetSide(
+        // Map geometric side to actual street sides and get the matching schedule
+        let (determinedSide, matchedSchedule) = mapGeometricSideToStreetSideWithSchedule(
             isLeftSide: isLeftSide,
             segmentStart: segmentStart,
             segmentEnd: segmentEnd,
@@ -622,7 +637,11 @@ class ParkingLocationManager: ObservableObject {
         print("📐 [Geometric Detection] Geometric result: \(isLeftSide ? "LEFT" : "RIGHT") side")
         print("📐 [Geometric Detection] Mapped to street side: \(determinedSide ?? "UNKNOWN")")
         
-        return determinedSide
+        if let side = determinedSide, let schedule = matchedSchedule {
+            return (side, schedule)
+        } else {
+            return nil
+        }
     }
     
     private func closestPointOnLineSegment(
@@ -678,12 +697,12 @@ class ParkingLocationManager: ObservableObject {
         return vectorLine.x * vectorPoint.y - vectorLine.y * vectorPoint.x
     }
     
-    private func mapGeometricSideToStreetSide(
+    private func mapGeometricSideToStreetSideWithSchedule(
         isLeftSide: Bool,
         segmentStart: CLLocationCoordinate2D,
         segmentEnd: CLLocationCoordinate2D,
         availableSchedules: [AggregatedSweepSchedule]
-    ) -> String? {
+    ) -> (String?, SweepSchedule?) {
         // Calculate the bearing/direction of the street segment
         let deltaLon = segmentEnd.longitude - segmentStart.longitude
         let deltaLat = segmentEnd.latitude - segmentStart.latitude
@@ -724,15 +743,64 @@ class ParkingLocationManager: ObservableObject {
         
         if let match = matchingSchedule {
             print("📐 [Geometric Detection] Found matching schedule: \(match.blockSide)")
-            return match.blockSide
+            
+            // Convert the matched AggregatedSweepSchedule to SweepSchedule format
+            if let convertedSchedule = convertAggregatedToSweepSchedule(match) {
+                return (match.blockSide, convertedSchedule)
+            }
         } else {
             // Fallback: try to find any schedule that makes sense
             print("📐 [Geometric Detection] No exact match found, using best available")
             
             // If we can't find an exact match, return the calculated side for the closest available schedule
-            if let closestSchedule = availableSchedules.first {
+            if let closestSchedule = availableSchedules.first,
+               let convertedSchedule = convertAggregatedToSweepSchedule(closestSchedule) {
                 print("📐 [Geometric Detection] Using fallback schedule: \(closestSchedule.blockSide)")
-                return closestSchedule.blockSide
+                return (closestSchedule.blockSide, convertedSchedule)
+            }
+        }
+        
+        return (nil, nil)
+    }
+    
+    private func convertAggregatedToSweepSchedule(_ aggregated: AggregatedSweepSchedule) -> SweepSchedule? {
+        // Create the schedule based on the specific aggregated schedule's active days
+        let days = [
+            ("Mon", aggregated.mondayHours),
+            ("Tue", aggregated.tuesdayHours), 
+            ("Wed", aggregated.wednesdayHours),
+            ("Thu", aggregated.thursdayHours),
+            ("Fri", aggregated.fridayHours),
+            ("Sat", aggregated.saturdayHours),
+            ("Sun", aggregated.sundayHours)
+        ]
+        
+        // Find the first active day for this specific schedule
+        for (dayName, hours) in days {
+            if !hours.isEmpty {
+                let fromHour = hours.min() ?? 0
+                let toHour = (hours.max() ?? 0) + 1
+                
+                // Create a simple schedule struct for this specific day/side combination
+                return SweepSchedule(
+                    cnn: aggregated.cnn,
+                    corridor: aggregated.corridor,
+                    limits: aggregated.limits,
+                    blockside: aggregated.blockSide,
+                    fullname: aggregated.scheduleSummary,
+                    weekday: String(dayName.prefix(3)), // Convert to abbreviated form
+                    fromhour: String(fromHour),
+                    tohour: String(toHour),
+                    week1: String(aggregated.week1),
+                    week2: String(aggregated.week2),
+                    week3: String(aggregated.week3),
+                    week4: String(aggregated.week4),
+                    week5: String(aggregated.week5),
+                    holidays: "0",
+                    line: nil, // We don't need geometry here since we already have the aggregated data
+                    avgSweeperTime: aggregated.avgCitationTime,
+                    medianSweeperTime: aggregated.medianCitationTime
+                )
             }
         }
         
