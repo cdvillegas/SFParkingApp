@@ -36,9 +36,10 @@ struct ReminderRowView: View {
                         .font(.system(size: 15))
                         .foregroundColor(.secondary)
                 } else {
-                    Text("No upcoming cleaning scheduled")
+                    Text("No active schedule")
                         .font(.system(size: 15))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.secondary.opacity(0.7))
+                        .italic()
                 }
             }
             

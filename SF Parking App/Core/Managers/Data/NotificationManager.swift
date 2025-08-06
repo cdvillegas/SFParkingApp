@@ -574,7 +574,7 @@ class NotificationManager: NSObject, ObservableObject {
         }
     }
     
-    func addCustomReminder(_ reminder: CustomReminder) -> AddReminderResult {
+    func addCustomReminder(_ reminder: CustomReminder, cleaningDate: Date? = nil) -> AddReminderResult {
         guard customReminders.count < maxCustomReminders else {
             print("Maximum number of custom reminders reached (\(maxCustomReminders))")
             return .maxReached
@@ -592,10 +592,15 @@ class NotificationManager: NSObject, ObservableObject {
         let reminderType = AnalyticsManager.shared.getReminderType(from: reminder.timing)
         AnalyticsManager.shared.logReminderCreated(reminderType: reminderType, timing: timingText)
         
+        // CRITICAL FIX: Schedule the reminder immediately if we have a parking location
+        if let location = getCurrentParkingLocation() {
+            scheduleCustomReminders(for: location, cleaningDate: cleaningDate)
+        }
+        
         return .success
     }
     
-    func addCustomReminderForced(_ reminder: CustomReminder) -> Bool {
+    func addCustomReminderForced(_ reminder: CustomReminder, cleaningDate: Date? = nil) -> Bool {
         guard customReminders.count < maxCustomReminders else {
             print("Maximum number of custom reminders reached (\(maxCustomReminders))")
             return false
@@ -608,6 +613,11 @@ class NotificationManager: NSObject, ObservableObject {
         let timingText = reminder.timing.displayText
         let reminderType = AnalyticsManager.shared.getReminderType(from: reminder.timing)
         AnalyticsManager.shared.logReminderCreated(reminderType: reminderType, timing: timingText)
+        
+        // CRITICAL FIX: Schedule the reminder immediately if we have a parking location
+        if let location = getCurrentParkingLocation() {
+            scheduleCustomReminders(for: location, cleaningDate: cleaningDate)
+        }
         
         return true
     }
@@ -657,6 +667,7 @@ class NotificationManager: NSObject, ObservableObject {
             saveCustomReminders()
             
             // Always reschedule all notifications to ensure proper state
+            // (scheduleCustomReminders will handle the case where there's no schedule)
             if let location = getCurrentParkingLocation() {
                 scheduleCustomReminders(for: location)
             }
@@ -664,6 +675,25 @@ class NotificationManager: NSObject, ObservableObject {
     }
     
     // MARK: - Custom Reminder Scheduling
+    
+    /// Schedules all active custom reminders for the current parking location
+    /// Call this when a parking location is set or updated
+    /// Note: If no cleaning schedule is available, reminders will not be scheduled (this is expected behavior)
+    public func scheduleActiveRemindersForCurrentLocation(location: ParkingLocation? = nil, cleaningDate: Date? = nil) {
+        guard notificationPermissionStatus == .authorized else {
+            print("📅 Cannot schedule reminders - notifications not authorized")
+            return
+        }
+        
+        // Use provided location or try to get current location
+        guard let parkingLocation = location ?? getCurrentParkingLocation() else {
+            print("📅 Cannot schedule reminders - no parking location available")
+            return
+        }
+        
+        print("📅 Attempting to schedule reminders for location: \(parkingLocation.address)")
+        scheduleCustomReminders(for: parkingLocation, cleaningDate: cleaningDate)
+    }
     
     func scheduleCustomReminders(for location: ParkingLocation, cleaningDate: Date? = nil) {
         guard notificationPermissionStatus == .authorized else {
@@ -678,16 +708,38 @@ class NotificationManager: NSObject, ObservableObject {
         guard !activeReminders.isEmpty else { return }
         
         // Use provided cleaning date or find next cleaning date
-        let targetCleaningDate = cleaningDate ?? getNextCleaningDate(for: location) ?? Date().addingTimeInterval(86400) // Default to tomorrow
+        let targetCleaningDate: Date?
+        if let providedDate = cleaningDate {
+            targetCleaningDate = providedDate
+            print("📅 Using provided cleaning date for reminders")
+        } else if let nextDate = getNextCleaningDate(for: location) {
+            targetCleaningDate = nextDate
+            print("📅 Using detected next cleaning date for reminders")
+        } else {
+            targetCleaningDate = nil
+            print("⚠️ No cleaning schedule found - reminders will not be scheduled")
+        }
+        
+        // Only schedule if we have a valid cleaning date
+        guard let validCleaningDate = targetCleaningDate else {
+            print("📅 Skipping reminder scheduling - no street cleaning schedule available")
+            return
+        }
         
         for reminder in activeReminders {
-            scheduleCustomReminder(reminder, for: location, cleaningDate: targetCleaningDate)
+            scheduleCustomReminder(reminder, for: location, cleaningDate: validCleaningDate)
         }
         
     }
     
     private func scheduleCustomReminder(_ reminder: CustomReminder, for location: ParkingLocation, cleaningDate: Date) {
         let notificationDate: Date?
+        
+        // Debug logging
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "MMM d, yyyy h:mm a"
+        print("📅 Scheduling reminder: \(reminder.title)")
+        print("   Cleaning date: \(dateFormatter.string(from: cleaningDate))")
         
         // Calculate notification date based on reminder timing and cleaning date
         switch reminder.timing {
@@ -698,13 +750,15 @@ class NotificationManager: NSObject, ObservableObject {
         }
         
         guard let finalNotificationDate = notificationDate else {
-            print("Could not calculate notification date for reminder: \(reminder.title)")
+            print("   ❌ Could not calculate notification date")
             return
         }
         
+        print("   Notification date: \(dateFormatter.string(from: finalNotificationDate))")
+        
         // Don't schedule notifications in the past
         guard finalNotificationDate > Date() else {
-            print("Skipping past notification date for reminder: \(reminder.title)")
+            print("   ⚠️ Skipping past notification date")
             return
         }
         
@@ -733,9 +787,9 @@ class NotificationManager: NSObject, ObservableObject {
         // Schedule notification
         center.add(request) { error in
             if let error = error {
-                print("Error scheduling custom reminder notification: \(error)")
+                print("   ❌ Error scheduling notification: \(error)")
             } else {
-                print("Scheduled custom reminder: \(reminder.title) for \(finalNotificationDate)")
+                print("   ✅ Successfully scheduled notification")
             }
         }
     }

@@ -85,7 +85,7 @@ struct CustomReminderEditorView: View {
         .alert("Duplicate Reminder", isPresented: $showingDuplicateAlert) {
             Button("Keep Both") {
                 if let reminder = pendingReminder {
-                    let _ = notificationManager.addCustomReminderForced(reminder)
+                    let _ = notificationManager.addCustomReminderForced(reminder, cleaningDate: schedule.date)
                     impactFeedbackLight.impactOccurred()
                     onDismiss()
                 }
@@ -378,7 +378,7 @@ struct CustomReminderEditorView: View {
                 isActive: true
             )
             
-            let result = notificationManager.addCustomReminder(newReminder)
+            let result = notificationManager.addCustomReminder(newReminder, cleaningDate: schedule.date)
             
             switch result {
             case .success:

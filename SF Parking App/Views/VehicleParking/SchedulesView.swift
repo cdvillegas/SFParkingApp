@@ -38,9 +38,17 @@ struct SchedulesView: View {
             
             // Active Schedule Section
             if let schedule = schedule {
-                activeScheduleSection
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 20)
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("ACTIVE SCHEDULE")
+                        .font(.footnote)
+                        .fontWeight(.medium)
+                        .foregroundColor(.secondary)
+                        .padding(.horizontal, 20)
+                    
+                    activeScheduleSection
+                        .padding(.horizontal, 20)
+                }
+                .padding(.bottom, 20)
             }
             
             // SF Parking Sign - positioned relative to schedule section
@@ -77,41 +85,8 @@ struct SchedulesView: View {
     
     private var activeScheduleSection: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 16) {
-                ZStack {
-                    Circle()
-                        .fill(scheduleUrgencyColor)
-                        .frame(width: 44, height: 44)
-                    
-                    Image(systemName: "calendar")
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(.white)
-                }
-                
-                VStack(alignment: .leading, spacing: 6) {
-                    // Line 1: Street Cleaning
-                    Text("Street Cleaning")
-                        .font(.system(size: 22, weight: .bold))
-                        .foregroundColor(.primary)
-                    
-                    if let schedule = schedule {
-                        // Line 2: Date and Time
-                        Text("\(formatScheduleDate(schedule)) • \(formatScheduleTimeRange(schedule))")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.secondary)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.75)
-                        
-                        // Line 3: Time remaining
-                        Text("in \(scheduleTimeRemaining)")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(scheduleUrgencyColor)
-                    }
-                }
-                
-                Spacer()
-            }
-            .padding(16)
+            ActiveScheduleCard(schedule: schedule)
+                .padding(16)
         }
         .background(Color.clear)
         .overlay(
@@ -245,10 +220,7 @@ struct SchedulesView: View {
     private func formatScheduleDayForSign(_ dayOfWeek: String) -> String {
         // If we have the original schedule data, use it to build the proper pattern
         if let originalSchedule = originalSchedule {
-            print("🗓️ Using original schedule: \(originalSchedule.corridor ?? "Unknown")")
             return buildWeekPatternFromSchedule(originalSchedule, dayOfWeek: dayOfWeek)
-        } else {
-            print("🗓️ No original schedule available, using fallback")
         }
         
         // First try the existing complex parser
@@ -285,8 +257,7 @@ struct SchedulesView: View {
         // Get the full day name
         let fullDayName = getFullDayName(dayOfWeek)
         
-        // Debug logging
-        print("🗓️ Schedule debug: week1=\(schedule.week1 ?? "nil"), week2=\(schedule.week2 ?? "nil"), week3=\(schedule.week3 ?? "nil"), week4=\(schedule.week4 ?? "nil"), week5=\(schedule.week5 ?? "nil")")
+        // Check which weeks are active
         
         // Build array of active weeks
         var activeWeeks: [String] = []
@@ -297,8 +268,7 @@ struct SchedulesView: View {
         if schedule.week4 == "Y" || schedule.week4 == "1" { activeWeeks.append("4TH") }
         if schedule.week5 == "Y" || schedule.week5 == "1" { activeWeeks.append("5TH") }
         
-        // Debug: show what weeks are active
-        print("🗓️ Active weeks: \(activeWeeks)")
+        // Determine the appropriate display format
         
         // If no weeks specified or 4+ weeks active, show just the day
         if activeWeeks.isEmpty || activeWeeks.count >= 4 {
@@ -307,9 +277,7 @@ struct SchedulesView: View {
         
         // Build the pattern like "1ST and 3RD WEDNESDAY"
         let weekPattern = activeWeeks.joined(separator: " and ")
-        let result = "\(weekPattern) \(fullDayName)"
-        print("🗓️ Final result: \(result)")
-        return result
+        return "\(weekPattern) \(fullDayName)"
     }
     
     private func getFullDayName(_ dayOfWeek: String) -> String {
@@ -440,16 +408,7 @@ struct SchedulesView: View {
     }
     
     private var scheduleUrgencyColor: Color {
-        guard let schedule = schedule else { return .gray }
-        let hoursUntil = schedule.date.timeIntervalSinceNow / 3600
-        
-        if hoursUntil < 2 {
-            return .red
-        } else if hoursUntil < 24 {
-            return .orange
-        } else {
-            return .green
-        }
+        return schedule?.urgencyColor ?? .gray
     }
     
     private var scheduleUrgencyText: String {
