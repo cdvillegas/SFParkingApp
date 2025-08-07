@@ -3,42 +3,59 @@ import SwiftUI
 struct SmartParkSetupView: View {
     @StateObject private var manager = SmartParkManager.shared
     @Environment(\.dismiss) private var dismiss
+    @State private var impactFeedbackLight = UIImpactFeedbackGenerator(style: .light)
     
     var body: some View {
-        NavigationView {
-            VStack(spacing: 0) {
-                // Progress indicator
-                ProgressView(value: Double(currentStepIndex), total: Double(totalSteps - 1))
-                    .progressViewStyle(LinearProgressViewStyle())
-                    .padding()
-                
-                // Current step content
-                ScrollView {
-                    VStack(spacing: 24) {
-                        stepContent
-                    }
-                    .padding()
+        VStack(spacing: 0) {
+            // Fixed header - matching SmartParkSettingsView style
+            headerSection
+                .padding(.horizontal, 20)
+                .padding(.top, 40)
+                .padding(.bottom, 24)
+            
+            // Scrollable content
+            ScrollView {
+                VStack(spacing: 32) {
+                    stepContent
                 }
-                
-                Spacer()
-                
-                // Navigation buttons
-                navigationButtons
-                    .padding()
+                .padding(.horizontal, 20)
             }
-            .navigationTitle(manager.setupStep.title)
-            .navigationBarTitleDisplayMode(.large)
-            .navigationBarBackButtonHidden(true)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Cancel") {
-                        manager.cancelSetup()
-                        dismiss()
-                    }
-                    .foregroundColor(.red)
+            .mask(
+                VStack(spacing: 0) {
+                    // Top fade
+                    LinearGradient(
+                        gradient: Gradient(colors: [Color.clear, Color.black]),
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .frame(height: 8)
+                    
+                    Color.black
+                    
+                    // Bottom fade
+                    LinearGradient(
+                        gradient: Gradient(colors: [Color.black, Color.clear]),
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .frame(height: 40)
                 }
+            )
+            
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.clear)
+        .overlay(alignment: .bottom) {
+            // Fixed bottom navigation - only show for connection type step
+            if manager.setupStep == .connectionType {
+                navigationButtons
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 20)
             }
         }
+        .presentationBackground(.thinMaterial)
+        .presentationBackgroundInteraction(.enabled)
     }
     
     // MARK: - Step Content
@@ -46,349 +63,279 @@ struct SmartParkSetupView: View {
     @ViewBuilder
     private var stepContent: some View {
         switch manager.setupStep {
-        case .welcome:
-            welcomeStep
         case .connectionType:
             connectionTypeStep
-        case .permissions:
-            permissionsStep
-        case .shortcut:
-            shortcutStep
-        case .automation:
-            automationStep
-        case .complete:
-            completeStep
-        }
-    }
-    
-    private var welcomeStep: some View {
-        VStack(spacing: 24) {
-            Image(systemName: "car.fill")
-                .font(.system(size: 60))
-                .foregroundColor(.blue)
-            
-            Text("Welcome to Smart Park")
-                .font(.title2)
-                .fontWeight(.bold)
-            
-            Text(manager.setupStep.description)
-                .font(.body)
-                .multilineTextAlignment(.center)
-                .foregroundColor(.secondary)
-            
-            // How It Works section
-            VStack(alignment: .leading, spacing: 16) {
-                Text("How It Works")
-                    .font(.headline)
-                
-                HowItWorksRow(
-                    number: 1,
-                    title: "Uses iOS Shortcuts",
-                    description: "Built with iOS Shortcuts for automation"
-                )
-                
-                HowItWorksRow(
-                    number: 2,
-                    title: "Car Disconnection", 
-                    description: "Detects when you disconnect from CarPlay or Bluetooth"
-                )
-                
-                HowItWorksRow(
-                    number: 3,
-                    title: "Safety Wait",
-                    description: "Waits 2 minutes to avoid false detections"
-                )
-                
-                HowItWorksRow(
-                    number: 4,
-                    title: "Location Saved",
-                    description: "Saves your parking spot and updates sweep reminders"
-                )
-            }
-            .padding()
-            .background(Color(.systemGray6))
-            .cornerRadius(12)
+        case .instructions:
+            instructionsStep
         }
     }
     
     private var connectionTypeStep: some View {
         VStack(spacing: 24) {
-            Text(manager.setupStep.description)
-                .font(.body)
-                .multilineTextAlignment(.center)
-                .foregroundColor(.secondary)
+            VStack(spacing: 16) {
+                Text("Choose how Smart Park should detect when you've parked")
+                    .font(.title3)
+                    .fontWeight(.medium)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+            }
             
             VStack(spacing: 16) {
                 ConnectionTypeCard(
                     type: .carPlay,
                     isSelected: manager.triggerType == .carPlay,
-                    onSelect: { manager.triggerType = .carPlay }
+                    onSelect: { 
+                        impactFeedbackLight.impactOccurred()
+                        print("🔥 Selected CarPlay, setting triggerType")
+                        manager.triggerType = .carPlay 
+                    }
                 )
                 
                 ConnectionTypeCard(
                     type: .bluetooth,
                     isSelected: manager.triggerType == .bluetooth,
-                    onSelect: { manager.triggerType = .bluetooth }
-                )
-            }
-        }
-    }
-    
-    
-    
-    private var permissionsStep: some View {
-        VStack(spacing: 24) {
-            Text(manager.setupStep.description)
-                .font(.body)
-                .multilineTextAlignment(.center)
-                .foregroundColor(.secondary)
-            
-            VStack(spacing: 16) {
-                PermissionCard(
-                    icon: "location.fill",
-                    title: "Location Access",
-                    description: "Required to save your parking location",
-                    status: .granted // TODO: Check actual permission status
-                )
-                
-                PermissionCard(
-                    icon: "bell.fill",
-                    title: "Notifications",
-                    description: "Alerts you when parking is detected",
-                    status: .granted // TODO: Check actual permission status
-                )
-            }
-        }
-    }
-    
-    private var shortcutStep: some View {
-        VStack(spacing: 24) {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Follow these steps:")
-                    .font(.headline)
-                
-                ForEach(Array(manager.createShortcutInstructions().enumerated()), id: \.offset) { index, instruction in
-                    HStack(alignment: .top, spacing: 12) {
-                        Text("\(index + 1)")
-                            .font(.caption)
-                            .fontWeight(.bold)
-                            .foregroundColor(.white)
-                            .frame(width: 24, height: 24)
-                            .background(Color.blue)
-                            .clipShape(Circle())
-                        
-                        Text(instruction)
-                            .font(.body)
-                            .fixedSize(horizontal: false, vertical: true)
-                        
-                        Spacer()
+                    onSelect: { 
+                        impactFeedbackLight.impactOccurred()
+                        print("🔥 Selected Bluetooth, setting triggerType")
+                        manager.triggerType = .bluetooth 
                     }
-                }
+                )
             }
-            .padding()
-            .background(Color(.systemGray6))
-            .cornerRadius(12)
-            
-            Button("Open Shortcuts App") {
-                if let url = URL(string: "shortcuts://") {
-                    UIApplication.shared.open(url)
-                }
-            }
-            .buttonStyle(.borderedProminent)
         }
     }
     
-    private var automationStep: some View {
-        VStack(spacing: 24) {
-            // Special note for Bluetooth users
-            if manager.triggerType == .bluetooth {
-                HStack {
-                    Image(systemName: "exclamationmark.circle.fill")
-                        .foregroundColor(.orange)
-                    Text("Important: Select YOUR CAR'S Bluetooth from the device list")
-                        .font(.footnote)
-                        .fontWeight(.medium)
-                }
-                .padding()
-                .background(Color.orange.opacity(0.1))
-                .cornerRadius(8)
-            }
-            
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Now create the automation:")
-                    .font(.headline)
-                
-                ForEach(Array(manager.createAutomationInstructions().enumerated()), id: \.offset) { index, instruction in
-                    HStack(alignment: .top, spacing: 12) {
-                        Text("\(index + 1)")
-                            .font(.caption)
-                            .fontWeight(.bold)
-                            .foregroundColor(.white)
-                            .frame(width: 24, height: 24)
-                            .background(Color.blue)
-                            .clipShape(Circle())
-                        
-                        Text(instruction)
-                            .font(.body)
-                            .fixedSize(horizontal: false, vertical: true)
-                        
-                        Spacer()
-                    }
-                }
-            }
-            .padding()
-            .background(Color(.systemGray6))
-            .cornerRadius(12)
-            
-            Button("Open Shortcuts App") {
-                if let url = URL(string: "shortcuts://create-automation") {
-                    UIApplication.shared.open(url)
-                }
-            }
-            .buttonStyle(.borderedProminent)
-        }
-    }
-    
-    private var completeStep: some View {
-        VStack(spacing: 24) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 60))
-                .foregroundColor(.green)
-            
-            Text("All Set!")
-                .font(.title2)
-                .fontWeight(.bold)
-            
-            Text(manager.setupStep.description)
-                .font(.body)
-                .multilineTextAlignment(.center)
-                .foregroundColor(.secondary)
-            
-            // Show configured connections
-            if !manager.configuredConnections.isEmpty {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Configured Connections:")
-                        .font(.headline)
+    private var instructionsStep: some View {
+        ScrollView {
+            VStack(spacing: 32) {
+                // Helper button to open Shortcuts app
+                VStack(spacing: 12) {
+                    Text("Ready to set up Smart Park? Let's start by opening the Shortcuts app.")
+                        .font(.system(size: 18))
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
                     
-                    ForEach(Array(manager.configuredConnections), id: \.self) { connection in
-                        HStack {
-                            Image(systemName: connection == .carPlay ? "carplay" : "bluetooth")
-                                .foregroundColor(.blue)
-                            Text(connection.rawValue)
-                                .font(.body)
-                            Spacer()
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.green)
+                    Button(action: {
+                        impactFeedbackLight.impactOccurred()
+                        if let url = URL(string: "shortcuts://") {
+                            UIApplication.shared.open(url)
                         }
-                        .padding(.horizontal)
+                    }) {
+                        Text("Open Shortcuts App")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 56)
+                            .background(Color.blue)
+                            .cornerRadius(16)
                     }
-                    
-                    Button("Set Up Another Connection") {
-                        // Go back to connection type selection
-                        manager.setupStep = .connectionType
-                    }
-                    .foregroundColor(.blue)
-                    .padding(.top, 8)
                 }
-                .padding()
-                .background(Color(.systemGray6))
-                .cornerRadius(12)
+                
+                // Setup instructions
+                VStack(alignment: .leading, spacing: 32) {
+                    let instructions = getSetupInstructions()
+                    
+                    ForEach(Array(instructions.enumerated()), id: \.offset) { index, instruction in
+                        HStack(alignment: .center, spacing: 16) {
+                            // Step number - centered
+                            ZStack {
+                                Circle()
+                                    .fill(Color.blue)
+                                    .frame(width: 32, height: 32)
+                                
+                                Text("\(index + 1)")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.white)
+                            }
+                            
+                            // Instruction text - aligned to left of number
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(instruction.title)
+                                    .font(.system(size: 18, weight: .semibold))
+                                    .foregroundColor(.primary)
+                                
+                                if let subtitle = instruction.subtitle {
+                                    Text(subtitle)
+                                        .font(.system(size: 16))
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                            
+                            Spacer()
+                        }
+                    }
+                }
+                .padding(24)
+                .background(Color.clear)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(Color.secondary.opacity(0.2), lineWidth: 0.5)
+                )
+                .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
+                
+                // Done button at bottom
+                Button(action: {
+                    let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                    impactFeedback.impactOccurred()
+                    
+                    // Mark setup as completed
+                    manager.completeSetup()
+                    UserDefaults.standard.set(true, forKey: "smartParkSetupCompleted")
+                    UserDefaults.standard.set(true, forKey: "smartParkEnabled")
+                    manager.configuredConnections.insert(manager.triggerType)
+                    
+                    dismiss()
+                }) {
+                    Text("Done")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 56)
+                        .background(Color.blue)
+                        .cornerRadius(16)
+                }
+                
+                Spacer(minLength: 10)
+            }
+            .padding(.top, 20)
+            .padding(.bottom, 20)
+        }
+    }
+    
+    private func getSetupInstructions() -> [(title: String, subtitle: String?)] {
+        let connectionType = manager.triggerType.rawValue
+        
+        if manager.triggerType == .carPlay {
+            return [
+                ("Navigate to 'Automations'", "Tap the 'Automation' tab at the bottom of the Shortcuts app"),
+                ("Create New Automation", "Tap 'New Automation' then select 'CarPlay'"),
+                ("Configure Trigger", "Make sure only 'Is Disconnected' is selected and 'Run Immediately' is checked"),
+                ("Add Smart Park Action", "Tap 'New Blank Automation' and search for 'Smart Park'"),
+                ("Finalize Settings", "Deselect 'Show When Run' then tap 'Done'")
+            ]
+        } else {
+            return [
+                ("Navigate to 'Automations'", "Tap the 'Automation' tab at the bottom of the Shortcuts app"),
+                ("Create New Automation", "Tap 'New Automation' then select 'Bluetooth'"),
+                ("Select Your Car", "Choose your vehicle's Bluetooth from the device list"),
+                ("Configure Trigger", "Make sure only 'Is Disconnected' is selected and 'Run Immediately' is checked"),
+                ("Add Smart Park Action", "Tap 'New Blank Automation' and search for 'Smart Park'"),
+                ("Finalize Settings", "Deselect 'Show When Run' then tap 'Done'")
+            ]
+        }
+    }
+    
+    
+    // MARK: - View Components
+    
+    private var headerSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(stepTitle)
+                    .font(.system(size: 32, weight: .bold))
+                    .foregroundColor(.primary)
+                
+                Spacer()
+                
+                Button(action: {
+                    impactFeedbackLight.impactOccurred()
+                    manager.cancelSetup()
+                    dismiss()
+                }) {
+                    Text("Cancel")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.secondary)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(
+                            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                .fill(.ultraThinMaterial)
+                        )
+                }
             }
         }
     }
     
     // MARK: - Navigation
     
-    @ViewBuilder
     private var navigationButtons: some View {
-        if manager.setupStep == .welcome {
-            // Special layout for welcome screen - centered setup button
-            VStack(spacing: 16) {
-                Button("Set Up Smart Park") {
-                    nextStep()
-                }
-                .font(.headline)
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color.blue)
-                .cornerRadius(12)
-            }
-        } else {
-            // All screens - consistent back and main action button with fixed positioning
-            HStack(spacing: 12) {
-                // Always reserve space for back button to maintain consistent positioning
+        HStack(spacing: 12) {
+            Button(action: {
+                impactFeedbackLight.impactOccurred()
                 if currentStepIndex > 0 {
-                    Button("Back") {
-                        previousStep()
-                    }
-                    .buttonStyle(.bordered)
-                    .frame(height: 44)
-                    .frame(maxWidth: .infinity)
+                    previousStep()
                 } else {
-                    // Invisible spacer to maintain positioning when no back button
-                    Spacer()
-                        .frame(height: 44)
-                        .frame(maxWidth: .infinity)
+                    // If on first step, dismiss
+                    manager.cancelSetup()
+                    dismiss()
                 }
-                
-                Button(isLastStep ? "Complete Setup" : "Continue") {
-                    if isLastStep {
-                        manager.completeSetup()
-                        dismiss()
-                    } else {
-                        nextStep()
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-                .frame(height: 44)
-                .frame(maxWidth: .infinity)
-                .disabled(!canProceed)
+            }) {
+                Text("Back")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(.primary)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 56)
+                    .background(Color(.systemGray5))
+                    .cornerRadius(16)
             }
+            
+            Button(action: {
+                print("🔥 Continue button pressed! Current step: \(manager.setupStep)")
+                let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                impactFeedback.impactOccurred()
+                
+                print("🔥 Calling nextStep()...")
+                nextStep()
+                print("🔥 After nextStep(), new step: \(manager.setupStep)")
+            }) {
+                Text("Continue")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 56)
+                    .background(canProceed ? Color.blue : Color.secondary)
+                    .cornerRadius(16)
+            }
+            // .disabled(!canProceed) // Temporarily disabled for debugging
         }
     }
     
     // MARK: - Computed Properties
     
     private var currentStepIndex: Int {
-        let allSteps = SetupStep.allCases
-        return allSteps.firstIndex(of: manager.setupStep) ?? 0
-    }
-    
-    private var totalSteps: Int {
-        SetupStep.allCases.count
+        return SetupStep.allCases.firstIndex(of: manager.setupStep) ?? 0
     }
     
     private var isLastStep: Bool {
-        manager.setupStep == .complete
+        manager.setupStep == .instructions
     }
     
     private var canProceed: Bool {
-        // All steps can proceed without additional validation
+        // Always allow proceeding - user can change connection type if needed
         return true
+    }
+    
+    private var stepTitle: String {
+        return "Smart Park Setup"
     }
     
     // MARK: - Navigation Methods
     
     private func nextStep() {
-        let allSteps = SetupStep.allCases
-        let currentIndex = currentStepIndex
+        print("🔥 nextStep() called from step: \(manager.setupStep)")
         
-        if currentIndex < allSteps.count - 1 {
-            let nextIndex = currentIndex + 1
-            
-            // If we just finished automation, mark this connection type as configured
-            if manager.setupStep == .automation {
-                manager.configuredConnections.insert(manager.triggerType)
-            }
-            
-            manager.setupStep = allSteps[nextIndex]
+        // From connectionType, go to instructions
+        if manager.setupStep == .connectionType {
+            print("🔥 Moving from connectionType to instructions")
+            manager.setupStep = .instructions
+            return
         }
+        
+        print("🔥 No valid next step found for: \(manager.setupStep)")
     }
     
     private func previousStep() {
         let allSteps = SetupStep.allCases
-        let currentIndex = currentStepIndex
+        let currentIndex = allSteps.firstIndex(of: manager.setupStep) ?? 0
         
         if currentIndex > 0 {
             let previousIndex = currentIndex - 1
@@ -399,62 +346,6 @@ struct SmartParkSetupView: View {
 
 // MARK: - Supporting Views
 
-struct HowItWorksRow: View {
-    let number: Int
-    let title: String
-    let description: String
-    
-    var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            Text("\(number)")
-                .font(.caption)
-                .fontWeight(.bold)
-                .foregroundColor(.white)
-                .frame(width: 24, height: 24)
-                .background(Color.blue)
-                .clipShape(Circle())
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                
-                Text(description)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            
-            Spacer()
-        }
-    }
-}
-
-struct FeatureRow: View {
-    let icon: String
-    let title: String
-    let description: String
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .foregroundColor(.blue)
-                .frame(width: 24)
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                
-                Text(description)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            
-            Spacer()
-        }
-    }
-}
-
 struct ConnectionTypeCard: View {
     let type: SmartParkTriggerType
     let isSelected: Bool
@@ -462,37 +353,45 @@ struct ConnectionTypeCard: View {
     
     var body: some View {
         Button(action: onSelect) {
-            HStack {
-                HStack {
-                    Image(systemName: type == .carPlay ? "carplay" : "bluetooth")
-                        .font(.title2)
-                        .foregroundColor(.blue)
+            HStack(spacing: 16) {
+                ZStack {
+                    Circle()
+                        .fill(isSelected ? Color.blue : Color.secondary.opacity(0.1))
+                        .frame(width: 40, height: 40)
                     
+                    Image(type == .carPlay ? "Carplay" : "Bluetooth")
+                        .resizable()
+                        .renderingMode(.template)
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 20, height: 20)
+                        .foregroundColor(isSelected ? .white : .secondary)
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
                     Text(type.rawValue)
-                        .font(.headline)
-                    
-                    Spacer()
-                    
-                    if isSelected {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.blue)
-                    }
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.primary)
                 }
                 
                 Spacer()
+                
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(.blue)
+                }
             }
-            .padding()
-            .background(isSelected ? Color.blue.opacity(0.1) : Color(.systemGray6))
+            .padding(20)
+            .frame(maxWidth: .infinity)
+            .background(Color.clear)
             .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(isSelected ? Color.blue : Color.secondary.opacity(0.2), lineWidth: isSelected ? 2 : 0.5)
             )
-            .cornerRadius(12)
+            .shadow(color: Color.black.opacity(isSelected ? 0.2 : 0.1), radius: isSelected ? 12 : 6, x: 0, y: isSelected ? 6 : 3)
         }
-        .buttonStyle(.plain)
     }
 }
-
 
 struct PermissionCard: View {
     let icon: String
@@ -502,45 +401,50 @@ struct PermissionCard: View {
     
     var body: some View {
         HStack(spacing: 16) {
-            Image(systemName: icon)
-                .font(.title2)
-                .foregroundColor(.blue)
-                .frame(width: 32)
+            ZStack {
+                Circle()
+                    .fill(statusColor.opacity(0.1))
+                    .frame(width: 40, height: 40)
+                
+                Image(systemName: icon)
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(statusColor)
+            }
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.headline)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.primary)
                 
                 Text(description)
-                    .font(.body)
+                    .font(.system(size: 15))
                     .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             
             Spacer()
             
             Image(systemName: status == .granted ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
+                .font(.system(size: 20))
                 .foregroundColor(status == .granted ? .green : .orange)
         }
-        .padding()
-        .background(Color(.systemGray6))
-        .cornerRadius(12)
+        .padding(20)
+        .background(Color.clear)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Color.secondary.opacity(0.2), lineWidth: 0.5)
+        )
+        .shadow(color: Color.black.opacity(0.1), radius: 6, x: 0, y: 3)
     }
-}
-
-
-struct ConfigSummaryRow: View {
-    let label: String
-    let value: String
     
-    var body: some View {
-        HStack {
-            Text(label)
-                .fontWeight(.medium)
-            
-            Spacer()
-            
-            Text(value)
-                .foregroundColor(.secondary)
+    private var statusColor: Color {
+        switch status {
+        case .granted:
+            return .green
+        case .denied:
+            return .red
+        case .notRequested:
+            return .blue
         }
     }
 }

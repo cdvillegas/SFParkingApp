@@ -15,7 +15,7 @@ class SmartParkManager: ObservableObject {
     
     // Setup progress tracking
     @Published var isSetupComplete: Bool = false
-    @Published var setupStep: SetupStep = .welcome
+    @Published var setupStep: SetupStep = .connectionType
     
     // Track which connection types have been configured
     @Published var configuredConnections: Set<SmartParkTriggerType> = []
@@ -58,7 +58,7 @@ class SmartParkManager: ObservableObject {
     
     func startSetup() {
         showSetup = true
-        setupStep = .welcome
+        setupStep = .connectionType
     }
     
     func completeSetup() {
@@ -72,7 +72,7 @@ class SmartParkManager: ObservableObject {
     
     func cancelSetup() {
         showSetup = false
-        setupStep = .welcome
+        setupStep = .connectionType
     }
     
     // MARK: - Feature Toggle
@@ -153,44 +153,24 @@ class SmartParkManager: ObservableObject {
 
 // MARK: - Setup Steps
 enum SetupStep: CaseIterable {
-    case welcome
-    case permissions
-    case shortcut
     case connectionType
-    case automation
-    case complete
+    case instructions
     
     var title: String {
         switch self {
-        case .welcome:
-            return "Welcome"
         case .connectionType:
             return "Connection Type"
-        case .permissions:
-            return "Permissions"
-        case .shortcut:
-            return "Add Shortcut"
-        case .automation:
-            return "Create Automation"
-        case .complete:
-            return "Complete"
+        case .instructions:
+            return "Setup Instructions"
         }
     }
     
     var description: String {
         switch self {
-        case .welcome:
-            return "It automatically saves your location and updates your sweep reminders whenever you park so you don't have to remember to do it!"
         case .connectionType:
-            return "Select your car's connection type. You can set up multiple connections if needed."
-        case .permissions:
-            return "Grant required permissions."
-        case .shortcut:
-            return "First, add Smart Park to your shortcuts."
-        case .automation:
-            return "Now create the automation trigger."
-        case .complete:
-            return "Smart Park is ready to use!"
+            return "Select your car's connection type."
+        case .instructions:
+            return "Follow these steps to set up Smart Park automation."
         }
     }
     

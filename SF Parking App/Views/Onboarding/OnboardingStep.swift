@@ -13,7 +13,6 @@ struct OnboardingStep {
         case location
         case notifications
         case motion
-        case smartParking
     }
     
     static let allSteps: [OnboardingStep] = [
@@ -41,14 +40,6 @@ struct OnboardingStep {
             permissionType: .notifications,
             buttonText: "Enable Notifications"
         ),
-        OnboardingStep(
-            title: "Automatic Parking Detection",
-            description: "Automatically update your parking location using motion and vehicle connection data.",
-            systemImage: "sparkles",
-            color: .blue,
-            permissionType: .smartParking,
-            buttonText: "Enable Smart Park"
-        )
     ]
 
 }

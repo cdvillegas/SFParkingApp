@@ -224,7 +224,7 @@ struct VehicleParkingView: View {
             }
         }
         .sheet(isPresented: $showingAutoParkingSettings) {
-            SmartParkHubView()
+            SmartParkSettingsView()
         }
         .sheet(isPresented: $showingParkingDetailsSheet) {
             if let vehicle = viewModel.vehicleManager.currentVehicle,
@@ -477,11 +477,20 @@ struct VehicleParkingView: View {
     
     
     private var smartParkingIsOn: Bool {
-        return ParkingDetector.shared.isMonitoring
+        let hasSetup = UserDefaults.standard.bool(forKey: "smartParkSetupCompleted")
+        let isEnabled = UserDefaults.standard.object(forKey: "smartParkEnabled") == nil ? true : UserDefaults.standard.bool(forKey: "smartParkEnabled")
+        return hasSetup && isEnabled
     }
     
     private var smartParkingStatus: String {
-        return smartParkingIsOn ? "Active" : "Disabled"
+        let hasSetup = UserDefaults.standard.bool(forKey: "smartParkSetupCompleted")
+        if !hasSetup {
+            return "Needs Setup"
+        } else if !smartParkingIsOn {
+            return "Disabled"
+        } else {
+            return "Enabled"
+        }
     }
     
     // MARK: - Map Control Buttons

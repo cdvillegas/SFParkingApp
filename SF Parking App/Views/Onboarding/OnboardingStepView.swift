@@ -191,8 +191,6 @@ struct OnboardingStepView: View {
             requestNotificationPermission()
         case .motion:
             requestMotionPermission()
-        case .smartParking:
-            enableSmartParking()
         }
     }
     
@@ -270,60 +268,6 @@ struct OnboardingStepView: View {
             // If we haven't moved to next step yet, assume permission was denied
             if !self.showingPermissionDeniedAlert {
                 self.showPermissionDeniedAlert(message: "Motion access is required for Smart Parking to work. Please enable it in Settings.")
-                AnalyticsManager.shared.logPermissionDenied(permissionType: "motion")
-            }
-        }
-    }
-    
-    private func enableSmartParking() {
-        // Check if motion is available
-        guard CMMotionActivityManager.isActivityAvailable() else {
-            showPermissionDeniedAlert(message: "Motion tracking is not available on this device. Smart Parking cannot be enabled.")
-            return
-        }
-        
-        // Check current permission status
-        let currentStatus = CMMotionActivityManager.authorizationStatus()
-        
-        if currentStatus == .authorized {
-            // Already authorized, enable Smart Parking
-            ParkingDetector.shared.startMonitoring()
-            let successFeedback = UINotificationFeedbackGenerator()
-            successFeedback.notificationOccurred(.success)
-            AnalyticsManager.shared.logPermissionGranted(permissionType: "smart_parking")
-            onNext()
-            return
-        }
-        
-        if currentStatus == .denied || currentStatus == .restricted {
-            showPermissionDeniedAlert(message: "Motion access was denied. Smart Parking requires motion permission to detect when you've parked. Please enable it in Settings.")
-            return
-        }
-        
-        // Request motion permission
-        let motionManager = CMMotionActivityManager()
-        
-        motionManager.startActivityUpdates(to: .main) { activity in
-            // Stop immediately after permission is granted
-            motionManager.stopActivityUpdates()
-            
-            DispatchQueue.main.async {
-                // Enable Smart Parking now that we have permission
-                ParkingDetector.shared.startMonitoring()
-                
-                let successFeedback = UINotificationFeedbackGenerator()
-                successFeedback.notificationOccurred(.success)
-                
-                AnalyticsManager.shared.logPermissionGranted(permissionType: "smart_parking")
-                self.onNext()
-            }
-        }
-        
-        // Handle timeout for permission request
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
-            if CMMotionActivityManager.authorizationStatus() != .authorized {
-                motionManager.stopActivityUpdates()
-                self.showPermissionDeniedAlert(message: "Motion access is required for Smart Parking to automatically detect when you've parked. Please enable it in Settings.")
                 AnalyticsManager.shared.logPermissionDenied(permissionType: "motion")
             }
         }

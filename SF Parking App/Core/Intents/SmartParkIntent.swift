@@ -64,12 +64,20 @@ struct SmartParkIntent: AppIntent {
         print("🚗 [Smart Park 2.0] Main intent triggered")
         
         // Check if Smart Park 2.0 is enabled
-        let config = SmartParkConfig.current
-        guard config.isEnabled else {
-            print("🚗 [Smart Park 2.0] Feature is disabled")
-            return .result(dialog: "Smart Park 2.0 is disabled. Enable it in the SF Parking App settings.")
+        let hasSetup = UserDefaults.standard.bool(forKey: "smartParkSetupCompleted")
+        let isEnabled = UserDefaults.standard.object(forKey: "smartParkEnabled") == nil ? hasSetup : UserDefaults.standard.bool(forKey: "smartParkEnabled")
+        
+        guard hasSetup else {
+            print("🚗 [Smart Park 2.0] Smart Park not set up")
+            return .result(dialog: "Smart Park needs to be set up first in the SF Parking App.")
         }
         
+        guard isEnabled else {
+            print("🚗 [Smart Park 2.0] Feature is disabled")
+            return .result(dialog: "Smart Park is disabled. Enable it in the SF Parking App settings.")
+        }
+        
+        let config = SmartParkConfig.current
         print("🚗 [Smart Park 2.0] Config - Type: \(config.triggerType.rawValue), Delay: \(config.delayConfirmation)")
         
         // Check if we're actually disconnected from the car
@@ -99,6 +107,9 @@ struct SmartParkIntent: AppIntent {
             triggerType: parkingTriggerType,
             delayConfirmation: false // TESTING: Force immediate confirmation
         )
+        
+        // Track successful Smart Park usage
+        UserDefaults.standard.set(Date(), forKey: "smartParkLastTriggered")
         
         return .result(dialog: "Parking location saved at \(savedLocation.address ?? "current location")")
     }

@@ -45,7 +45,7 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $smartParkManager.showSetup) {
-            SmartParkSetupView()
+            SmartParkSettingsView()
         }
     }
 }
