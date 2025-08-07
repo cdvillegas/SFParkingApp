@@ -29,6 +29,13 @@ struct ActiveScheduleCard: View {
                         .foregroundColor(.secondary)
                         .lineLimit(1)
                     
+                    // Line 2.5: Predicted sweep time (optional)
+                    if let estimatedTime = schedule.estimatedSweeperTime {
+                        Text("Typically arrives ~\(estimatedTime)")
+                            .font(.system(size: 13))
+                            .foregroundColor(.orange)
+                    }
+                    
                     // Line 3: Time remaining (with extra spacing above)
                     Text(schedule.formatTimeUntil())
                         .font(.system(size: 15))
