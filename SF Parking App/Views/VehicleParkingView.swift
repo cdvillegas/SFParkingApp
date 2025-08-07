@@ -659,9 +659,9 @@ struct VehicleParkingView: View {
     // MARK: - Bottom Button Group
     
     private var bottomTabBar: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 12) {
             // Status indicators group
-            HStack(spacing: 8) {
+            HStack(spacing: 12) {
                 // Smart Park Status
                 Button(action: {
                     let impactFeedback = UIImpactFeedbackGenerator(style: .light)
