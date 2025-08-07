@@ -590,6 +590,57 @@ class NotificationManager: NSObject, ObservableObject {
         }
     }
     
+    func sendParkingConfirmationRequired(for location: SmartParkLocation) async {
+        print("🔔 [Smart Park] Sending parking confirmation required for: \(location.address ?? "Unknown")")
+        
+        guard notificationPermissionStatus == .authorized else {
+            print("⚠️ Cannot send Smart Park confirmation notification - permission not granted")
+            return
+        }
+        
+        let content = UNMutableNotificationContent()
+        content.title = "Confirm Your Parking Location"
+        
+        let triggerTypeText = location.triggerType == "carPlay" ? "CarPlay" : "Bluetooth"
+        let deviceText = location.bluetoothDeviceName != nil ? " (\(location.bluetoothDeviceName!))" : ""
+        
+        if let address = location.address {
+            content.body = "Smart Park detected parking at \(address) via \(triggerTypeText)\(deviceText) disconnect. Tap to confirm or dismiss."
+        } else {
+            content.body = "Smart Park detected parking via \(triggerTypeText)\(deviceText) disconnect. Tap to confirm or dismiss."
+        }
+        
+        content.categoryIdentifier = "SMART_PARK_CONFIRMATION"
+        content.sound = .default
+        
+        // Add location data to userInfo for handling taps and actions
+        content.userInfo = [
+            "type": "smart_park_confirmation_required",
+            "parkingId": location.id,
+            "latitude": location.coordinate.latitude,
+            "longitude": location.coordinate.longitude,
+            "address": location.address ?? "",
+            "triggerType": location.triggerType,
+            "bluetoothDeviceName": location.bluetoothDeviceName ?? "",
+            "timestamp": location.timestamp.timeIntervalSince1970
+        ]
+        
+        // Use immediate trigger for confirmation notifications
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 0.1, repeats: false)
+        let request = UNNotificationRequest(
+            identifier: "smart_park_confirmation_required_\(location.id)",
+            content: content,
+            trigger: trigger
+        )
+        
+        do {
+            try await center.add(request)
+            print("✅ Smart Park confirmation required notification sent for \(location.address ?? "location")")
+        } catch {
+            print("❌ Failed to send Smart Park confirmation required notification: \(error)")
+        }
+    }
+    
     
     // MARK: - Custom Reminders Management
     
@@ -1043,6 +1094,9 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
             case "smart_park_confirmation", "smart_park_delay":
                 print("📱 Handling Smart Park notification tap")
                 handleSmartParkNotificationTap(userInfo: userInfo)
+            case "smart_park_confirmation_required":
+                print("📱 Handling Smart Park confirmation required tap")
+                handleSmartParkConfirmationRequiredTap(userInfo: userInfo)
             default:
                 break
             }
@@ -1134,6 +1188,19 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
         }
         
         print("📱 Posted notification to open Smart Park confirmation screen")
+    }
+    
+    private func handleSmartParkConfirmationRequiredTap(userInfo: [AnyHashable: Any]) {
+        // Handle tapping the confirmation required notification
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(
+                name: .smartParkConfirmationRequired,
+                object: nil,
+                userInfo: userInfo
+            )
+        }
+        
+        print("📱 Posted notification to show Smart Park confirmation required UI")
     }
     
     private func handleSmartParkConfirmAction(userInfo: [AnyHashable: Any]) {
@@ -1246,6 +1313,7 @@ extension Notification.Name {
     static let openParkingConfirmation = Notification.Name("openParkingConfirmation")
     static let smartParkLocationSaved = Notification.Name("smartParkLocationSaved")
     static let smartParkLocationUpdate = Notification.Name("smartParkLocationUpdate")
+    static let smartParkConfirmationRequired = Notification.Name("smartParkConfirmationRequired")
 }
 
 // MARK: - Placeholder Models (assuming these exist in your app)

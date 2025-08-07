@@ -90,7 +90,14 @@ struct SmartParkIntent: AppIntent {
             return .result(dialog: "Still connected to your car. Smart Park will activate when you disconnect.")
         }
         
-        print("🚗 [Smart Park] Car disconnected - saving parking location")
+        print("🚗 [Smart Park] Car disconnected - processing parking location")
+        
+        // Check if user requires confirmation
+        let requiresConfirmation = UserDefaults.standard.object(forKey: "smartParkRequiresConfirmation") == nil 
+            ? true // Default to true (require confirmation)
+            : UserDefaults.standard.bool(forKey: "smartParkRequiresConfirmation")
+        
+        print("🚗 [Smart Park] Requires confirmation: \(requiresConfirmation)")
         
         // Get parking location manager
         let manager = await ParkingLocationManager.shared
@@ -101,17 +108,36 @@ struct SmartParkIntent: AppIntent {
             throw SmartParkError.locationUnavailable
         }
         
-        // Save parking location (TESTING: disable 2-minute delay)
-        let savedLocation = try await manager.saveParkingLocation(
-            at: currentLocation,
-            triggerType: parkingTriggerType,
-            delayConfirmation: false // TESTING: Force immediate confirmation
-        )
-        
-        // Track successful Smart Park usage
-        UserDefaults.standard.set(Date(), forKey: "smartParkLastTriggered")
-        
-        return .result(dialog: "Parking location saved at \(savedLocation.address ?? "current location")")
+        if requiresConfirmation {
+            // Confirmation mode - detect but don't save
+            print("🚗 [Smart Park] Confirmation mode - saving pending location")
+            
+            // Save as pending location
+            let pendingLocation = try await manager.savePendingParkingLocation(
+                at: currentLocation,
+                triggerType: parkingTriggerType
+            )
+            
+            // Track successful Smart Park usage
+            UserDefaults.standard.set(Date(), forKey: "smartParkLastTriggered")
+            
+            return .result(dialog: "Please confirm your parking location at \(pendingLocation.address ?? "current location")")
+        } else {
+            // Automatic mode - save immediately
+            print("🚗 [Smart Park] Automatic mode - saving location immediately")
+            
+            // Save parking location (TESTING: disable 2-minute delay)
+            let savedLocation = try await manager.saveParkingLocation(
+                at: currentLocation,
+                triggerType: parkingTriggerType,
+                delayConfirmation: false // TESTING: Force immediate confirmation
+            )
+            
+            // Track successful Smart Park usage
+            UserDefaults.standard.set(Date(), forKey: "smartParkLastTriggered")
+            
+            return .result(dialog: "Parking location saved at \(savedLocation.address ?? "current location")")
+        }
     }
 }
 

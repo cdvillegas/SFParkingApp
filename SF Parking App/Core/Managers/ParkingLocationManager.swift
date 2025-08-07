@@ -12,16 +12,18 @@ struct SmartParkLocation: Codable, Identifiable {
     let triggerType: String // "carPlay" or "bluetooth"
     let bluetoothDeviceName: String?
     var confirmationStatus: ConfirmationStatus
+    var detectedSchedule: PersistedSweepSchedule? // For confirmation mode
     
     enum ConfirmationStatus: String, Codable {
         case pending = "pending"
         case confirmed = "confirmed"
         case cancelled = "cancelled"
+        case requiresUserConfirmation = "requiresUserConfirmation" // New status
     }
     
     // Custom encoding/decoding for CLLocationCoordinate2D
     enum CodingKeys: String, CodingKey {
-        case id, coordinate, address, timestamp, triggerType, bluetoothDeviceName, confirmationStatus
+        case id, coordinate, address, timestamp, triggerType, bluetoothDeviceName, confirmationStatus, detectedSchedule
     }
     
     enum CoordinateKeys: String, CodingKey {
@@ -34,7 +36,8 @@ struct SmartParkLocation: Codable, Identifiable {
          timestamp: Date = Date(),
          triggerType: String,
          bluetoothDeviceName: String? = nil,
-         confirmationStatus: ConfirmationStatus = .pending) {
+         confirmationStatus: ConfirmationStatus = .pending,
+         detectedSchedule: PersistedSweepSchedule? = nil) {
         self.id = id
         self.coordinate = coordinate
         self.address = address
@@ -42,6 +45,7 @@ struct SmartParkLocation: Codable, Identifiable {
         self.triggerType = triggerType
         self.bluetoothDeviceName = bluetoothDeviceName
         self.confirmationStatus = confirmationStatus
+        self.detectedSchedule = detectedSchedule
     }
     
     init(from decoder: Decoder) throws {
@@ -58,6 +62,7 @@ struct SmartParkLocation: Codable, Identifiable {
         self.triggerType = try container.decode(String.self, forKey: .triggerType)
         self.bluetoothDeviceName = try container.decodeIfPresent(String.self, forKey: .bluetoothDeviceName)
         self.confirmationStatus = try container.decode(ConfirmationStatus.self, forKey: .confirmationStatus)
+        self.detectedSchedule = try container.decodeIfPresent(PersistedSweepSchedule.self, forKey: .detectedSchedule)
     }
     
     func encode(to encoder: Encoder) throws {
@@ -72,6 +77,7 @@ struct SmartParkLocation: Codable, Identifiable {
         try container.encode(triggerType, forKey: .triggerType)
         try container.encodeIfPresent(bluetoothDeviceName, forKey: .bluetoothDeviceName)
         try container.encode(confirmationStatus, forKey: .confirmationStatus)
+        try container.encodeIfPresent(detectedSchedule, forKey: .detectedSchedule)
     }
 }
 
@@ -162,6 +168,57 @@ class ParkingLocationManager: ObservableObject {
         }
     }
     
+    func savePendingParkingLocation(
+        at coordinate: CLLocationCoordinate2D,
+        triggerType: ParkingTriggerType
+    ) async throws -> SmartParkLocation {
+        print("💾 [Smart Park] Saving pending parking location for confirmation - Type: \(triggerType.rawValue)")
+        print("💾 [Smart Park] Coordinates: \(coordinate.latitude), \(coordinate.longitude)")
+        
+        // Validate coordinate
+        guard CLLocationCoordinate2DIsValid(coordinate),
+              coordinate.latitude != 0,
+              coordinate.longitude != 0 else {
+            print("❌ [Smart Park] Invalid coordinates provided")
+            throw IntentError.invalidCoordinates
+        }
+        
+        // Get address for the coordinate
+        let address = await reverseGeocode(coordinate: coordinate)
+        if let address = address {
+            print("🏠 [Smart Park] Geocoded address: \(address)")
+        } else {
+            print("🏠 [Smart Park] No address found for coordinates")
+        }
+        
+        // Detect schedule for the location
+        let detectedSchedule = await detectScheduleForLocation(coordinate)
+        if let schedule = detectedSchedule {
+            print("📅 [Smart Park] Detected schedule: \(schedule.streetName) - \(schedule.weekday) \(schedule.startTime)-\(schedule.endTime)")
+        } else {
+            print("📅 [Smart Park] No schedule detected for this location")
+        }
+        
+        // Create pending parking location with detected schedule
+        let parkingLocation = SmartParkLocation(
+            coordinate: coordinate,
+            address: address,
+            triggerType: triggerType.rawValue,
+            bluetoothDeviceName: nil,
+            confirmationStatus: .requiresUserConfirmation,
+            detectedSchedule: detectedSchedule
+        )
+        
+        // Save as pending for user confirmation
+        pendingSmartParkLocation = parkingLocation
+        savePendingLocation(parkingLocation)
+        
+        // Send notification for confirmation
+        await NotificationManager.shared.sendParkingConfirmationRequired(for: parkingLocation)
+        
+        return parkingLocation
+    }
+    
     func saveParkingLocation(
         at coordinate: CLLocationCoordinate2D,
         triggerType: ParkingTriggerType,
@@ -209,6 +266,37 @@ class ParkingLocationManager: ObservableObject {
         }
         
         return parkingLocation
+    }
+    
+    func confirmPendingLocation() async {
+        print("✅ [Smart Park] Confirming pending location")
+        
+        guard let pendingLocation = pendingSmartParkLocation else {
+            print("⚠️ [Smart Park] No pending location to confirm")
+            return
+        }
+        
+        // Update status to confirmed
+        var confirmedLocation = pendingLocation
+        confirmedLocation.confirmationStatus = .confirmed
+        
+        // Clear pending
+        pendingSmartParkLocation = nil
+        clearPendingLocation()
+        
+        // Save to main app with the detected schedule
+        await saveToVehicleManager(confirmedLocation)
+        
+        print("✅ [Smart Park] Location confirmed and saved")
+    }
+    
+    func cancelPendingLocation() {
+        print("❌ [Smart Park] Cancelling pending location")
+        
+        pendingSmartParkLocation = nil
+        clearPendingLocation()
+        
+        print("❌ [Smart Park] Pending location cancelled")
     }
     
     func updateParkingLocation(
