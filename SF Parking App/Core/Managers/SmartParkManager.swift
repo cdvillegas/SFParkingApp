@@ -2,7 +2,7 @@ import Foundation
 import SwiftUI
 import Combine
 
-// MARK: - Smart Park 2.0 Manager
+// MARK: - Smart Park Manager
 @MainActor
 class SmartParkManager: ObservableObject {
     static let shared = SmartParkManager()
@@ -39,7 +39,7 @@ class SmartParkManager: ObservableObject {
         configuredConnections = config.configuredConnections ?? []
         isSetupComplete = config.isEnabled || !configuredConnections.isEmpty // If enabled or has configured connections
         
-        print("🚗 [Smart Park 2.0] Loaded config - Enabled: \(isEnabled), Type: \(triggerType.rawValue), Configured: \(configuredConnections)")
+        print("🚗 [Smart Park] Loaded config - Enabled: \(isEnabled), Type: \(triggerType.rawValue), Configured: \(configuredConnections)")
     }
     
     func saveConfiguration() {
@@ -51,7 +51,7 @@ class SmartParkManager: ObservableObject {
             configuredConnections: configuredConnections
         )
         config.save()
-        print("🚗 [Smart Park 2.0] Saved config - Enabled: \(isEnabled), Type: \(triggerType.rawValue), Configured: \(configuredConnections)")
+        print("🚗 [Smart Park] Saved config - Enabled: \(isEnabled), Type: \(triggerType.rawValue), Configured: \(configuredConnections)")
     }
     
     // MARK: - Setup Flow Management
@@ -67,7 +67,7 @@ class SmartParkManager: ObservableObject {
         showSetup = false
         saveConfiguration()
         
-        print("🚗 [Smart Park 2.0] Setup completed successfully")
+        print("🚗 [Smart Park] Setup completed successfully")
     }
     
     func cancelSetup() {
@@ -82,9 +82,9 @@ class SmartParkManager: ObservableObject {
         saveConfiguration()
         
         if isEnabled {
-            print("🚗 [Smart Park 2.0] Feature enabled")
+            print("🚗 [Smart Park] Feature enabled")
         } else {
-            print("🚗 [Smart Park 2.0] Feature disabled")
+            print("🚗 [Smart Park] Feature disabled")
         }
     }
     
@@ -112,7 +112,7 @@ class SmartParkManager: ObservableObject {
     func createShortcutInstructions() -> [String] {
         return [
             "Open the Shortcuts App",
-            "Search for 'Smart Park 2.0'",
+            "Search for 'Smart Park'",
             "Tap it",
             "Make sure 'Show When Run' is disabled",
             "Tap 'Done'",
@@ -130,7 +130,7 @@ class SmartParkManager: ObservableObject {
                 "Ensure 'Disconnects' is selected and 'Connects' is not",
                 "Select 'Run Immediately'",
                 "Hit Next",
-                "Search for 'Smart Park 2.0'",
+                "Search for 'Smart Park'",
                 "Make sure 'Show When Run' is NOT selected",
                 "Return to App"
             ]
@@ -143,7 +143,7 @@ class SmartParkManager: ObservableObject {
                 "Ensure 'Disconnects' is selected and 'Connects' is not",
                 "Select 'Run Immediately'",
                 "Hit Next",
-                "Search for 'Smart Park 2.0'",
+                "Search for 'Smart Park'",
                 "Make sure 'Show When Run' is NOT selected",
                 "Return to App"
             ]

@@ -3,7 +3,7 @@ import CoreLocation
 import Combine
 import SwiftUI
 
-// MARK: - Smart Park 2.0 Parking Location
+// MARK: - Smart Park Parking Location
 struct SmartParkLocation: Codable, Identifiable {
     let id: String
     let coordinate: CLLocationCoordinate2D
@@ -96,11 +96,11 @@ class ParkingLocationManager: ObservableObject {
     // MARK: - Public Methods
     
     func getCurrentLocation() async -> CLLocationCoordinate2D? {
-        print("📍 [Smart Park 2.0] Getting current location...")
+        print("📍 [Smart Park] Getting current location...")
         
         // Request location permission if needed
         if locationManager.authorizationStatus == .notDetermined {
-            print("📍 [Smart Park 2.0] Location permission not determined, requesting...")
+            print("📍 [Smart Park] Location permission not determined, requesting...")
             locationManager.requestLocationPermission()
             // Wait a moment for permission dialog
             try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
@@ -109,11 +109,11 @@ class ParkingLocationManager: ObservableObject {
         // If we have a recent location, use it
         if let currentLocation = locationManager.userLocation,
            currentLocation.timestamp.timeIntervalSinceNow > -30 { // Less than 30 seconds old
-            print("📍 [Smart Park 2.0] Using cached location: \(currentLocation.coordinate.latitude), \(currentLocation.coordinate.longitude)")
+            print("📍 [Smart Park] Using cached location: \(currentLocation.coordinate.latitude), \(currentLocation.coordinate.longitude)")
             return currentLocation.coordinate
         }
         
-        print("📍 [Smart Park 2.0] Requesting fresh location...")
+        print("📍 [Smart Park] Requesting fresh location...")
         // Otherwise request a fresh location
         return await withCheckedContinuation { continuation in
             locationManager.requestLocation()
@@ -145,7 +145,7 @@ class ParkingLocationManager: ObservableObject {
                 .first()
                 .sink { location in
                     if state.safeResume(with: location.coordinate, continuation: continuation) {
-                        print("📍 [Smart Park 2.0] Got fresh location: \(location.coordinate.latitude), \(location.coordinate.longitude)")
+                        print("📍 [Smart Park] Got fresh location: \(location.coordinate.latitude), \(location.coordinate.longitude)")
                     }
                     cancellable?.cancel()
                 }
@@ -155,7 +155,7 @@ class ParkingLocationManager: ObservableObject {
                 try? await Task.sleep(nanoseconds: 10_000_000_000) // 10 seconds
                 
                 if state.safeResume(with: nil, continuation: continuation) {
-                    print("⏰ [Smart Park 2.0] Location request timed out")
+                    print("⏰ [Smart Park] Location request timed out")
                 }
                 cancellable?.cancel()
             }
@@ -167,23 +167,23 @@ class ParkingLocationManager: ObservableObject {
         triggerType: ParkingTriggerType,
         delayConfirmation: Bool
     ) async throws -> SmartParkLocation {
-        print("💾 [Smart Park 2.0] Saving parking location - Type: \(triggerType.rawValue), Delay: \(delayConfirmation)")
-        print("💾 [Smart Park 2.0] Coordinates: \(coordinate.latitude), \(coordinate.longitude)")
+        print("💾 [Smart Park] Saving parking location - Type: \(triggerType.rawValue), Delay: \(delayConfirmation)")
+        print("💾 [Smart Park] Coordinates: \(coordinate.latitude), \(coordinate.longitude)")
         
         // Validate coordinate
         guard CLLocationCoordinate2DIsValid(coordinate),
               coordinate.latitude != 0,
               coordinate.longitude != 0 else {
-            print("❌ [Smart Park 2.0] Invalid coordinates provided")
+            print("❌ [Smart Park] Invalid coordinates provided")
             throw IntentError.invalidCoordinates
         }
         
         // Get address for the coordinate
         let address = await reverseGeocode(coordinate: coordinate)
         if let address = address {
-            print("🏠 [Smart Park 2.0] Geocoded address: \(address)")
+            print("🏠 [Smart Park] Geocoded address: \(address)")
         } else {
-            print("🏠 [Smart Park 2.0] No address found for coordinates")
+            print("🏠 [Smart Park] No address found for coordinates")
         }
         
         // Create parking location
@@ -197,12 +197,12 @@ class ParkingLocationManager: ObservableObject {
         
         // Save to storage
         if delayConfirmation {
-            print("⏳ [Smart Park 2.0] Saving as pending - will confirm in 2 minutes")
+            print("⏳ [Smart Park] Saving as pending - will confirm in 2 minutes")
             pendingSmartParkLocation = parkingLocation
             savePendingLocation(parkingLocation)
             // No notification sent - wait for 2-minute confirmation
         } else {
-            print("✅ [Smart Park 2.0] Immediate confirmation - saving to vehicle manager")
+            print("✅ [Smart Park] Immediate confirmation - saving to vehicle manager")
             // Immediately save to the main app's vehicle manager and send confirmation
             await saveToVehicleManager(parkingLocation)
             await NotificationManager.shared.sendParkingConfirmation(for: parkingLocation)
@@ -261,12 +261,12 @@ class ParkingLocationManager: ObservableObject {
     // MARK: - Private Methods
     
     private func performConfirmationCheck(for location: SmartParkLocation) async {
-        print("⏰ [Smart Park 2.0] Performing 2-minute confirmation check for \(location.id)")
+        print("⏰ [Smart Park] Performing 2-minute confirmation check for \(location.id)")
         
         // Check if still pending
         guard let pending = pendingSmartParkLocation,
               pending.id == location.id else {
-            print("⚠️ [Smart Park 2.0] No matching pending location found - may have been cleared")
+            print("⚠️ [Smart Park] No matching pending location found - may have been cleared")
             return
         }
         
@@ -276,10 +276,10 @@ class ParkingLocationManager: ObservableObject {
             type: ParkingTriggerType(rawValue: location.triggerType) ?? .carPlay
         )
         
-        print("🚗 [Smart Park 2.0] Car connection status after 2 minutes: \(isConnected ? "CONNECTED" : "DISCONNECTED")")
+        print("🚗 [Smart Park] Car connection status after 2 minutes: \(isConnected ? "CONNECTED" : "DISCONNECTED")")
         
         if !isConnected {
-            print("✅ [Smart Park 2.0] Car still disconnected - confirming parking location")
+            print("✅ [Smart Park] Car still disconnected - confirming parking location")
             // Car is still disconnected, confirm the location
             var confirmedLocation = location
             confirmedLocation.confirmationStatus = .confirmed
@@ -292,7 +292,7 @@ class ParkingLocationManager: ObservableObject {
             await saveToVehicleManager(confirmedLocation)
             await NotificationManager.shared.sendParkingConfirmation(for: confirmedLocation)
         } else {
-            print("🚫 [Smart Park 2.0] Car reconnected - cancelling parking detection")
+            print("🚫 [Smart Park] Car reconnected - cancelling parking detection")
             // Car reconnected, cancel the parking
             pendingSmartParkLocation = nil
             clearPendingLocation()
@@ -337,14 +337,14 @@ class ParkingLocationManager: ObservableObject {
     }
     
     func saveToVehicleManager(_ smartParkLocation: SmartParkLocation) async {
-        print("🚙 [Smart Park 2.0] Saving to VehicleManager - Address: \(smartParkLocation.address ?? "Unknown")")
+        print("🚙 [Smart Park] Saving to VehicleManager - Address: \(smartParkLocation.address ?? "Unknown")")
         
         // CRITICAL FIX: Detect schedule for the parking location
         let selectedSchedule = await detectScheduleForLocation(smartParkLocation.coordinate)
         if let schedule = selectedSchedule {
-            print("📅 [Smart Park 2.0] Found schedule: \(schedule.streetName) - \(schedule.weekday) \(schedule.startTime)-\(schedule.endTime)")
+            print("📅 [Smart Park] Found schedule: \(schedule.streetName) - \(schedule.weekday) \(schedule.startTime)-\(schedule.endTime)")
         } else {
-            print("📅 [Smart Park 2.0] No schedule found for this location")
+            print("📅 [Smart Park] No schedule found for this location")
         }
         
         // Convert to regular ParkingLocation with schedule information
@@ -359,18 +359,18 @@ class ParkingLocationManager: ObservableObject {
         // Get the vehicle manager and update
         if let vehicle = VehicleManager.shared.currentVehicle {
             VehicleManager.shared.setParkingLocation(for: vehicle, location: parkingLocation)
-            print("✅ [Smart Park 2.0] Successfully saved to VehicleManager with schedule")
+            print("✅ [Smart Park] Successfully saved to VehicleManager with schedule")
             
             // CRITICAL FIX: Update StreetDataManager to process the schedule for immediate UI updates
             await updateStreetDataManager(with: selectedSchedule, at: smartParkLocation.coordinate)
         } else {
-            print("⚠️ [Smart Park 2.0] No vehicle found in VehicleManager")
+            print("⚠️ [Smart Park] No vehicle found in VehicleManager")
         }
     }
     
     private func detectScheduleForLocation(_ coordinate: CLLocationCoordinate2D) async -> PersistedSweepSchedule? {
-        print("🔍 [Smart Park 2.0] ========== SCHEDULE DETECTION STARTING ==========")
-        print("🔍 [Smart Park 2.0] Detecting schedule for coordinate: \(coordinate.latitude), \(coordinate.longitude)")
+        print("🔍 [Smart Park] ========== SCHEDULE DETECTION STARTING ==========")
+        print("🔍 [Smart Park] Detecting schedule for coordinate: \(coordinate.latitude), \(coordinate.longitude)")
         
         return await withCheckedContinuation { continuation in
             // Get the raw schedule data with centerline geometry for true geometric detection
@@ -378,14 +378,14 @@ class ParkingLocationManager: ObservableObject {
                 switch result {
                 case .success(let scheduleData):
                     if let (rawSchedules, closestSchedule) = scheduleData {
-                        print("📅 [Smart Park 2.0] Using TRUE geometric side detection with street centerline")
+                        print("📅 [Smart Park] Using TRUE geometric side detection with street centerline")
                         
                         if let (determinedSide, matchedSchedule) = self.determineActualSideOfStreetWithSchedule(
                             userLocation: coordinate,
                             streetSchedules: rawSchedules,
                             closestSchedule: closestSchedule
                         ) {
-                            print("📅 [Smart Park 2.0] Geometric detection result: \(closestSchedule.streetName ?? "Unknown") - \(determinedSide)")
+                            print("📅 [Smart Park] Geometric detection result: \(closestSchedule.streetName ?? "Unknown") - \(determinedSide)")
                             
                             let persistedSchedule = PersistedSweepSchedule(
                                 from: matchedSchedule,
@@ -393,7 +393,7 @@ class ParkingLocationManager: ObservableObject {
                             )
                             continuation.resume(returning: persistedSchedule)
                         } else {
-                            print("📅 [Smart Park 2.0] Geometric detection failed, using closest schedule")
+                            print("📅 [Smart Park] Geometric detection failed, using closest schedule")
                             let persistedSchedule = PersistedSweepSchedule(
                                 from: closestSchedule,
                                 side: "Both"
@@ -401,11 +401,11 @@ class ParkingLocationManager: ObservableObject {
                             continuation.resume(returning: persistedSchedule)
                         }
                     } else {
-                        print("📅 [Smart Park 2.0] No schedule data found")
+                        print("📅 [Smart Park] No schedule data found")
                         continuation.resume(returning: nil)
                     }
                 case .failure(let error):
-                    print("❌ [Smart Park 2.0] Failed to get schedule geometry: \(error)")
+                    print("❌ [Smart Park] Failed to get schedule geometry: \(error)")
                     continuation.resume(returning: nil)
                 }
             }
@@ -415,7 +415,7 @@ class ParkingLocationManager: ObservableObject {
     private func selectBestScheduleForAutoDetection(_ schedulesWithSides: [SweepScheduleWithSide], userLocation: CLLocationCoordinate2D) -> SweepScheduleWithSide? {
         guard !schedulesWithSides.isEmpty else { return nil }
         
-        print("🎯 [Smart Park 2.0] Selecting best schedule from \(schedulesWithSides.count) options using street geometry:")
+        print("🎯 [Smart Park] Selecting best schedule from \(schedulesWithSides.count) options using street geometry:")
         
         // Group schedules by street name to handle multiple sides of the same street
         let schedulesByStreet = Dictionary(grouping: schedulesWithSides) { schedule in
@@ -452,7 +452,7 @@ class ParkingLocationManager: ObservableObject {
         }
         
         if let best = bestSchedule {
-            print("🏆 [Smart Park 2.0] Selected: \(best.schedule.streetName ?? "Unknown") \(best.side)")
+            print("🏆 [Smart Park] Selected: \(best.schedule.streetName ?? "Unknown") \(best.side)")
         }
         
         return bestSchedule
@@ -813,7 +813,7 @@ class ParkingLocationManager: ObservableObject {
             // For now, we'll trigger schedule fetching which should automatically process the saved schedule
             
             if let schedule = selectedSchedule {
-                print("📊 [Smart Park 2.0] Triggering StreetDataManager updates for schedule processing")
+                print("📊 [Smart Park] Triggering StreetDataManager updates for schedule processing")
                 
                 // Convert persisted schedule back to SweepSchedule for processing
                 let sweepSchedule = StreetDataService.shared.convertToSweepSchedule(from: schedule)
@@ -822,7 +822,7 @@ class ParkingLocationManager: ObservableObject {
                 // The schedule will be automatically loaded when the user opens the app
                 // and VehicleParkingView detects the saved parking location with schedule
                 
-                print("✅ [Smart Park 2.0] Schedule detection and saving completed")
+                print("✅ [Smart Park] Schedule detection and saving completed")
             }
         }
     }

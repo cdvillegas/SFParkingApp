@@ -3,7 +3,7 @@ import CoreLocation
 import SwiftUI
 import AVFoundation
 
-// MARK: - Smart Park 2.0 Configuration
+// MARK: - Smart Park Configuration
 struct SmartParkConfig: Codable {
     let isEnabled: Bool
     let triggerType: SmartParkTriggerType
@@ -52,33 +52,33 @@ enum ParkingTriggerType: String, CaseIterable, Codable {
     case bluetooth = "Bluetooth"
 }
 
-// MARK: - Main Smart Park 2.0 Intent
+// MARK: - Main Smart Park Intent
 struct SmartParkIntent: AppIntent {
-    static var title: LocalizedStringResource = "Smart Park 2.0"
+    static var title: LocalizedStringResource = "Smart Park"
     static var description = IntentDescription("Automatically saves your parking location when you disconnect from your car")
     
     static var openAppWhenRun: Bool = false
     
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        print("🚗 [Smart Park 2.0] ========== SMART PARK INTENT TRIGGERED ==========")
-        print("🚗 [Smart Park 2.0] Main intent triggered")
+        print("🚗 [Smart Park] ========== SMART PARK INTENT TRIGGERED ==========")
+        print("🚗 [Smart Park] Main intent triggered")
         
-        // Check if Smart Park 2.0 is enabled
+        // Check if Smart Park is enabled
         let hasSetup = UserDefaults.standard.bool(forKey: "smartParkSetupCompleted")
         let isEnabled = UserDefaults.standard.object(forKey: "smartParkEnabled") == nil ? hasSetup : UserDefaults.standard.bool(forKey: "smartParkEnabled")
         
         guard hasSetup else {
-            print("🚗 [Smart Park 2.0] Smart Park not set up")
+            print("🚗 [Smart Park] Smart Park not set up")
             return .result(dialog: "Smart Park needs to be set up first in the SF Parking App.")
         }
         
         guard isEnabled else {
-            print("🚗 [Smart Park 2.0] Feature is disabled")
+            print("🚗 [Smart Park] Feature is disabled")
             return .result(dialog: "Smart Park is disabled. Enable it in the SF Parking App settings.")
         }
         
         let config = SmartParkConfig.current
-        print("🚗 [Smart Park 2.0] Config - Type: \(config.triggerType.rawValue), Delay: \(config.delayConfirmation)")
+        print("🚗 [Smart Park] Config - Type: \(config.triggerType.rawValue), Delay: \(config.delayConfirmation)")
         
         // Check if we're actually disconnected from the car
         let detector = CarConnectionDetector()
@@ -86,18 +86,18 @@ struct SmartParkIntent: AppIntent {
         let isConnected = await detector.isCarConnected(type: parkingTriggerType)
         
         if isConnected {
-            print("🚗 [Smart Park 2.0] Still connected to car - not saving location")
+            print("🚗 [Smart Park] Still connected to car - not saving location")
             return .result(dialog: "Still connected to your car. Smart Park will activate when you disconnect.")
         }
         
-        print("🚗 [Smart Park 2.0] Car disconnected - saving parking location")
+        print("🚗 [Smart Park] Car disconnected - saving parking location")
         
         // Get parking location manager
         let manager = await ParkingLocationManager.shared
         
         // Get current location
         guard let currentLocation = await manager.getCurrentLocation() else {
-            print("❌ [Smart Park 2.0] Failed to get current location")
+            print("❌ [Smart Park] Failed to get current location")
             throw SmartParkError.locationUnavailable
         }
         
@@ -127,9 +127,9 @@ enum SmartParkError: Swift.Error, LocalizedError {
         case .locationUnavailable:
             return "Unable to get your current location. Please ensure location services are enabled."
         case .notConfigured:
-            return "Smart Park 2.0 is not configured. Please run the setup first."
+            return "Smart Park is not configured. Please run the setup first."
         case .featureDisabled:
-            return "Smart Park 2.0 is disabled. Enable it in the app settings."
+            return "Smart Park is disabled. Enable it in the app settings."
         }
     }
 }
@@ -163,8 +163,8 @@ struct CarConnectionDetector {
                 let audioSession = AVAudioSession.sharedInstance()
                 let currentRoute = audioSession.currentRoute
                 
-                print("🚗 [Smart Park 2.0] CarConnectionDetector checking audio routes...")
-                print("🚗 [Smart Park 2.0] Current route outputs: \(currentRoute.outputs.map { "\($0.portType.rawValue): \($0.portName)" })")
+                print("🚗 [Smart Park] CarConnectionDetector checking audio routes...")
+                print("🚗 [Smart Park] Current route outputs: \(currentRoute.outputs.map { "\($0.portType.rawValue): \($0.portName)" })")
                 
                 switch type {
                 case .carPlay:
@@ -172,7 +172,7 @@ struct CarConnectionDetector {
                     let hasCarPlay = currentRoute.outputs.contains { output in
                         output.portType == .carAudio
                     }
-                    print("🚗 [Smart Park 2.0] CarPlay check result: \(hasCarPlay)")
+                    print("🚗 [Smart Park] CarPlay check result: \(hasCarPlay)")
                     continuation.resume(returning: hasCarPlay)
                     
                 case .bluetooth:
@@ -187,7 +187,7 @@ struct CarConnectionDetector {
                         return bluetoothTypes.contains(output.portType)
                     }
                     
-                    print("🚗 [Smart Park 2.0] Bluetooth audio check result: \(hasAnyBluetooth)")
+                    print("🚗 [Smart Park] Bluetooth audio check result: \(hasAnyBluetooth)")
                     continuation.resume(returning: hasAnyBluetooth)
                 }
             }

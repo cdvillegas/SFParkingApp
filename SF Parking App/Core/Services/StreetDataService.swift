@@ -734,7 +734,7 @@ final class StreetDataService {
     }
     
     // MARK: - Public API (matches your existing interface)
-    // New method for Smart Park 2.0 geometric side detection
+    // New method for Smart Park geometric side detection
     func getClosestScheduleWithGeometry(for coordinate: CLLocationCoordinate2D, completion: @escaping (Result<([AggregatedSweepSchedule], SweepSchedule)?, ParkingError>) -> Void) {
         guard isLoaded else {
             completion(.failure(.noData))

@@ -148,7 +148,7 @@ class NotificationManager: NSObject, ObservableObject {
             options: [.customDismissAction]
         )
         
-        // Smart Park 2.0 confirmation category
+        // Smart Park confirmation category
         let updateLocationAction = UNNotificationAction(
             identifier: "UPDATE_SMART_PARK_LOCATION",
             title: "Update Location",
@@ -508,15 +508,15 @@ class NotificationManager: NSObject, ObservableObject {
         return (hour: 8, minute: 0) // Default to 8 AM
     }
     
-    // MARK: - Smart Park 2.0 Notifications
+    // MARK: - Smart Park Notifications
     
     func sendParkingConfirmation(for location: SmartParkLocation) async {
-        print("🔔 [Smart Park 2.0] Sending parking confirmation for: \(location.address ?? "Unknown")")
+        print("🔔 [Smart Park] Sending parking confirmation for: \(location.address ?? "Unknown")")
         
         // CRITICAL FIX: Also trigger the in-app UI update through ParkingDetectionHandler
         await MainActor.run {
             if let handler = self.parkingDetectionHandler {
-                print("🎯 [Smart Park 2.0] Triggering in-app UI update via ParkingDetectionHandler")
+                print("🎯 [Smart Park] Triggering in-app UI update via ParkingDetectionHandler")
                 
                 // Convert Smart Park trigger type to ParkingSource
                 let source: ParkingSource = location.triggerType == "carPlay" ? .carplay : .bluetooth
@@ -527,7 +527,7 @@ class NotificationManager: NSObject, ObservableObject {
                     source: source
                 )
             } else {
-                print("⚠️ [Smart Park 2.0] No ParkingDetectionHandler available - storing for app launch")
+                print("⚠️ [Smart Park] No ParkingDetectionHandler available - storing for app launch")
                 
                 // Store notification data for when app launches (fallback)
                 let notificationData: [String: Any] = [
@@ -1003,7 +1003,7 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
         let userInfo = response.notification.request.content.userInfo
         print("📱 Notification tapped - App state: \(UIApplication.shared.applicationState.rawValue)")
         
-        // Handle Smart Park 2.0 notification actions
+        // Handle Smart Park notification actions
         switch response.actionIdentifier {
         case "CONFIRM_SMART_PARK":
             handleSmartParkConfirmAction(userInfo: userInfo)
@@ -1041,7 +1041,7 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
                 print("📱 Handling parking location update notification tap")
                 handleParkingLocationUpdateTap(userInfo: userInfo)
             case "smart_park_confirmation", "smart_park_delay":
-                print("📱 Handling Smart Park 2.0 notification tap")
+                print("📱 Handling Smart Park notification tap")
                 handleSmartParkNotificationTap(userInfo: userInfo)
             default:
                 break

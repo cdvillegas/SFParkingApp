@@ -25,10 +25,10 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         _ = ParkingDetector.shared
     }
     
-    // Initialize Smart Park 2.0 Manager for App Intents
+    // Initialize Smart Park Manager for App Intents
     _ = ParkingLocationManager.shared
     _ = SmartParkManager.shared
-    print("🚗 [Smart Park 2.0] Managers initialized")
+    print("🚗 [Smart Park] Managers initialized")
 
     return true
   }
@@ -59,14 +59,14 @@ struct SF_Parking_AppApp: App {
         
         // Force App Intents registration
         Task {
-            print("🚗 [Smart Park 2.0] Requesting App Intents registration...")
+            print("🚗 [Smart Park] Requesting App Intents registration...")
             
             // Force evaluation of our App Shortcuts Provider
             let shortcuts = SmartParkAppShortcutsProvider.appShortcuts
-            print("🚗 [Smart Park 2.0] Found \(shortcuts.count) shortcut (Smart Park 2.0 only)")
+            print("🚗 [Smart Park] Found \(shortcuts.count) shortcut (Smart Park only)")
             
             // The system automatically registers AppShortcutsProvider implementations
-            print("🚗 [Smart Park 2.0] App Intents registration completed")
+            print("🚗 [Smart Park] App Intents registration completed")
         }
     }
     var body: some Scene {

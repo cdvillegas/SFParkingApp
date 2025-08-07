@@ -6,18 +6,18 @@ struct SmartParkAppShortcutsProvider: AppShortcutsProvider {
     static func updateAppShortcutParameters() {
         // This method can be called to update app shortcuts
         // Automatically handled by the system for AppShortcutsProvider
-        print("🚗 [Smart Park 2.0] App Shortcuts registered")
+        print("🚗 [Smart Park] App Shortcuts registered")
     }
     
     // Ensure this provider is discoverable by the system
     static var appShortcuts: [AppShortcut] {
-        print("🚗 [Smart Park 2.0] App Shortcuts Provider called - returning shortcuts")
+        print("🚗 [Smart Park] App Shortcuts Provider called - returning shortcuts")
         return [
-        // Main Smart Park 2.0 Intent - the one users will use in automations
+        // Main Smart Park Intent - the one users will use in automations
         AppShortcut(
             intent: SmartParkIntent(),
             phrases: [], // Empty phrases for Personal Team
-            shortTitle: "Smart Park 2.0",
+            shortTitle: "Smart Park",
             systemImageName: "car.fill"
         )
         ]

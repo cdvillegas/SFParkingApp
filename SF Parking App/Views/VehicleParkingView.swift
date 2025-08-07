@@ -787,17 +787,27 @@ struct VehicleParkingView: View {
     }
     
     private func performPostOnboardingTransition() {
-        // After onboarding completes, maintain the same default view for consistency
+        // After onboarding completes, zoom to user location if available, otherwise stay in SF
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { // Small delay for overlay to fade
             
-            // Use the same default coordinates as the main map view for consistency
             withAnimation(.easeInOut(duration: 1.0)) {
-                self.viewModel.mapPosition = .region(
-                    MKCoordinateRegion(
-                        center: CLLocationCoordinate2D(latitude: 37.73143, longitude: -122.44143), // Same as default view
-                        span: MKCoordinateSpan(latitudeDelta: 0.12, longitudeDelta: 0.20)
+                if let userLocation = self.viewModel.locationManager.userLocation {
+                    // User location is available - zoom in on user
+                    self.viewModel.mapPosition = .region(
+                        MKCoordinateRegion(
+                            center: userLocation.coordinate,
+                            span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01) // Close zoom on user
+                        )
                     )
-                )
+                } else {
+                    // No user location - stay at SF level but closer than onboarding
+                    self.viewModel.mapPosition = .region(
+                        MKCoordinateRegion(
+                            center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194), // SF center
+                            span: MKCoordinateSpan(latitudeDelta: 0.12, longitudeDelta: 0.20) // Medium SF view
+                        )
+                    )
+                }
             }
             
             // Reset the flag
@@ -837,7 +847,7 @@ struct VehicleParkingView: View {
         if let existingLocation = currentVehicle.parkingLocation,
            let existingSchedule = existingLocation.selectedSchedule {
             
-            print("🎯 Smart Park 2.0 location already saved with schedule: \(existingSchedule.streetName) - \(existingSchedule.weekday) \(existingSchedule.startTime)-\(existingSchedule.endTime)")
+            print("🎯 Smart Park location already saved with schedule: \(existingSchedule.streetName) - \(existingSchedule.weekday) \(existingSchedule.startTime)-\(existingSchedule.endTime)")
             
             // Update the UI to show the saved location and schedule
             setupView()
@@ -850,7 +860,7 @@ struct VehicleParkingView: View {
             // Center map on saved location
             viewModel.centerMapOnLocation(existingLocation.coordinate)
             
-            print("🎯 Smart Park 2.0 UI updated with existing schedule")
+            print("🎯 Smart Park UI updated with existing schedule")
         } else {
             print("🎯 No saved schedule found, using legacy auto-detection flow")
             
