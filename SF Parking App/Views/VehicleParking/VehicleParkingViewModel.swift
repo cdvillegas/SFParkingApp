@@ -375,6 +375,12 @@ class VehicleParkingViewModel: ObservableObject {
     }
     
     func cancelSettingLocation() {
+        // Center map on vehicle if it exists, using the same zoom as the vehicle button
+        if let currentVehicle = vehicleManager.currentVehicle,
+           let parkingLocation = currentVehicle.parkingLocation {
+            centerMapOnLocation(parkingLocation.coordinate)
+        }
+        
         completeLocationSetting()
     }
     
@@ -408,7 +414,8 @@ class VehicleParkingViewModel: ObservableObject {
         hoveredScheduleIndex = nil
         
         if let coordinate = confirmedLocation {
-            centerMapOnLocationForVehicleMove(coordinate)
+            // Use the standard zoom level when going back to location setting
+            centerMapOnLocation(coordinate)
         }
     }
     
@@ -493,16 +500,6 @@ class VehicleParkingViewModel: ObservableObject {
         }
     }
     
-    func centerMapOnLocationForVehicleMove(_ coordinate: CLLocationCoordinate2D) {
-        withAnimation(.easeInOut(duration: 0.8)) {
-            mapPosition = .region(
-                MKCoordinateRegion(
-                    center: CLLocationCoordinate2D(latitude: 37.77084, longitude: -122.43837), // Initial parking location setting center
-                    span: MKCoordinateSpan(latitudeDelta: 0.049, longitudeDelta: 0.084)
-                )
-            )
-        }
-    }
     
     func centerMapOnLocationWithZoomIn(_ coordinate: CLLocationCoordinate2D) {
         withAnimation(.easeInOut(duration: 0.8)) {
@@ -717,7 +714,9 @@ class VehicleParkingViewModel: ObservableObject {
                currentSchedule.schedule.weekday != newSchedule.schedule.weekday ||
                currentSchedule.schedule.fromhour != newSchedule.schedule.fromhour ||
                currentSchedule.schedule.tohour != newSchedule.schedule.tohour ||
-               currentSchedule.side != newSchedule.side {
+               currentSchedule.side != newSchedule.side ||
+               currentSchedule.schedule.cnn != newSchedule.schedule.cnn ||  // Compare unique identifier
+               currentSchedule.schedule.limits != newSchedule.schedule.limits {  // Compare block limits
                 return false
             }
         }
@@ -763,7 +762,9 @@ class VehicleParkingViewModel: ObservableObject {
                schedule.schedule.weekday == target.schedule.weekday &&
                schedule.schedule.fromhour == target.schedule.fromhour &&
                schedule.schedule.tohour == target.schedule.tohour &&
-               schedule.side == target.side {
+               schedule.side == target.side &&
+               schedule.schedule.cnn == target.schedule.cnn &&  // Compare unique identifier
+               schedule.schedule.limits == target.schedule.limits {  // Compare block limits
                 return index
             }
         }

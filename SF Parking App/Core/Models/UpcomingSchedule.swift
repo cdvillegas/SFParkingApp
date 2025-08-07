@@ -113,80 +113,66 @@ struct UpcomingSchedule {
         let minutes = totalSeconds / 60
         let hours = minutes / 60
         let days = hours / 24
-        let remainingHours = hours % 24
-        let remainingMinutes = minutes % 60
         
-        // Under 1 hour - show minutes
+        // Under 1 hour - show minutes only
         if hours < 1 {
             return "in \(minutes) minute\(minutes == 1 ? "" : "s")"
         }
         
-        // Under 12 hours - show hours and be precise
-        if hours < 12 {
-            if remainingMinutes < 10 {
-                return "in \(hours) hour\(hours == 1 ? "" : "s")"
-            } else if remainingMinutes < 40 {
-                return "in \(hours)½ hours"
-            } else {
-                return "in \(hours + 1) hours"
-            }
+        // Under 24 hours - show hours only
+        if hours < 24 {
+            return "in \(hours) hour\(hours == 1 ? "" : "s")"
         }
         
-        // 12-36 hours - special handling for "tomorrow"
-        if hours >= 12 && hours < 36 {
-            // Check if it's actually tomorrow
-            let calendar = Calendar.current
-            if calendar.isDateInTomorrow(date) {
-                return "tomorrow"
-            } else if hours < 24 {
-                return "in \(hours) hours"
-            }
+        // 1 day
+        if days == 1 {
+            return "in 1 day"
         }
         
-        // 1.5 - 2.5 days - be more precise
-        if hours >= 36 && hours < 60 {
-            // Round to nearest half day
-            if remainingHours < 6 {
-                return "in \(days) day\(days == 1 ? "" : "s")"
-            } else if remainingHours < 18 {
-                return "in \(days)½ days"
-            } else {
-                return "in \(days + 1) days"
-            }
+        // 2 days
+        if days == 2 {
+            return "in 2 days"
         }
         
-        // 2.5 - 6.5 days - round to nearest day
-        if days >= 2 && days < 7 {
-            if remainingHours < 12 {
-                return "in \(days) days"
-            } else {
-                return "in \(days + 1) days"
-            }
+        // 3-6 days - show day count
+        if days >= 3 && days <= 6 {
+            return "in \(days) days"
         }
         
-        // 1+ weeks
-        let weeks = days / 7
-        if weeks >= 1 && weeks < 4 {
-            let remainingDays = days % 7
-            if weeks == 1 && remainingDays <= 1 {
-                return "in 1 week"
-            } else if remainingDays <= 3 {
-                return "in \(weeks) week\(weeks == 1 ? "" : "s")"
-            } else {
-                return "in \(weeks + 1) weeks"
-            }
+        // 7-10 days - roughly 1 week
+        if days >= 7 && days <= 10 {
+            return "in 1 week"
         }
         
-        // Default for longer periods
-        return "in \(days) days"
+        // 11-17 days - roughly 2 weeks
+        if days >= 11 && days <= 17 {
+            return "in 2 weeks"
+        }
+        
+        // 18-24 days - roughly 3 weeks
+        if days >= 18 && days <= 24 {
+            return "in 3 weeks"
+        }
+        
+        // 25-31 days - roughly 4 weeks
+        if days >= 25 && days <= 31 {
+            return "in 4 weeks"
+        }
+        
+        // Over a month
+        let weeks = (days + 3) / 7  // Rough rounding
+        return "in \(weeks) weeks"
     }
     
     func formatDateAndTime() -> String {
         let calendar = Calendar.current
         
-        // Helper to clean up time strings
+        // Helper to clean up time strings and make AM/PM lowercase
         let cleanTime = { (time: String) -> String in
-            return time.replacingOccurrences(of: ":00", with: "")
+            return time
+                .replacingOccurrences(of: ":00", with: "")
+                .replacingOccurrences(of: "AM", with: "am")
+                .replacingOccurrences(of: "PM", with: "pm")
         }
         
         let cleanStartTime = cleanTime(startTime)
@@ -198,7 +184,7 @@ struct UpcomingSchedule {
             return "Tomorrow, \(cleanStartTime) - \(cleanEndTime)"
         } else {
             let formatter = DateFormatter()
-            formatter.dateFormat = "EEEE, MMM d"  // Abbreviated month
+            formatter.dateFormat = "EEE, MMM d"  // Abbreviated day and month (e.g., "Mon, Jan 20")
             let dateString = formatter.string(from: date)
             return "\(dateString), \(cleanStartTime) - \(cleanEndTime)"
         }

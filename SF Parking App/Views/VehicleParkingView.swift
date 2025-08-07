@@ -498,7 +498,7 @@ struct VehicleParkingView: View {
     private var mapControlButtons: some View {
         Group {
             if !viewModel.isConfirmingSchedule || viewModel.isSettingLocation {
-                HStack(spacing: 12) {
+                HStack(spacing: 16) {
                     vehicleButton
                     userLocationButton
                     enableLocationButton
@@ -518,9 +518,9 @@ struct VehicleParkingView: View {
                 showingParkingDetailsSheet = true
             }) {
                 Image(systemName: "calendar")
-                    .font(.system(size: 18, weight: .medium))
+                    .font(.system(size: 17, weight: .medium))
                     .foregroundColor(.secondary)
-                    .frame(width: 50, height: 50)
+                    .frame(width: 48, height: 48)
                     .background(
                         Circle()
                             .fill(.regularMaterial)
@@ -540,9 +540,9 @@ struct VehicleParkingView: View {
                 centerOnVehicle()
             }) {
                 Image(systemName: "car.fill")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.system(size: 17, weight: .medium))
                     .foregroundColor(.secondary)
-                    .frame(width: 44, height: 44)
+                    .frame(width: 48, height: 48)
                     .background(
                         Circle()
                             .fill(.regularMaterial)
@@ -569,9 +569,9 @@ struct VehicleParkingView: View {
                 centerOnUser()
             }) {
                 Image(systemName: "location.fill")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.system(size: 17, weight: .medium))
                     .foregroundColor(.secondary)
-                    .frame(width: 44, height: 44)
+                    .frame(width: 48, height: 48)
                     .background(
                         Circle()
                             .fill(.regularMaterial)
@@ -590,9 +590,9 @@ struct VehicleParkingView: View {
                 enableLocationAction()
             }) {
                 Image(systemName: "location.slash")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.system(size: 17, weight: .medium))
                     .foregroundColor(.secondary)
-                    .frame(width: 44, height: 44)
+                    .frame(width: 48, height: 48)
                     .background(
                         Circle()
                             .fill(.regularMaterial)

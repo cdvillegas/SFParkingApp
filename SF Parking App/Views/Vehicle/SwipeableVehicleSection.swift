@@ -238,39 +238,42 @@ struct VehicleSwipeCard: View {
             return "Move by Tomorrow, \(nextSchedule.startTime)"
         }
         
-        // 2-6 days away - show specific day count or day name
+        // 2 days away
         if daysUntil == 2 {
             return "Move in 2 Days, \(nextSchedule.startTime)"
-        } else if daysUntil <= 6 {
-            // 3-6 days - show day name with time
+        }
+        
+        // 3-6 days away - show day name only (this week)
+        if daysUntil >= 3 && daysUntil <= 6 {
             let formatter = DateFormatter()
             formatter.dateFormat = "EEEE"
             let dayString = formatter.string(from: nextSchedule.date)
             return "Move by \(dayString), \(nextSchedule.startTime)"
         }
         
-        // 7-13 days - show "Next [Day]" 
-        if daysUntil >= 7 && daysUntil <= 13 {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "EEEE"
-            let dayString = formatter.string(from: nextSchedule.date)
-            return "Move by Next \(dayString), \(nextSchedule.startTime)"
+        // 7-10 days - roughly 1 week
+        if daysUntil >= 7 && daysUntil <= 10 {
+            return "Move in 1 Week, \(nextSchedule.startTime)"
         }
         
-        // 14+ days - show in weeks (round up)
-        // Use ceiling division to round up weeks
-        let weeks = (daysUntil + 6) / 7  // This rounds up
-        
-        if weeks == 2 {
+        // 11-17 days - roughly 2 weeks
+        if daysUntil >= 11 && daysUntil <= 17 {
             return "Move in 2 Weeks, \(nextSchedule.startTime)"
-        } else if weeks == 3 {
-            return "Move in 3 Weeks, \(nextSchedule.startTime)"
-        } else if weeks == 4 {
-            return "Move in 4 Weeks, \(nextSchedule.startTime)"
-        } else {
-            // For anything more than 4 weeks
-            return "Move in \(weeks) Weeks, \(nextSchedule.startTime)"
         }
+        
+        // 18-24 days - roughly 3 weeks
+        if daysUntil >= 18 && daysUntil <= 24 {
+            return "Move in 3 Weeks, \(nextSchedule.startTime)"
+        }
+        
+        // 25+ days - 4 weeks or more
+        if daysUntil >= 25 && daysUntil <= 31 {
+            return "Move in 4 Weeks, \(nextSchedule.startTime)"
+        }
+        
+        // Over a month
+        let weeks = (daysUntil + 3) / 7  // Rough rounding
+        return "Move in \(weeks) Weeks, \(nextSchedule.startTime)"
     }
     
     private enum UrgencyLevel {

@@ -15,7 +15,7 @@ struct ReminderRowView: View {
     let onToggle: (Bool) -> Void
     
     var body: some View {
-        HStack(spacing: 24) {
+        HStack(spacing: 16) {
             // Toggle switch instead of icon
             Toggle("", isOn: Binding(
                 get: { reminder.isActive },
@@ -35,11 +35,13 @@ struct ReminderRowView: View {
                     Text(formatReminderDateTime(reminderDate))
                         .font(.system(size: 15))
                         .foregroundColor(.secondary)
+                        .lineLimit(1)
                 } else {
                     Text("No active schedule")
                         .font(.system(size: 15))
                         .foregroundColor(.secondary.opacity(0.7))
                         .italic()
+                        .lineLimit(1)
                 }
             }
             
@@ -63,7 +65,8 @@ struct ReminderRowView: View {
                     .contentShape(Rectangle())
             }
         }
-        .padding(20)
+        .padding(.vertical, 20)
+        .padding(.horizontal, 16)
         .background(.clear)
         .contentShape(Rectangle())
     }
@@ -74,9 +77,9 @@ struct ReminderRowView: View {
         let formatter = DateFormatter()
         
         if calendar.isDateInToday(date) {
-            formatter.dateFormat = "'Today,' EEE 'at' h:mma"
+            formatter.dateFormat = "'Today,' h:mma"
         } else if calendar.isDateInTomorrow(date) {
-            formatter.dateFormat = "'Tomorrow,' EEE 'at' h:mma"
+            formatter.dateFormat = "'Tomorrow,' h:mma"
         } else {
             // For dates more than tomorrow, show the day of week and date
             let daysUntil = calendar.dateComponents([.day], from: Date(), to: date).day ?? 0

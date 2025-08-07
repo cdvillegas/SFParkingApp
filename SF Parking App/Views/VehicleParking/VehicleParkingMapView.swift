@@ -171,7 +171,7 @@ struct VehicleParkingMapView: View {
     private var mapControlButtons: some View {
         Group {
             if !viewModel.isConfirmingSchedule || viewModel.isSettingLocation {
-                HStack(spacing: 12) {
+                HStack(spacing: 16) {
                     vehicleButton
                     userLocationButton
                     enableLocationMapButton
@@ -191,9 +191,9 @@ struct VehicleParkingMapView: View {
                 centerOnVehicle()
             }) {
                 Image(systemName: "car.fill")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.system(size: 17, weight: .medium))
                     .foregroundColor(.secondary)
-                    .frame(width: 44, height: 44)
+                    .frame(width: 48, height: 48)
                     .background(
                         Circle()
                             .fill(.thinMaterial)
@@ -211,9 +211,9 @@ struct VehicleParkingMapView: View {
                 centerOnUser()
             }) {
                 Image(systemName: "location.fill")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.system(size: 17, weight: .medium))
                     .foregroundColor(.secondary)
-                    .frame(width: 44, height: 44)
+                    .frame(width: 48, height: 48)
                     .background(
                         Circle()
                             .fill(.thinMaterial)
