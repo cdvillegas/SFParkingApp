@@ -182,8 +182,9 @@ class ParkingDetector: NSObject, ObservableObject {
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
         locationManager.distanceFilter = 10
-        locationManager.allowsBackgroundLocationUpdates = true
-        locationManager.pausesLocationUpdatesAutomatically = false
+        // Smart Park doesn't need background location updates
+        locationManager.allowsBackgroundLocationUpdates = false
+        locationManager.pausesLocationUpdatesAutomatically = true
         
         // For terminated app support
         locationManager.startMonitoringSignificantLocationChanges()
@@ -202,10 +203,8 @@ class ParkingDetector: NSObject, ObservableObject {
     private func requestLocationPermission() {
         switch locationManager.authorizationStatus {
         case .notDetermined:
-            locationManager.requestAlwaysAuthorization()
-        case .authorizedWhenInUse:
-            locationManager.requestAlwaysAuthorization()
-        case .authorizedAlways:
+            locationManager.requestWhenInUseAuthorization()
+        case .authorizedWhenInUse, .authorizedAlways:
             print("🚗 Location permission granted")
         default:
             print("🚗 ⚠️ Location permission denied")

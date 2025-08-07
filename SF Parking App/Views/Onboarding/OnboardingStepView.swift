@@ -214,7 +214,7 @@ struct OnboardingStepView: View {
             }
             
             locationManager!.delegate = locationDelegate
-            locationManager!.requestAlwaysAuthorization()
+            locationManager!.requestWhenInUseAuthorization()
             
         case .denied, .restricted:
             showPermissionDeniedAlert(message: "Location access helps us track where you parked and show you the street cleaning rules for that location. Please enable it in Settings.")

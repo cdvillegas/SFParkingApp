@@ -684,7 +684,7 @@ struct VehicleParkingView: View {
                     .frame(height: 56)
                     .background(
                         RoundedRectangle(cornerRadius: 12)
-                            .fill(.regularMaterial)
+                            .fill(Color.primary.opacity(0.08))
                     )
                 }
                 .buttonStyle(PlainButtonStyle())
@@ -710,7 +710,7 @@ struct VehicleParkingView: View {
                     .frame(height: 56)
                     .background(
                         RoundedRectangle(cornerRadius: 12)
-                            .fill(.regularMaterial)
+                            .fill(Color.primary.opacity(0.08))
                     )
                 }
                 .buttonStyle(PlainButtonStyle())
