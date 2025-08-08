@@ -1,2 +1,0 @@
-Target dependency graph (1 target)
-Target 'SF Parking App' in project 'SF Parking App' (no dependencies)
