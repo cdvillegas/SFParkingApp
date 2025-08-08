@@ -7,6 +7,7 @@ struct VehicleParkingView: View {
     @State private var showingRemindersSheet = false
     @State private var showingAutoParkingSettings = false
     @State private var showingParkingDetailsSheet = false
+    @State private var showingHistorySheet = false
     @EnvironmentObject var parkingDetectionHandler: ParkingDetectionHandler
     @StateObject private var parkingDetector = ParkingDetector.shared
     @StateObject private var notificationManager = NotificationManager.shared
@@ -53,9 +54,14 @@ struct VehicleParkingView: View {
                                 removal: .move(edge: .top).combined(with: .opacity)
                             ))
                     } else {
-                        // Top area now empty - status buttons moved to bottom tab bar
-                        Spacer()
-                            .frame(height: 10)
+                        // History button in top left when not setting/confirming location
+                        HStack {
+                            historyButton
+                                .padding(.leading, 12)
+                                .padding(.top, 20)
+                            
+                            Spacer()
+                        }
                     }
                     
                     Spacer()
@@ -237,6 +243,15 @@ struct VehicleParkingView: View {
                 )
             }
         }
+        .sheet(isPresented: $showingHistorySheet) {
+            ParkingHistorySheet(
+                vehicleManager: viewModel.vehicleManager,
+                onSelectLocation: { location in
+                    // Set the selected location for the current vehicle
+                    viewModel.confirmVehicleLocation(at: location.coordinate, address: location.address)
+                }
+            )
+        }
         .onChange(of: showingAutoParkingSettings) { _, isShowing in
             if !isShowing {
                 // Sheet was dismissed, show details for 5 seconds
@@ -248,18 +263,40 @@ struct VehicleParkingView: View {
     // MARK: - Instruction Window
     
     private var instructionWindow: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(viewModel.isConfirmingSchedule ? "Confirm Schedule" : "Set Location")
-                .font(.system(size: 24, weight: .semibold))
-                .foregroundColor(.primary)
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(viewModel.isConfirmingSchedule ? "Confirm Schedule" : "Set Location")
+                    .font(.system(size: 24, weight: .semibold))
+                    .foregroundColor(.primary)
+                
+                Text(instructionText)
+                    .font(.system(size: 18))
+                    .foregroundColor(.secondary)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             
-            Text(instructionText)
-                .font(.system(size: 18))
-                .foregroundColor(.secondary)
-                .lineLimit(2)
-                .fixedSize(horizontal: false, vertical: true)
+            // Warning text when schedule is urgent (red marker)
+            if shouldShowUrgencyWarning {
+                HStack(spacing: 8) {
+                    Image(systemName: scheduleWarningIcon)
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(scheduleWarningColor)
+                    
+                    Text(urgentScheduleWarningText)
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(scheduleWarningColor)
+                        .lineLimit(1)
+                    
+                    Spacer()
+                }
+                .transition(.opacity)
+                .animation(.easeInOut(duration: 0.25), value: shouldShowUrgencyWarning)
+            }
         }
-        .padding(20)
+        .padding(.horizontal, 20)
+        .padding(.top, 20)
+        .padding(.bottom, shouldShowUrgencyWarning ? 16 : 20)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -277,6 +314,132 @@ struct VehicleParkingView: View {
         } else {
             return "Drag the map to position the pin at your vehicle's location."
         }
+    }
+    
+    private var shouldShowUrgencyWarning: Bool {
+        // Show warning during schedule confirmation when we have a selected schedule
+        guard viewModel.isConfirmingSchedule else { return false }
+        
+        // Check if we have a selected schedule
+        if viewModel.hasSelectedSchedule,
+           viewModel.selectedScheduleIndex < viewModel.nearbySchedules.count {
+            return true
+        }
+        
+        return false
+    }
+    
+    private var urgentScheduleWarningText: String {
+        guard viewModel.hasSelectedSchedule,
+              viewModel.selectedScheduleIndex < viewModel.nearbySchedules.count else {
+            return "Street cleaning soon"
+        }
+        
+        let selectedSchedule = viewModel.nearbySchedules[viewModel.selectedScheduleIndex].schedule
+        guard let nextOccurrence = viewModel.streetDataManager.calculateNextScheduleImmediate(for: selectedSchedule) else {
+            return "Street cleaning soon"
+        }
+        
+        let timeInterval = nextOccurrence.date.timeIntervalSinceNow
+        let totalSeconds = Int(timeInterval)
+        
+        // Handle past/current times
+        if totalSeconds <= 0 {
+            return "Street cleaning starting now"
+        }
+        
+        // Handle very soon (under 2 minutes)
+        if totalSeconds < 120 {
+            if totalSeconds < 60 {
+                return "Street cleaning in under 1 minute"
+            } else {
+                return "Street cleaning in 1 minute"
+            }
+        }
+        
+        let minutes = totalSeconds / 60
+        let hours = minutes / 60
+        let days = hours / 24
+        
+        // Under 1 hour - show minutes only
+        if hours < 1 {
+            return "Street cleaning in \(minutes) minute\(minutes == 1 ? "" : "s")"
+        }
+        
+        // Under 24 hours - show hours only
+        if hours < 24 {
+            return "Street cleaning in \(hours) hour\(hours == 1 ? "" : "s")"
+        }
+        
+        // 1 day
+        if days == 1 {
+            return "Street cleaning in 1 day"
+        }
+        
+        // 2 days
+        if days == 2 {
+            return "Street cleaning in 2 days"
+        }
+        
+        // 3-6 days - show day count
+        if days >= 3 && days <= 6 {
+            return "Street cleaning in \(days) days"
+        }
+        
+        // 7-10 days - roughly 1 week
+        if days >= 7 && days <= 10 {
+            return "Street cleaning in 1 week"
+        }
+        
+        // 11-17 days - roughly 2 weeks
+        if days >= 11 && days <= 17 {
+            return "Street cleaning in 2 weeks"
+        }
+        
+        // 18-24 days - roughly 3 weeks
+        if days >= 18 && days <= 24 {
+            return "Street cleaning in 3 weeks"
+        }
+        
+        // 25-31 days - roughly 4 weeks
+        if days >= 25 && days <= 31 {
+            return "Street cleaning in 4 weeks"
+        }
+        
+        // Over a month
+        let weeks = (days + 3) / 7  // Rough rounding
+        return "Street cleaning in \(weeks) weeks"
+    }
+    
+    private func getUrgencyColor(for schedule: SweepSchedule) -> Color {
+        // Calculate next occurrence of this specific schedule
+        guard let nextOccurrence = viewModel.streetDataManager.calculateNextScheduleImmediate(for: schedule) else {
+            return .green
+        }
+        
+        let timeInterval = nextOccurrence.date.timeIntervalSinceNow
+        let hours = timeInterval / 3600
+        
+        if hours < 24 {
+            return .red
+        } else {
+            return .green
+        }
+    }
+    
+    private var scheduleWarningColor: Color {
+        guard viewModel.hasSelectedSchedule,
+              viewModel.selectedScheduleIndex < viewModel.nearbySchedules.count else {
+            return .green
+        }
+        
+        let selectedSchedule = viewModel.nearbySchedules[viewModel.selectedScheduleIndex].schedule
+        return getUrgencyColor(for: selectedSchedule)
+    }
+    
+    private var scheduleWarningIcon: String {
+        let color = scheduleWarningColor
+        return color == .red ? "exclamationmark.triangle.fill" : "calendar"
     }
     
     // MARK: - Top Status Buttons
@@ -508,10 +671,30 @@ struct VehicleParkingView: View {
     }
     
     @ViewBuilder
+    private var historyButton: some View {
+        Button(action: {
+            let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+            impactFeedback.impactOccurred()
+            showingHistorySheet = true
+        }) {
+            Image(systemName: "clock.arrow.circlepath")
+                .font(.system(size: 17, weight: .medium))
+                .foregroundColor(.secondary)
+                .frame(width: 48, height: 48)
+                .background(
+                    Circle()
+                        .fill(.regularMaterial)
+                        .shadow(color: Color.black.opacity(0.2), radius: 15, x: 0, y: -5)
+                )
+        }
+    }
+    
+    @ViewBuilder
     private var parkingDetailsButton: some View {
         if let currentVehicle = viewModel.vehicleManager.currentVehicle,
            currentVehicle.parkingLocation != nil,
-           viewModel.streetDataManager.nextUpcomingSchedule != nil {
+           viewModel.streetDataManager.nextUpcomingSchedule != nil,
+           !viewModel.isSettingLocation && !viewModel.isConfirmingSchedule {
             Button(action: {
                 let impactFeedback = UIImpactFeedbackGenerator(style: .light)
                 impactFeedback.impactOccurred()

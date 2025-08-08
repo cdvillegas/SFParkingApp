@@ -267,6 +267,9 @@ struct VehicleParkingMapView: View {
                             viewModel.centerMapOnLocation(parkingLocation.coordinate)
                         }
                     )
+                    .opacity(viewModel.isSettingLocation || viewModel.isConfirmingSchedule ? 0.5 : 1.0)
+                    .animation(.easeInOut(duration: 0.3), value: viewModel.isSettingLocation)
+                    .animation(.easeInOut(duration: 0.3), value: viewModel.isConfirmingSchedule)
                 }
             }
         }
@@ -391,13 +394,19 @@ struct VehicleParkingMapView: View {
     }
     
     private func getMovingPinColor() -> Color {
-        // Use the color of the currently selected schedule, or green as default
-        if viewModel.hasSelectedSchedule,
+        // Always green during "Set Location" step (step 1)
+        if viewModel.isSettingLocation && !viewModel.isConfirmingSchedule {
+            return .green
+        }
+        
+        // During "Confirm Schedule" step (step 2), use urgency color based on selected schedule
+        if viewModel.isConfirmingSchedule && viewModel.hasSelectedSchedule,
            viewModel.selectedScheduleIndex < viewModel.nearbySchedules.count {
             let selectedSchedule = viewModel.nearbySchedules[viewModel.selectedScheduleIndex].schedule
             return getUrgencyColor(for: selectedSchedule)
         }
-        return .green  // Default to green when no schedule selected
+        
+        return .green  // Default to green
     }
     
     // Helper function to check if cleaning is today and hasn't ended yet

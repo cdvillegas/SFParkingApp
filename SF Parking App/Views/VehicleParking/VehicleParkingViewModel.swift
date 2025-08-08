@@ -456,6 +456,21 @@ class VehicleParkingViewModel: ObservableObject {
     
     // MARK: - Confirmation Methods
     
+    func confirmVehicleLocation(at coordinate: CLLocationCoordinate2D, address: String) {
+        guard let selectedVehicle = vehicleManager.selectedVehicle else { return }
+        
+        // Set the location directly without going through the setting flow
+        vehicleManager.setManualParkingLocation(
+            for: selectedVehicle,
+            coordinate: coordinate,
+            address: address,
+            selectedSchedule: nil
+        )
+        
+        // Update the map to center on the new location
+        centerMapOnLocation(coordinate)
+    }
+    
     func confirmUnifiedLocation() {
         guard let selectedVehicle = vehicleManager.selectedVehicle,
               let address = settingAddress else { return }

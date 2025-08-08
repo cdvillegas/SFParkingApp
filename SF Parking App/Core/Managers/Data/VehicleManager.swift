@@ -111,6 +111,12 @@ class VehicleManager: ObservableObject {
         var updatedVehicle = vehicle
         updatedVehicle.parkingLocation = location
         updateVehicle(updatedVehicle)
+        
+        // Add to parking history (only if not already added by setManualParkingLocation)
+        if location.source != .manual {
+            ParkingHistoryManager.shared.addParkingLocation(location, vehicleId: vehicle.id)
+        }
+        
         AnalyticsManager.shared.logParkingLocationSet(method: "manual")
     }
     
@@ -132,6 +138,9 @@ class VehicleManager: ObservableObject {
         )
         
         setParkingLocation(for: vehicle, location: parkingLocation)
+        
+        // Add to parking history
+        ParkingHistoryManager.shared.addParkingLocation(parkingLocation, vehicleId: vehicle.id)
         
         // Log additional analytics for schedule selection
         if let schedule = selectedSchedule {
