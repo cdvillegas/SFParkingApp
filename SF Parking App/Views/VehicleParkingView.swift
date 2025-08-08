@@ -276,27 +276,35 @@ struct VehicleParkingView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             
-            // Warning text when schedule is urgent (red marker)
+            // Schedule information with smooth transitions
             if shouldShowUrgencyWarning {
                 HStack(spacing: 8) {
                     Image(systemName: scheduleWarningIcon)
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(scheduleWarningColor)
+                        .animation(.smooth(duration: 0.4, extraBounce: 0.1), value: scheduleWarningColor)
+                        .animation(.smooth(duration: 0.3, extraBounce: 0.15), value: scheduleWarningIcon)
                     
                     Text(urgentScheduleWarningText)
                         .font(.system(size: 16, weight: .bold))
                         .foregroundColor(scheduleWarningColor)
                         .lineLimit(1)
+                        .animation(.smooth(duration: 0.4, extraBounce: 0.1), value: scheduleWarningColor)
+                        .contentTransition(.numericText())
                     
                     Spacer()
                 }
-                .transition(.opacity)
-                .animation(.easeInOut(duration: 0.25), value: shouldShowUrgencyWarning)
+                .transition(.asymmetric(
+                    insertion: .scale(scale: 0.8).combined(with: .opacity).combined(with: .move(edge: .top)),
+                    removal: .scale(scale: 0.9).combined(with: .opacity).combined(with: .move(edge: .bottom))
+                ))
+                .animation(.smooth(duration: 0.5, extraBounce: 0.2), value: shouldShowUrgencyWarning)
             }
         }
         .padding(.horizontal, 20)
         .padding(.top, 20)
         .padding(.bottom, shouldShowUrgencyWarning ? 16 : 20)
+        .animation(.smooth(duration: 0.3), value: shouldShowUrgencyWarning)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
