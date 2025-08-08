@@ -84,9 +84,6 @@ class VehicleParkingViewModel: ObservableObject {
         
         // Subscribe to LocationManager changes to forward them as published properties
         setupLocationSubscriptions()
-        
-        // Configure ParkingDetector with VehicleManager
-        ParkingDetector.shared.configure(vehicleManager: vehicleManager)
     }
     
     private func setupLocationSubscriptions() {

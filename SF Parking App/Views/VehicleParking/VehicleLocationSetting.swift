@@ -161,7 +161,9 @@ struct VehicleLocationSetting: View {
     }
     
     private var smartParkingIsOn: Bool {
-        return ParkingDetector.shared.isMonitoring
+        // Check if Smart Park 2.0 is enabled
+        return UserDefaults.standard.bool(forKey: "smartParkEnabled") && 
+               UserDefaults.standard.bool(forKey: "smartParkSetupCompleted")
     }
     
     private var smartParkingStatus: String {

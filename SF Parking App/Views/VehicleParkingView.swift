@@ -9,7 +9,6 @@ struct VehicleParkingView: View {
     @State private var showingParkingDetailsSheet = false
     @State private var showingHistorySheet = false
     @EnvironmentObject var parkingDetectionHandler: ParkingDetectionHandler
-    @StateObject private var parkingDetector = ParkingDetector.shared
     @StateObject private var notificationManager = NotificationManager.shared
     @State private var wasHandlingAutoParking = false
     @State private var showingOnboarding = !OnboardingManager.hasCompletedOnboarding

@@ -20,9 +20,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     
     // Check if app was launched due to location event
     if let _ = launchOptions?[.location] {
-        print("🚗 App launched from location event - initializing parking detection")
-        // Initialize ParkingDetector to handle the location event
-        _ = ParkingDetector.shared
+        print("🚗 App launched from location event")
     }
     
     // Initialize Smart Park Manager for App Intents
@@ -51,9 +49,6 @@ struct SF_Parking_AppApp: App {
     @StateObject private var parkingDetectionHandler = ParkingDetectionHandler()
     
     init() {
-        // Initialize comprehensive parking detection system
-        _ = ParkingDetector.shared
-        
         // Register App Shortcuts for Siri and Shortcuts app
         SmartParkAppShortcutsProvider.updateAppShortcutParameters()
         

@@ -2,7 +2,6 @@ import SwiftUI
 
 struct SmartParkSettingsView: View {
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var parkingDetector = ParkingDetector.shared
     @State private var impactFeedbackLight = UIImpactFeedbackGenerator(style: .light)
     @State private var showingSetupFlow = false
     @State private var smartParkIsEnabled = false
