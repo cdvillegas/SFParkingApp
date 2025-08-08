@@ -291,6 +291,7 @@ struct VehicleParkingView: View {
                         .lineLimit(1)
                         .animation(.smooth(duration: 0.4, extraBounce: 0.1), value: scheduleWarningColor)
                         .contentTransition(.numericText())
+                        .animation(.smooth(duration: 0.35, extraBounce: 0.08), value: urgentScheduleWarningText)
                     
                     Spacer()
                 }
