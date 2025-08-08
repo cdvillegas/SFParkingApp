@@ -15,6 +15,10 @@ struct VehicleParkingView: View {
     @State private var showingOnboarding = !OnboardingManager.hasCompletedOnboarding
     @State private var isComingFromOnboarding = false
     
+    // Smart Park confirmation state
+    @State private var showingSmartParkConfirmation = false
+    @State private var pendingParkingLocation: SmartParkLocation?
+    
     // Optional parameters for auto-parking detection
     var autoDetectedLocation: CLLocationCoordinate2D?
     var autoDetectedAddress: String?
@@ -123,6 +127,12 @@ struct VehicleParkingView: View {
                 )
                 .transition(.opacity)
             }
+            
+            // Smart Park confirmation overlay
+            if showingSmartParkConfirmation, let location = pendingParkingLocation {
+                smartParkConfirmationOverlay(for: location)
+                    .transition(.opacity)
+            }
         }
         .sheet(isPresented: $viewModel.showingAddVehicle) {
             AddEditVehicleView(
@@ -179,6 +189,10 @@ struct VehicleParkingView: View {
                let address = userInfo["address"] as? String {
                 handleAutoDetectedParking()
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .smartParkConfirmationRequired)) { notification in
+            // Handle Smart Park confirmation required notification
+            handleSmartParkConfirmationRequired(notification: notification)
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
             // Refresh notification permission status when returning from Settings
@@ -1095,7 +1109,159 @@ struct VehicleParkingView: View {
         // parkingDetectionHandler will be cleared when user confirms the location
     }
     
+    // MARK: - Smart Park Confirmation UI
     
+    private func handleSmartParkConfirmationRequired(notification: Notification) {
+        guard let userInfo = notification.userInfo else { return }
+        
+        // Extract parking location data from notification
+        guard let parkingId = userInfo["parkingId"] as? String,
+              let latitude = userInfo["latitude"] as? Double,
+              let longitude = userInfo["longitude"] as? Double,
+              let address = userInfo["address"] as? String,
+              let triggerType = userInfo["triggerType"] as? String else {
+            print("❌ Invalid Smart Park confirmation required notification data")
+            return
+        }
+        
+        // Create SmartParkLocation from notification data
+        let location = SmartParkLocation(
+            id: parkingId,
+            coordinate: CLLocationCoordinate2D(latitude: latitude, longitude: longitude),
+            address: address,
+            timestamp: Date(timeIntervalSince1970: userInfo["timestamp"] as? TimeInterval ?? Date().timeIntervalSince1970),
+            triggerType: triggerType,
+            bluetoothDeviceName: userInfo["bluetoothDeviceName"] as? String
+        )
+        
+        // Show confirmation UI
+        DispatchQueue.main.async {
+            self.pendingParkingLocation = location
+            withAnimation(.easeInOut(duration: 0.3)) {
+                self.showingSmartParkConfirmation = true
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func smartParkConfirmationOverlay(for location: SmartParkLocation) -> some View {
+        ZStack {
+            // Background overlay
+            Color.black.opacity(0.4)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    // Allow dismissing by tapping outside
+                    dismissSmartParkConfirmation()
+                }
+            
+            // Confirmation card
+            VStack(spacing: 20) {
+                // Header
+                VStack(spacing: 8) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 32, weight: .medium))
+                        .foregroundColor(.blue)
+                    
+                    Text("Smart Park Detected")
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundColor(.primary)
+                    
+                    let triggerText = location.triggerType == "carPlay" ? "CarPlay" : "Bluetooth"
+                    Text("via \(triggerText) disconnection")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.secondary)
+                }
+                
+                // Location info
+                if let address = location.address {
+                    VStack(spacing: 4) {
+                        Text("Detected Location")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.secondary)
+                        
+                        Text(address)
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.primary)
+                            .multilineTextAlignment(.center)
+                            .lineLimit(2)
+                    }
+                    .padding(.horizontal, 16)
+                }
+                
+                // Action buttons
+                VStack(spacing: 12) {
+                    // Confirm button
+                    Button(action: {
+                        confirmSmartParkLocation(location)
+                    }) {
+                        Text("Confirm & Save")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 56)
+                            .background(Color.blue)
+                            .cornerRadius(16)
+                    }
+                    
+                    // Dismiss button
+                    Button(action: {
+                        dismissSmartParkConfirmation()
+                    }) {
+                        Text("Not Parked Here")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.secondary)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 44)
+                            .background(Color.clear)
+                    }
+                }
+            }
+            .padding(24)
+            .background(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(.regularMaterial)
+                    .shadow(color: Color.black.opacity(0.3), radius: 20, x: 0, y: 10)
+            )
+            .padding(.horizontal, 20)
+        }
+    }
+    
+    private func confirmSmartParkLocation(_ location: SmartParkLocation) {
+        Task { @MainActor in
+            // Confirm the location using ParkingLocationManager
+            let manager = await ParkingLocationManager.shared
+            await manager.confirmPendingLocation()
+            
+            print("✅ Smart Park location confirmed: \(location.address ?? "location")")
+            
+            // Update the UI to show the confirmed location
+            setupView()
+            
+            // Hide confirmation UI
+            withAnimation(.easeInOut(duration: 0.3)) {
+                showingSmartParkConfirmation = false
+                pendingParkingLocation = nil
+            }
+        }
+    }
+    
+    private func dismissSmartParkConfirmation() {
+        Task { @MainActor in
+            if let location = pendingParkingLocation {
+                // Cancel the pending location
+                let manager = await ParkingLocationManager.shared
+                await manager.cancelPendingLocation()
+                
+                print("✅ Smart Park location dismissed")
+            }
+            
+            // Hide confirmation UI
+            withAnimation(.easeInOut(duration: 0.3)) {
+                showingSmartParkConfirmation = false
+                pendingParkingLocation = nil
+            }
+        }
+    }
     
 }
 
