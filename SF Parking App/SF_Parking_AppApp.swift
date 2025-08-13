@@ -34,11 +34,18 @@ class AppDelegate: NSObject, UIApplicationDelegate {
   func applicationWillResignActive(_ application: UIApplication) {
     // Help prevent Metal crashes during app transitions
     NotificationCenter.default.post(name: NSNotification.Name("AppWillResignActive"), object: nil)
+    AnalyticsManager.shared.logAppBackgrounded()
   }
   
   func applicationDidBecomeActive(_ application: UIApplication) {
     // App became active again
     NotificationCenter.default.post(name: NSNotification.Name("AppDidBecomeActive"), object: nil)
+    AnalyticsManager.shared.logAppOpened()
+  }
+  
+  func applicationWillTerminate(_ application: UIApplication) {
+    // App will terminate
+    AnalyticsManager.shared.logAppBackgrounded()
   }
 }
 

@@ -117,7 +117,6 @@ class GeocodingCacheManager: ObservableObject {
                     print("Geocoding error: \(error.localizedDescription)")
                     // Return fallback for failed requests
                     request.completion("Selected Location", nil)
-                    AnalyticsManager.shared.logGeocodingPerformed(success: false)
                 } else if let placemark = placemarks?.first {
                     let address = self?.formatAddress(from: placemark) ?? "Selected Location"
                     let neighborhood = self?.formatNeighborhood(from: placemark)
@@ -131,10 +130,8 @@ class GeocodingCacheManager: ObservableObject {
                     )
                     
                     request.completion(address, neighborhood)
-                    AnalyticsManager.shared.logGeocodingPerformed(success: true)
                 } else {
                     request.completion("Selected Location", nil)
-                    AnalyticsManager.shared.logGeocodingPerformed(success: false)
                 }
                 
                 // Continue processing queue

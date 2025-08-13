@@ -95,8 +95,15 @@ struct SmartParkSettingsView: View {
         }
         .onChange(of: showingSetupFlow) { _, isShowing in
             if !isShowing {
+                // Check if setup was completed while we were away
+                let wasCompletedBefore = UserDefaults.standard.bool(forKey: "smartParkSetupCompleted")
                 // Reload state when returning from setup
                 loadSmartParkState()
+                // If setup was just completed, log it
+                let isCompletedNow = UserDefaults.standard.bool(forKey: "smartParkSetupCompleted")
+                if !wasCompletedBefore && isCompletedNow {
+                    AnalyticsManager.shared.logSmartParkSetupCompleted()
+                }
             }
         }
         .presentationBackground(.thinMaterial)
@@ -136,6 +143,8 @@ struct SmartParkSettingsView: View {
         .onAppear {
             // Initialize toggle state
             loadSmartParkState()
+            // Track Smart Park tab access
+            AnalyticsManager.shared.logSmartParkTabClicked()
         }
         .onDisappear {
             // Smart Park cleanup if needed
@@ -156,6 +165,7 @@ struct SmartParkSettingsView: View {
                     Button {
                         let impactFeedback = UIImpactFeedbackGenerator(style: .light)
                         impactFeedback.impactOccurred()
+                        AnalyticsManager.shared.logSmartParkSetupStarted()
                         showingSetupFlow = true
                     } label: {
                         Text("Setup")
@@ -216,6 +226,11 @@ struct SmartParkSettingsView: View {
                     .onChange(of: smartParkIsEnabled) { _, newValue in
                         let impactFeedback = UIImpactFeedbackGenerator(style: .light)
                         impactFeedback.impactOccurred()
+                        if newValue {
+                            AnalyticsManager.shared.logSmartParkEnabled()
+                        } else {
+                            AnalyticsManager.shared.logSmartParkDisabled()
+                        }
                         UserDefaults.standard.set(newValue, forKey: "smartParkEnabled")
                     }
             }
@@ -227,6 +242,9 @@ struct SmartParkSettingsView: View {
             // Option 1: Update automatically
             Button(action: {
                 impactFeedbackLight.impactOccurred()
+                if requiresLocationConfirmation {
+                    AnalyticsManager.shared.logSmartParkModeChanged(mode: "automatic")
+                }
                 requiresLocationConfirmation = false
                 UserDefaults.standard.set(false, forKey: "smartParkRequiresConfirmation")
             }) {
@@ -260,6 +278,9 @@ struct SmartParkSettingsView: View {
             // Option 2: Require confirmation
             Button(action: {
                 impactFeedbackLight.impactOccurred()
+                if !requiresLocationConfirmation {
+                    AnalyticsManager.shared.logSmartParkModeChanged(mode: "confirmation")
+                }
                 requiresLocationConfirmation = true
                 UserDefaults.standard.set(true, forKey: "smartParkRequiresConfirmation")
             }) {
@@ -415,6 +436,7 @@ struct SmartParkSettingsView: View {
     private var getStartedButton: some View {
         Button(action: {
             impactFeedbackLight.impactOccurred()
+            AnalyticsManager.shared.logSmartParkSetupStarted()
             showingSetupFlow = true
         }) {
             Text("Get Started")

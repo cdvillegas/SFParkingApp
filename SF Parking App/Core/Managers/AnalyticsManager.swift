@@ -13,6 +13,20 @@ class AnalyticsManager {
     
     private init() {}
     
+    // Throttling for high-frequency events
+    private var lastMapCenterTime: Date?
+    private let mapEventThrottleInterval: TimeInterval = 5.0 // 5 seconds
+    
+    // MARK: - App Lifecycle Events
+    
+    func logAppOpened() {
+        Analytics.logEvent("app_opened", parameters: nil)
+    }
+    
+    func logAppBackgrounded() {
+        Analytics.logEvent("app_backgrounded", parameters: nil)
+    }
+    
     // MARK: - Onboarding Events
     
     func logOnboardingStarted() {
@@ -72,14 +86,6 @@ class AnalyticsManager {
         ])
     }
     
-    func logVehicleActivated() {
-        Analytics.logEvent("vehicle_activated", parameters: nil)
-    }
-    
-    func logVehicleDeactivated() {
-        Analytics.logEvent("vehicle_deactivated", parameters: nil)
-    }
-    
     // MARK: - Parking Events
     
     func logParkingLocationSet(method: String) {
@@ -116,28 +122,89 @@ class AnalyticsManager {
         ])
     }
     
-    // MARK: - Map Interaction Events
+    // MARK: - Map Interaction Events (Throttled)
     
     func logMapCenteredOnUser() {
+        guard shouldLogMapEvent() else { return }
         Analytics.logEvent("map_centered_on_user", parameters: nil)
     }
     
     func logMapCenteredOnVehicle() {
+        guard shouldLogMapEvent() else { return }
         Analytics.logEvent("map_centered_on_vehicle", parameters: nil)
-    }
-    
-    func logMapZoomed(zoomLevel: Double) {
-        Analytics.logEvent("map_zoomed", parameters: [
-            "zoom_level": zoomLevel as NSObject
-        ])
-    }
-    
-    func logMapPanned() {
-        Analytics.logEvent("map_panned", parameters: nil)
     }
     
     func logStreetCleaningInfoViewed() {
         Analytics.logEvent("street_cleaning_info_viewed", parameters: nil)
+    }
+    
+    // Helper method for throttling map events
+    private func shouldLogMapEvent() -> Bool {
+        let now = Date()
+        if let lastTime = lastMapCenterTime {
+            let timeSinceLastEvent = now.timeIntervalSince(lastTime)
+            if timeSinceLastEvent < mapEventThrottleInterval {
+                return false
+            }
+        }
+        lastMapCenterTime = now
+        return true
+    }
+    
+    // MARK: - Smart Park Events
+    
+    func logSmartParkTabClicked() {
+        Analytics.logEvent("smart_park_tab_clicked", parameters: nil)
+    }
+    
+    func logSmartParkSetupStarted() {
+        Analytics.logEvent("smart_park_setup_started", parameters: nil)
+    }
+    
+    func logSmartParkSetupCompleted() {
+        Analytics.logEvent("smart_park_setup_completed", parameters: nil)
+    }
+    
+    func logSmartParkEnabled() {
+        Analytics.logEvent("smart_park_enabled", parameters: nil)
+    }
+    
+    func logSmartParkDisabled() {
+        Analytics.logEvent("smart_park_disabled", parameters: nil)
+    }
+    
+    func logSmartParkModeChanged(mode: String) {
+        Analytics.logEvent("smart_park_mode_changed", parameters: [
+            "mode": mode as NSObject // "manual" or "confirmation"
+        ])
+    }
+    
+    func logSmartParkConfirmClicked() {
+        Analytics.logEvent("smart_park_confirm_clicked", parameters: nil)
+    }
+    
+    // MARK: - Navigation Events
+    
+    func logHistoryTabClicked() {
+        Analytics.logEvent("history_tab_clicked", parameters: nil)
+    }
+    
+    func logHistoryItemClicked() {
+        Analytics.logEvent("history_item_clicked", parameters: nil)
+    }
+    
+    func logRemindersTabClicked() {
+        Analytics.logEvent("reminders_tab_clicked", parameters: nil)
+    }
+    
+    // MARK: - Location Movement Events
+    
+    func logLocationMovedViaCarIcon() {
+        Analytics.logEvent("location_moved_via_car_icon", parameters: nil)
+    }
+    
+    func logLocationMovedViaUserButton() {
+        Analytics.logEvent("location_moved_via_user_button", parameters: nil)
     }
     
     // MARK: - Reminder Events
@@ -204,30 +271,7 @@ class AnalyticsManager {
         Analytics.logEvent("notification_tapped", parameters: nil)
     }
     
-    // MARK: - Navigation/UI Events
-    
-    func logTabSwitched(tabName: String) {
-        Analytics.logEvent("tab_switched", parameters: [
-            "tab_name": tabName as NSObject
-        ])
-    }
-    
-    func logSettingsOpened() {
-        Analytics.logEvent("settings_opened", parameters: nil)
-    }
-    
-    func logHelpTapped() {
-        Analytics.logEvent("help_tapped", parameters: nil)
-    }
-    
-    func logErrorOccurred(errorType: String, screenName: String) {
-        Analytics.logEvent("error_occurred", parameters: [
-            "error_type": errorType as NSObject,
-            "screen_name": screenName as NSObject
-        ])
-    }
-    
-    // MARK: - Data Events
+    // MARK: - Data Events (Only essential ones)
     
     func logStreetDataLoaded(loadTime: Double, dataSize: Int) {
         Analytics.logEvent("street_data_loaded", parameters: [
@@ -236,13 +280,14 @@ class AnalyticsManager {
         ])
     }
     
-    func logGeocodingPerformed(success: Bool) {
-        Analytics.logEvent("geocoding_performed", parameters: [
-            "success": success as NSObject
-        ])
-    }
-    
     func logLocationSearchPerformed() {
         Analytics.logEvent("location_search_performed", parameters: nil)
+    }
+    
+    func logErrorOccurred(errorType: String, screenName: String) {
+        Analytics.logEvent("error_occurred", parameters: [
+            "error_type": errorType as NSObject,
+            "screen_name": screenName as NSObject
+        ])
     }
 }

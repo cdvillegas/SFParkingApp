@@ -516,6 +516,7 @@ struct VehicleParkingView: View {
             Button(action: {
                 let impactFeedback = UIImpactFeedbackGenerator(style: .light)
                 impactFeedback.impactOccurred()
+                AnalyticsManager.shared.logRemindersTabClicked()
                 showingRemindersSheet = true
             }) {
                 HStack(spacing: 16) {
@@ -697,6 +698,7 @@ struct VehicleParkingView: View {
         Button(action: {
             let impactFeedback = UIImpactFeedbackGenerator(style: .light)
             impactFeedback.impactOccurred()
+            AnalyticsManager.shared.logHistoryTabClicked()
             showingHistorySheet = true
         }) {
             Image(systemName: "clock.arrow.circlepath")
@@ -871,6 +873,7 @@ struct VehicleParkingView: View {
                 Button(action: {
                     let impactFeedback = UIImpactFeedbackGenerator(style: .light)
                     impactFeedback.impactOccurred()
+                    AnalyticsManager.shared.logSmartParkTabClicked()
                     showingAutoParkingSettings = true
                 }) {
                     HStack(spacing: 8) {
@@ -898,6 +901,7 @@ struct VehicleParkingView: View {
                 Button(action: {
                     let impactFeedback = UIImpactFeedbackGenerator(style: .light)
                     impactFeedback.impactOccurred()
+                    AnalyticsManager.shared.logRemindersTabClicked()
                     showingRemindersSheet = true
                 }) {
                     HStack(spacing: 8) {
