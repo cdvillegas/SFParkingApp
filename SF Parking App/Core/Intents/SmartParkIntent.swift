@@ -90,53 +90,91 @@ struct SmartParkIntent: AppIntent {
             return .result(dialog: "Still connected to your car. Smart Park will activate when you disconnect.")
         }
         
-        print("🚗 [Smart Park] Car disconnected - processing parking location")
+        print("🚗 [Smart Park] Car disconnected - caching location and starting delay")
+        
+        // Get parking location manager
+        let manager = await ParkingLocationManager.shared
+        
+        // Get current location immediately at disconnect
+        guard let currentLocation = await manager.getCurrentLocation() else {
+            print("❌ [Smart Park] Failed to get current location")
+            throw SmartParkError.locationUnavailable
+        }
+        
+        // Cache the location with timestamp
+        let cacheKey = "smartParkPendingLocation"
+        let locationData: [String: Any] = [
+            "latitude": currentLocation.latitude,
+            "longitude": currentLocation.longitude,
+            "timestamp": Date().timeIntervalSince1970,
+            "triggerType": parkingTriggerType.rawValue
+        ]
+        UserDefaults.standard.set(locationData, forKey: cacheKey)
+        
+        print("🚗 [Smart Park] Location cached, waiting 2 minutes for cancellation window")
+        
+        if config.delayConfirmation {
+            // Wait 2 minutes - can be cancelled if car reconnects
+            try await Task.sleep(nanoseconds: 120_000_000_000) // 2 minutes = 120 seconds
+            
+            // Check if cache was cleared (car reconnected)
+            guard let cachedData = UserDefaults.standard.dictionary(forKey: cacheKey) else {
+                print("🚗 [Smart Park] Cache cleared - car reconnected, cancelling")
+                return .result(dialog: "Smart Park cancelled - car reconnected")
+            }
+            
+            // Check if we're still disconnected
+            let isStillConnected = await detector.isCarConnected(type: parkingTriggerType)
+            if isStillConnected {
+                print("🚗 [Smart Park] Car reconnected - cancelling Smart Park")
+                UserDefaults.standard.removeObject(forKey: cacheKey)
+                return .result(dialog: "Smart Park cancelled - car reconnected")
+            }
+        }
+        
+        // Retrieve cached location data
+        guard let cachedData = UserDefaults.standard.dictionary(forKey: cacheKey),
+              let latitude = cachedData["latitude"] as? Double,
+              let longitude = cachedData["longitude"] as? Double else {
+            print("❌ [Smart Park] Failed to retrieve cached location")
+            throw SmartParkError.locationUnavailable
+        }
+        
+        let cachedLocation = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+        
+        // Clear the cache
+        UserDefaults.standard.removeObject(forKey: cacheKey)
         
         // Check if user requires confirmation
         let requiresConfirmation = UserDefaults.standard.object(forKey: "smartParkRequiresConfirmation") == nil 
             ? true // Default to true (require confirmation)
             : UserDefaults.standard.bool(forKey: "smartParkRequiresConfirmation")
         
-        print("🚗 [Smart Park] Requires confirmation: \(requiresConfirmation)")
-        
-        // Get parking location manager
-        let manager = await ParkingLocationManager.shared
-        
-        // Get current location
-        guard let currentLocation = await manager.getCurrentLocation() else {
-            print("❌ [Smart Park] Failed to get current location")
-            throw SmartParkError.locationUnavailable
-        }
+        print("🚗 [Smart Park] Processing cached location - Requires confirmation: \(requiresConfirmation)")
         
         if requiresConfirmation {
-            // Confirmation mode - detect but don't save
-            print("🚗 [Smart Park] Confirmation mode - saving pending location")
-            
-            // Save as pending location
+            // Confirmation mode - save as pending location
             let pendingLocation = try await manager.savePendingParkingLocation(
-                at: currentLocation,
+                at: cachedLocation,
                 triggerType: parkingTriggerType
             )
             
             // Track successful Smart Park usage
             UserDefaults.standard.set(Date(), forKey: "smartParkLastTriggered")
             
-            return .result(dialog: "Please confirm your parking location at \(pendingLocation.address ?? "current location")")
+            return .result(dialog: "Please confirm your parking location at \(pendingLocation.address ?? "cached location")")
         } else {
-            // Automatic mode - save immediately
-            print("🚗 [Smart Park] Automatic mode - saving location immediately")
-            
-            // Save parking location (TESTING: disable 2-minute delay)
+            // Automatic mode - save immediately (no additional delay needed)
             let savedLocation = try await manager.saveParkingLocation(
-                at: currentLocation,
+                at: cachedLocation,
                 triggerType: parkingTriggerType,
-                delayConfirmation: false // TESTING: Force immediate confirmation
+                delayConfirmation: false // Already waited 2 minutes
             )
             
             // Track successful Smart Park usage
             UserDefaults.standard.set(Date(), forKey: "smartParkLastTriggered")
             
-            return .result(dialog: "Parking location saved at \(savedLocation.address ?? "current location")")
+            return .result(dialog: "Parking location saved at \(savedLocation.address ?? "cached location")")
         }
     }
 }
