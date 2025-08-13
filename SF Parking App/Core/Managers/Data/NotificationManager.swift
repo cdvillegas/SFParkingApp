@@ -9,6 +9,7 @@ import Foundation
 import UserNotifications
 import CoreLocation
 import UIKit
+import AVFoundation
 
 // MARK: - Notification Manager
 class NotificationManager: NSObject, ObservableObject {
@@ -1046,7 +1047,10 @@ class NotificationManager: NSObject, ObservableObject {
 
 extension NotificationManager: UNUserNotificationCenterDelegate {
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        // Show notification even when app is in foreground
+        let userInfo = notification.request.content.userInfo
+        
+        
+        // Show all other notifications when app is in foreground
         completionHandler([.banner, .sound, .badge])
     }
     
@@ -1071,6 +1075,7 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
         default:
             break
         }
+        
         
         if let type = userInfo["type"] as? String {
             switch type {
@@ -1258,6 +1263,7 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
             }
         }
     }
+    
 }
 
 // MARK: - Data Models
