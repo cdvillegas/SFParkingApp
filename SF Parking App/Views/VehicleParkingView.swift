@@ -41,7 +41,10 @@ struct VehicleParkingView: View {
     var body: some View {
         ZStack {
             // Map extends to absolute bottom edge
-            VehicleParkingMapView(viewModel: viewModel)
+            VehicleParkingMapView(
+                viewModel: viewModel,
+                pendingSmartParkLocation: showingSmartParkConfirmation ? pendingParkingLocation : nil
+            )
                 .ignoresSafeArea(.all)
             
             

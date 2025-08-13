@@ -4,7 +4,7 @@ import Combine
 import SwiftUI
 
 // MARK: - Smart Park Parking Location
-struct SmartParkLocation: Codable, Identifiable {
+struct SmartParkLocation: Codable, Identifiable, Equatable {
     let id: String
     let coordinate: CLLocationCoordinate2D
     let address: String?
@@ -78,6 +78,18 @@ struct SmartParkLocation: Codable, Identifiable {
         try container.encodeIfPresent(bluetoothDeviceName, forKey: .bluetoothDeviceName)
         try container.encode(confirmationStatus, forKey: .confirmationStatus)
         try container.encodeIfPresent(detectedSchedule, forKey: .detectedSchedule)
+    }
+    
+    // Equatable conformance
+    static func == (lhs: SmartParkLocation, rhs: SmartParkLocation) -> Bool {
+        return lhs.id == rhs.id &&
+               lhs.coordinate.latitude == rhs.coordinate.latitude &&
+               lhs.coordinate.longitude == rhs.coordinate.longitude &&
+               lhs.address == rhs.address &&
+               lhs.timestamp == rhs.timestamp &&
+               lhs.triggerType == rhs.triggerType &&
+               lhs.bluetoothDeviceName == rhs.bluetoothDeviceName &&
+               lhs.confirmationStatus == rhs.confirmationStatus
     }
 }
 

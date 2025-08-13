@@ -4,6 +4,7 @@ import CoreLocation
 
 struct VehicleParkingMapView: View {
     @ObservedObject var viewModel: VehicleParkingViewModel
+    let pendingSmartParkLocation: SmartParkLocation?
     @State private var currentMapHeading: CLLocationDirection = 0
     @State private var impactFeedbackLight = UIImpactFeedbackGenerator(style: .light)
     @State private var userLocation: CLLocation?
@@ -28,6 +29,11 @@ struct VehicleParkingMapView: View {
             
             // Vehicle annotations
             vehicleAnnotations
+            
+            // Pending Smart Park location (yellow pin)
+            if let pendingLocation = pendingSmartParkLocation {
+                pendingLocationAnnotation(for: pendingLocation)
+            }
             
             // Street sweeping schedule edge lines (only show in step 2)
             if viewModel.isConfirmingSchedule && !viewModel.nearbySchedules.isEmpty {
@@ -111,6 +117,12 @@ struct VehicleParkingMapView: View {
             userLocation = viewModel.locationManager.userLocation
             if let location = userLocation {
                 animatedUserCoordinate = location.coordinate
+            }
+        }
+        .onChange(of: pendingSmartParkLocation) { _, newPendingLocation in
+            // Center map on detected parking location when confirmation appears
+            if let pendingLocation = newPendingLocation {
+                viewModel.centerMapOnLocation(pendingLocation.coordinate)
             }
         }
         .onDisappear {
@@ -448,6 +460,43 @@ struct VehicleParkingMapView: View {
         }
         
         return false
+    }
+    
+    @MapContentBuilder
+    private func pendingLocationAnnotation(for pendingLocation: SmartParkLocation) -> some MapContent {
+        Annotation("Detected Parking Location", coordinate: pendingLocation.coordinate) {
+            ZStack {
+                // Outer glow ring
+                Circle()
+                    .fill(Color.yellow.opacity(0.3))
+                    .frame(width: 32, height: 32)
+                
+                // Main pin circle
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color.yellow,
+                                Color.orange.opacity(0.8)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 20, height: 20)
+                    .overlay(
+                        Circle()
+                            .stroke(Color.white, lineWidth: 2)
+                    )
+                
+                // Pin icon
+                Image(systemName: "mappin.circle.fill")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.white)
+            }
+            .shadow(color: Color.yellow.opacity(0.4), radius: 8, x: 0, y: 4)
+            .scaleEffect(1.2) // Make it slightly larger to stand out
+        }
     }
     
     @MapContentBuilder
