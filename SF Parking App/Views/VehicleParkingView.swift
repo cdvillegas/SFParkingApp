@@ -127,10 +127,14 @@ struct VehicleParkingView: View {
                 .transition(.opacity)
             }
             
-            // Smart Park confirmation overlay
+            // Smart Park confirmation banner at top
             if showingSmartParkConfirmation, let location = pendingParkingLocation {
-                smartParkConfirmationOverlay(for: location)
-                    .transition(.opacity)
+                VStack {
+                    smartParkConfirmationBanner(for: location)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                    Spacer()
+                }
+                .zIndex(1000) // Ensure it appears above other content
             }
         }
         .sheet(isPresented: $viewModel.showingAddVehicle) {
@@ -1147,85 +1151,78 @@ struct VehicleParkingView: View {
     }
     
     @ViewBuilder
-    private func smartParkConfirmationOverlay(for location: SmartParkLocation) -> some View {
-        ZStack {
-            // Background overlay
-            Color.black.opacity(0.4)
-                .ignoresSafeArea()
-                .onTapGesture {
-                    // Allow dismissing by tapping outside
-                    dismissSmartParkConfirmation()
-                }
-            
-            // Confirmation card
-            VStack(spacing: 20) {
-                // Header
-                VStack(spacing: 8) {
+    private func smartParkConfirmationBanner(for location: SmartParkLocation) -> some View {
+        VStack(spacing: 0) {
+            // Banner content
+            VStack(spacing: 12) {
+                // Header row
+                HStack(spacing: 12) {
                     Image(systemName: "sparkles")
-                        .font(.system(size: 32, weight: .medium))
+                        .font(.system(size: 20, weight: .semibold))
                         .foregroundColor(.blue)
                     
-                    Text("Smart Park Detected")
-                        .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(.primary)
-                    
-                    let triggerText = location.triggerType == "carPlay" ? "CarPlay" : "Bluetooth"
-                    Text("via \(triggerText) disconnection")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.secondary)
-                }
-                
-                // Location info
-                if let address = location.address {
-                    VStack(spacing: 4) {
-                        Text("Detected Location")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.secondary)
-                        
-                        Text(address)
-                            .font(.system(size: 16, weight: .medium))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Smart Park Detected")
+                            .font(.system(size: 16, weight: .bold))
                             .foregroundColor(.primary)
-                            .multilineTextAlignment(.center)
-                            .lineLimit(2)
+                        
+                        if let address = location.address {
+                            Text(address)
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(.secondary)
+                                .lineLimit(1)
+                        }
                     }
-                    .padding(.horizontal, 16)
-                }
-                
-                // Action buttons
-                VStack(spacing: 12) {
-                    // Confirm button
-                    Button(action: {
-                        confirmSmartParkLocation(location)
-                    }) {
-                        Text("Confirm & Save")
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 56)
-                            .background(Color.blue)
-                            .cornerRadius(16)
-                    }
+                    
+                    Spacer()
                     
                     // Dismiss button
                     Button(action: {
                         dismissSmartParkConfirmation()
                     }) {
-                        Text("Not Parked Here")
-                            .font(.system(size: 16, weight: .medium))
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 20))
+                            .foregroundColor(.secondary)
+                    }
+                }
+                
+                // Action buttons row
+                HStack(spacing: 12) {
+                    // Confirm button
+                    Button(action: {
+                        confirmSmartParkLocation(location)
+                    }) {
+                        Text("Confirm & Save")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 36)
+                            .background(Color.blue)
+                            .cornerRadius(8)
+                    }
+                    
+                    // Not parked button
+                    Button(action: {
+                        dismissSmartParkConfirmation()
+                    }) {
+                        Text("Not Parked")
+                            .font(.system(size: 15, weight: .medium))
                             .foregroundColor(.secondary)
                             .frame(maxWidth: .infinity)
-                            .frame(height: 44)
-                            .background(Color.clear)
+                            .frame(height: 36)
+                            .background(Color.secondary.opacity(0.1))
+                            .cornerRadius(8)
                     }
                 }
             }
-            .padding(24)
+            .padding(16)
             .background(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(.regularMaterial)
-                    .shadow(color: Color.black.opacity(0.3), radius: 20, x: 0, y: 10)
+                    .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
             )
-            .padding(.horizontal, 20)
+            .padding(.horizontal, 12)
+            .padding(.top, 12)
         }
     }
     
