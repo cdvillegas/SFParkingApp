@@ -254,8 +254,8 @@ class StreetDataManager: ObservableObject {
                     dayOfWeek: weekday,
                     startTime: schedule.startTime,
                     endTime: schedule.endTime,
-                    avgSweeperTime: nil,
-                    medianSweeperTime: nil
+                    avgSweeperTime: schedule.avgSweeperTime,
+                    medianSweeperTime: schedule.medianSweeperTime
                 )
             }
         }

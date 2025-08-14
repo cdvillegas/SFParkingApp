@@ -14,9 +14,6 @@ struct VehicleParkingView: View {
     @State private var showingOnboarding = !OnboardingManager.hasCompletedOnboarding
     @State private var isComingFromOnboarding = false
     
-    // Smart Park confirmation state
-    @State private var showingSmartParkConfirmation = false
-    @State private var pendingParkingLocation: SmartParkLocation?
     
     // Optional parameters for auto-parking detection
     var autoDetectedLocation: CLLocationCoordinate2D?
@@ -43,7 +40,7 @@ struct VehicleParkingView: View {
             // Map extends to absolute bottom edge
             VehicleParkingMapView(
                 viewModel: viewModel,
-                pendingSmartParkLocation: showingSmartParkConfirmation ? pendingParkingLocation : nil
+                pendingSmartParkLocation: nil
             )
                 .ignoresSafeArea(.all)
             
@@ -99,6 +96,7 @@ struct VehicleParkingView: View {
                     VStack(spacing: 0) {
                         VehicleLocationSetting(
                             viewModel: viewModel,
+                            parkingDetectionHandler: parkingDetectionHandler,
                             onShowReminders: {
                                 showingRemindersSheet = true
                             },
@@ -130,15 +128,6 @@ struct VehicleParkingView: View {
                 .transition(.opacity)
             }
             
-            // Smart Park confirmation banner at top
-            if showingSmartParkConfirmation, let location = pendingParkingLocation {
-                VStack {
-                    smartParkConfirmationBanner(for: location)
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                    Spacer()
-                }
-                .zIndex(1000) // Ensure it appears above other content
-            }
         }
         .sheet(isPresented: $viewModel.showingAddVehicle) {
             AddEditVehicleView(
@@ -160,7 +149,18 @@ struct VehicleParkingView: View {
         }
         .onAppear {
             setupView()
-            handleAutoDetectedParking()
+            
+            print("🚗 [Debug] onAppear - shouldShowParkingConfirmation: \(parkingDetectionHandler.shouldShowParkingConfirmation)")
+            print("🚗 [Debug] onAppear - isSmartParkUpdate: \(parkingDetectionHandler.isSmartParkUpdate)")
+            
+            // Check for Smart Park confirmation first
+            if parkingDetectionHandler.shouldShowParkingConfirmation && parkingDetectionHandler.isSmartParkUpdate {
+                print("🚗 [Smart Park] Starting Smart Park confirmation flow on app appear")
+                handleSmartParkOnAppear()
+            } else {
+                handleAutoDetectedParking()
+            }
+            
             // Check notification permission status on view appear
             notificationManager.checkPermissionStatus()
             
@@ -200,6 +200,10 @@ struct VehicleParkingView: View {
             // Handle Smart Park confirmation required notification
             handleSmartParkConfirmationRequired(notification: notification)
         }
+        .onReceive(NotificationCenter.default.publisher(for: .smartParkAutomaticUpdateCompleted)) { notification in
+            // Handle Smart Park automatic update completed - recenter map
+            handleSmartParkAutomaticUpdate(notification: notification)
+        }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
             // Refresh notification permission status when returning from Settings
             notificationManager.checkPermissionStatus()
@@ -210,6 +214,15 @@ struct VehicleParkingView: View {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     showingAutoParkingSettings = true
                 }
+            }
+        }
+        .onChange(of: parkingDetectionHandler.shouldShowParkingConfirmation) { _, shouldShow in
+            print("🚗 [Debug] shouldShowParkingConfirmation changed to: \(shouldShow)")
+            print("🚗 [Debug] isSmartParkUpdate: \(parkingDetectionHandler.isSmartParkUpdate)")
+            
+            if shouldShow && parkingDetectionHandler.isSmartParkUpdate {
+                print("🚗 [Smart Park] Smart Park confirmation triggered via onChange")
+                handleSmartParkOnAppear()
             }
         }
         .onChange(of: viewModel.isSettingLocation) { oldValue, newValue in
@@ -285,14 +298,14 @@ struct VehicleParkingView: View {
     private var instructionWindow: some View {
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 6) {
-                Text(viewModel.isConfirmingSchedule ? "Confirm Schedule" : "Set Location")
+                Text(instructionTitle)
                     .font(.system(size: 24, weight: .semibold))
                     .foregroundColor(.primary)
                 
                 Text(instructionText)
                     .font(.system(size: 18))
                     .foregroundColor(.secondary)
-                    .lineLimit(2)
+                    .lineLimit(3)
                     .fixedSize(horizontal: false, vertical: true)
             }
             
@@ -333,15 +346,42 @@ struct VehicleParkingView: View {
         )
     }
     
+    private var instructionTitle: String {
+        let isSmartPark = parkingDetectionHandler.isSmartParkUpdate
+        print("🚗 [Debug] instructionTitle called - isSmartParkUpdate: \(isSmartPark)")
+        print("🚗 [Debug] instructionTitle called - isConfirmingSchedule: \(viewModel.isConfirmingSchedule)")
+        
+        if isSmartPark {
+            print("🚗 [Debug] Returning 'Smart Park Confirmation'")
+            return "Smart Park Confirmation"
+        } else {
+            let title = viewModel.isConfirmingSchedule ? "Confirm Schedule" : "Set Location"
+            print("🚗 [Debug] Returning regular title: '\(title)'")
+            return title
+        }
+    }
+    
     private var instructionText: String {
-        if viewModel.isConfirmingSchedule {
-            if viewModel.nearbySchedules.isEmpty {
-                return "No parking restrictions found. Tap Confirm to save location."
+        if parkingDetectionHandler.isSmartParkUpdate {
+            if viewModel.isConfirmingSchedule {
+                if viewModel.nearbySchedules.isEmpty {
+                    return "Parking update detected. No restrictions found. Tap Confirm to save."
+                } else {
+                    return "Parking update detected. Select your side of the street below, then tap Confirm."
+                }
             } else {
-                return "Select your side of the street below, then tap Confirm."
+                return "Parking update detected. Adjust the pin if needed, then tap Continue."
             }
         } else {
-            return "Drag the map to position the pin at your vehicle's location."
+            if viewModel.isConfirmingSchedule {
+                if viewModel.nearbySchedules.isEmpty {
+                    return "No parking restrictions found. Tap Confirm to save location."
+                } else {
+                    return "Select your side of the street below, then tap Confirm."
+                }
+            } else {
+                return "Drag the map to position the pin at your vehicle's location."
+            }
         }
     }
     
@@ -1046,6 +1086,13 @@ struct VehicleParkingView: View {
         print("🎯 autoDetectedAddress: \(autoDetectedAddress ?? "nil")")
         print("🎯 autoDetectedSource: \(autoDetectedSource?.rawValue ?? "nil")")
         
+        // Check if this is a Smart Park update - if so, handle it differently
+        if parkingDetectionHandler.shouldShowParkingConfirmation && parkingDetectionHandler.isSmartParkUpdate {
+            print("🚗 [Smart Park] Detected Smart Park update in handleAutoDetectedParking")
+            // This is already handled by the Smart Park flow, don't duplicate it
+            return
+        }
+        
         // Check if we have auto-detected parking data
         guard let coordinate = autoDetectedLocation,
               let address = autoDetectedAddress else { 
@@ -1108,6 +1155,8 @@ struct VehicleParkingView: View {
                 sourceText = "car disconnection"
             case .manual:
                 sourceText = "manual input"
+            case .smartPark:
+                sourceText = "Smart Park detection"
             }
             print("🎯 Auto-detected parking via \(sourceText) at \(address)")
         }
@@ -1144,125 +1193,109 @@ struct VehicleParkingView: View {
             bluetoothDeviceName: userInfo["bluetoothDeviceName"] as? String
         )
         
-        // Show confirmation UI
+        // Set Smart Park flag FIRST, then trigger location setting
         DispatchQueue.main.async {
-            self.pendingParkingLocation = location
-            withAnimation(.easeInOut(duration: 0.3)) {
-                self.showingSmartParkConfirmation = true
+            // CRITICAL: Set Smart Park flag first so UI knows this is Smart Park
+            self.parkingDetectionHandler.pendingParkingLocation = location.coordinate
+            self.parkingDetectionHandler.pendingParkingAddress = location.address
+            self.parkingDetectionHandler.pendingParkingSource = .smartPark
+            self.parkingDetectionHandler.isSmartParkUpdate = true
+            self.parkingDetectionHandler.shouldShowParkingConfirmation = true
+            
+            print("🚗 [Smart Park] Set isSmartParkUpdate = true")
+            
+            // Ensure we have a current vehicle
+            guard let currentVehicle = self.viewModel.vehicleManager.currentVehicle else {
+                print("❌ No current vehicle for Smart Park confirmation")
+                return
             }
-        }
-    }
-    
-    @ViewBuilder
-    private func smartParkConfirmationBanner(for location: SmartParkLocation) -> some View {
-        VStack(spacing: 0) {
-            // Banner content
-            VStack(spacing: 12) {
-                // Header row
-                HStack(spacing: 12) {
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(.blue)
-                    
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Smart Park Detected")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(.primary)
-                        
-                        if let address = location.address {
-                            Text(address)
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.secondary)
-                                .lineLimit(1)
-                        }
-                    }
-                    
-                    Spacer()
-                    
-                    // Dismiss button
-                    Button(action: {
-                        dismissSmartParkConfirmation()
-                    }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 20))
-                            .foregroundColor(.secondary)
-                    }
-                }
-                
-                // Action buttons row
-                HStack(spacing: 12) {
-                    // Confirm button
-                    Button(action: {
-                        confirmSmartParkLocation(location)
-                    }) {
-                        Text("Confirm & Save")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 36)
-                            .background(Color.blue)
-                            .cornerRadius(8)
-                    }
-                    
-                    // Not parked button
-                    Button(action: {
-                        dismissSmartParkConfirmation()
-                    }) {
-                        Text("Not Parked")
-                            .font(.system(size: 15, weight: .medium))
-                            .foregroundColor(.secondary)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 36)
-                            .background(Color.secondary.opacity(0.1))
-                            .cornerRadius(8)
-                    }
-                }
-            }
-            .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(.regularMaterial)
-                    .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
+            
+            print("🚗 [Smart Park] Starting location setting flow for confirmation")
+            
+            // Start the existing location setting flow
+            self.viewModel.startSettingLocationForVehicle(currentVehicle)
+            self.viewModel.settingCoordinate = location.coordinate
+            self.viewModel.settingAddress = location.address
+            
+            // Center and zoom to the Smart Park location (matching Confirm Location zoom)
+            let region = MKCoordinateRegion(
+                center: location.coordinate,
+                span: MKCoordinateSpan(latitudeDelta: 0.001, longitudeDelta: 0.001) // Very close zoom like Confirm Location
             )
-            .padding(.horizontal, 12)
-            .padding(.top, 12)
+            self.viewModel.mapPosition = .region(region)
+            
+            // Immediately detect schedules and show confirmation
+            self.viewModel.performScheduleDetection(for: location.coordinate)
+            
+            // Set the confirmation mode to show the schedule selection
+            self.viewModel.isConfirmingSchedule = true
+            self.viewModel.confirmedLocation = location.coordinate
+            self.viewModel.confirmedAddress = location.address
         }
     }
     
-    private func confirmSmartParkLocation(_ location: SmartParkLocation) {
-        Task { @MainActor in
-            // Confirm the location using ParkingLocationManager
-            let manager = await ParkingLocationManager.shared
-            await manager.confirmPendingLocation()
-            
-            print("✅ Smart Park location confirmed: \(location.address ?? "location")")
-            
-            // Update the UI to show the confirmed location
-            setupView()
-            
-            // Hide confirmation UI
-            withAnimation(.easeInOut(duration: 0.3)) {
-                showingSmartParkConfirmation = false
-                pendingParkingLocation = nil
-            }
+    private func handleSmartParkOnAppear() {
+        // Get the pending Smart Park data from parkingDetectionHandler
+        guard let coordinate = parkingDetectionHandler.pendingParkingLocation,
+              let address = parkingDetectionHandler.pendingParkingAddress else {
+            print("🚗 [Smart Park] No pending Smart Park data found")
+            return
         }
+        
+        // Ensure we have a current vehicle
+        guard let currentVehicle = viewModel.vehicleManager.currentVehicle else {
+            print("❌ No current vehicle for Smart Park confirmation")
+            return
+        }
+        
+        print("🚗 [Smart Park] Starting location setting flow on app appear")
+        
+        // Start the location setting flow for Smart Park
+        viewModel.startSettingLocationForVehicle(currentVehicle)
+        viewModel.settingCoordinate = coordinate
+        viewModel.settingAddress = address
+        
+        // Center and zoom to the Smart Park location (matching Confirm Location zoom)
+        let region = MKCoordinateRegion(
+            center: coordinate,
+            span: MKCoordinateSpan(latitudeDelta: 0.001, longitudeDelta: 0.001)
+        )
+        viewModel.mapPosition = .region(region)
+        
+        // Immediately detect schedules and show confirmation
+        viewModel.performScheduleDetection(for: coordinate)
+        
+        // Set the confirmation mode to show the schedule selection
+        viewModel.isConfirmingSchedule = true
+        viewModel.confirmedLocation = coordinate
+        viewModel.confirmedAddress = address
     }
     
-    private func dismissSmartParkConfirmation() {
-        Task { @MainActor in
-            if let location = pendingParkingLocation {
-                // Cancel the pending location
-                let manager = await ParkingLocationManager.shared
-                await manager.cancelPendingLocation()
-                
-                print("✅ Smart Park location dismissed")
-            }
+    private func handleSmartParkAutomaticUpdate(notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let coordinateData = userInfo["coordinate"] as? [String: Double],
+              let latitude = coordinateData["latitude"],
+              let longitude = coordinateData["longitude"] else {
+            print("❌ Invalid Smart Park automatic update notification data")
+            return
+        }
+        
+        let coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+        let address = userInfo["address"] as? String ?? ""
+        
+        print("🚗 [Smart Park] Automatic update completed - recentering map and refreshing schedule for: \(address)")
+        
+        // Recenter map on the new parking location with close zoom and refresh schedule data
+        DispatchQueue.main.async {
+            let region = MKCoordinateRegion(
+                center: coordinate,
+                span: MKCoordinateSpan(latitudeDelta: 0.001, longitudeDelta: 0.001)
+            )
+            self.viewModel.mapPosition = .region(region)
             
-            // Hide confirmation UI
-            withAnimation(.easeInOut(duration: 0.3)) {
-                showingSmartParkConfirmation = false
-                pendingParkingLocation = nil
-            }
+            // CRITICAL FIX: Refresh street cleaning schedule for the new location
+            print("📅 [Smart Park] Refreshing street cleaning schedule for updated location")
+            self.viewModel.performScheduleDetection(for: coordinate)
         }
     }
     

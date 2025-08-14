@@ -100,6 +100,14 @@ class VehicleParkingViewModel: ObservableObject {
                 self?.clearScheduleDataForSmartPark()
             }
             .store(in: &cancellables)
+        
+        // Listen for Smart Park automatic updates to refresh schedule with detected data
+        NotificationCenter.default.publisher(for: .smartParkAutomaticUpdateCompleted)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] notification in
+                self?.handleSmartParkAutomaticUpdate(notification)
+            }
+            .store(in: &cancellables)
     }
     
     private func clearScheduleDataForSmartPark() {
@@ -128,6 +136,224 @@ class VehicleParkingViewModel: ObservableObject {
         }
         
         print("🚗 Schedule data cleared and new schedule detection started")
+    }
+    
+    private func handleSmartParkAutomaticUpdate(_ notification: Notification) {
+        print("🚗 [Smart Park] Handling automatic update in ViewModel")
+        
+        guard let userInfo = notification.userInfo,
+              let coordinateData = userInfo["coordinate"] as? [String: Double],
+              let latitude = coordinateData["latitude"],
+              let longitude = coordinateData["longitude"] else {
+            print("❌ [Smart Park] Invalid notification data in ViewModel")
+            return
+        }
+        
+        let coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+        let address = userInfo["address"] as? String ?? ""
+        
+        print("🚗 [Smart Park] Processing automatic update for: \(address)")
+        
+        // Check if schedule data was included in the notification
+        if let scheduleData = userInfo["detectedSchedule"] as? [String: Any],
+           let streetName = scheduleData["streetName"] as? String,
+           let weekday = scheduleData["weekday"] as? String,
+           let startTime = scheduleData["startTime"] as? String,
+           let endTime = scheduleData["endTime"] as? String,
+           let blockSide = scheduleData["blockSide"] as? String {
+            
+            print("📅 [Smart Park] Using schedule from notification: \(streetName) - \(weekday) \(startTime)-\(endTime)")
+            
+            // Update street data manager with the detected schedule immediately
+            updateStreetDataManagerWithSmartParkSchedule(
+                coordinate: coordinate,
+                streetName: streetName,
+                weekday: weekday,
+                startTime: startTime,
+                endTime: endTime,
+                blockSide: blockSide
+            )
+        } else {
+            print("📅 [Smart Park] No schedule in notification, checking saved parking location first")
+            
+            // CRITICAL FIX: Check if Smart Park already saved a schedule to the parking location
+            if let currentVehicle = vehicleManager.currentVehicle,
+               let parkingLocation = currentVehicle.parkingLocation,
+               let savedSchedule = parkingLocation.selectedSchedule {
+                
+                print("📅 [Smart Park] Found saved schedule in parking location: \(savedSchedule.streetName)")
+                
+                // Convert and use the saved schedule
+                let sweepSchedule = StreetDataService.shared.convertToSweepSchedule(from: savedSchedule)
+                streetDataManager.schedule = sweepSchedule
+                streetDataManager.selectedSchedule = sweepSchedule
+                streetDataManager.nextUpcomingSchedule = streetDataManager.calculateNextScheduleImmediate(for: sweepSchedule)
+                streetDataManager.processNextSchedule(for: sweepSchedule)
+                
+                // CRITICAL: Force UI refresh immediately
+                objectWillChange.send()
+                vehicleManager.objectWillChange.send()
+                
+                print("✅ [Smart Park] Loaded saved schedule into UI: \(savedSchedule.streetName) - \(savedSchedule.weekday) \(savedSchedule.startTime)-\(savedSchedule.endTime)")
+                print("🔄 [Smart Park] UI refresh triggered for saved schedule")
+            } else {
+                print("📅 [Smart Park] No saved schedule found, performing fresh detection")
+                // Fallback: perform schedule detection if no schedule data in notification or saved location
+                performScheduleDetection(for: coordinate)
+            }
+        }
+    }
+    
+    private func updateStreetDataManagerWithSmartParkSchedule(
+        coordinate: CLLocationCoordinate2D,
+        streetName: String,
+        weekday: String,
+        startTime: String,
+        endTime: String,
+        blockSide: String
+    ) {
+        // Trigger schedule detection for the new coordinate and save it to the parking location
+        print("📅 [Smart Park] Triggering fresh schedule detection for updated location")
+        
+        // Get the address from current parking location or use street name as fallback
+        let addressToUse = vehicleManager.currentVehicle?.parkingLocation?.address ?? streetName
+        
+        Task {
+            // Perform schedule detection and save
+            await self.performScheduleDetectionAndSave(for: coordinate, address: addressToUse)
+            
+            await MainActor.run {
+                print("✅ [Smart Park] StreetDataManager updated with schedule: \(streetName) - \(weekday) \(startTime)-\(endTime)")
+                print("📅 [Smart Park] Next schedule: \(self.streetDataManager.nextUpcomingSchedule?.date.description ?? "none")")
+                print("🔄 [Smart Park] UI update triggered")
+            }
+        }
+    }
+    
+    private func handleRemindersForUpdatedSchedule(_ schedule: PersistedSweepSchedule, at coordinate: CLLocationCoordinate2D) {
+        print("🔔 [Smart Park] Handling reminders for updated schedule")
+        
+        // Get current vehicle for reminder context
+        guard vehicleManager.currentVehicle != nil else {
+            print("⚠️ [Smart Park] No current vehicle for reminder setup")
+            return
+        }
+        
+        // The existing reminder system will automatically pick up the new schedule
+        // when the user's active reminders are evaluated against the updated parking location
+        // No additional action needed here as reminders are schedule-agnostic and location-based
+        
+        print("✅ [Smart Park] Schedule updated - existing reminders will use new schedule automatically")
+    }
+    
+    private func performScheduleDetectionAndSave(for coordinate: CLLocationCoordinate2D, address: String) async {
+        print("📅 [Smart Park] Performing schedule detection and saving to parking location")
+        
+        // First, perform the normal schedule detection for UI updates
+        await MainActor.run {
+            performScheduleDetection(for: coordinate)
+        }
+        
+        // Wait a moment for the detection to complete
+        try? await Task.sleep(nanoseconds: 3_000_000_000) // 3 seconds
+        
+        // Now check if a schedule was detected and save it to the parking location
+        await MainActor.run {
+            guard let currentVehicle = vehicleManager.currentVehicle,
+                  let parkingLocation = currentVehicle.parkingLocation else {
+                print("⚠️ [Smart Park] No current vehicle or parking location for schedule save")
+                return
+            }
+            
+            // Check if schedule was detected
+            let detectedSchedule = streetDataManager.selectedSchedule
+            
+            if let schedule = detectedSchedule {
+                print("📅 [Smart Park] Detected schedule found, updating parking location: \(schedule.streetName)")
+                
+                // Convert SweepSchedule to PersistedSweepSchedule
+                let persistedSchedule = PersistedSweepSchedule(from: schedule, side: schedule.blockside ?? "Unknown")
+                
+                // Create updated parking location with the detected schedule
+                let updatedParkingLocation = ParkingLocation(
+                    coordinate: coordinate,
+                    address: address,
+                    timestamp: parkingLocation.timestamp,
+                    source: parkingLocation.source,
+                    name: parkingLocation.name,
+                    color: parkingLocation.color,
+                    isActive: parkingLocation.isActive,
+                    selectedSchedule: persistedSchedule
+                )
+                
+                // Save the updated parking location
+                vehicleManager.setParkingLocation(for: currentVehicle, location: updatedParkingLocation)
+                print("✅ [Smart Park] Parking location updated with detected schedule")
+                
+                // CRITICAL: Force UI refresh by triggering objectWillChange on all relevant components
+                self.objectWillChange.send()
+                vehicleManager.objectWillChange.send()
+                
+                // Also ensure the next upcoming schedule is calculated and updated
+                streetDataManager.nextUpcomingSchedule = streetDataManager.calculateNextScheduleImmediate(for: schedule)
+                streetDataManager.processNextSchedule(for: schedule)
+                
+                // Post notification for any UI components that might be listening
+                NotificationCenter.default.post(
+                    name: NSNotification.Name("smartParkScheduleRefresh"),
+                    object: nil,
+                    userInfo: [
+                        "schedule": persistedSchedule,
+                        "coordinate": [
+                            "latitude": coordinate.latitude,
+                            "longitude": coordinate.longitude
+                        ]
+                    ]
+                )
+                
+                print("🔄 [Smart Park] All UI components refreshed with new schedule")
+            } else {
+                print("📅 [Smart Park] No schedule detected for this location")
+                
+                // Update parking location to remove any old schedule
+                let updatedParkingLocation = ParkingLocation(
+                    coordinate: coordinate,
+                    address: address,
+                    timestamp: parkingLocation.timestamp,
+                    source: parkingLocation.source,
+                    name: parkingLocation.name,
+                    color: parkingLocation.color,
+                    isActive: parkingLocation.isActive,
+                    selectedSchedule: nil
+                )
+                
+                vehicleManager.setParkingLocation(for: currentVehicle, location: updatedParkingLocation)
+                
+                // Clear UI schedule data
+                streetDataManager.schedule = nil
+                streetDataManager.selectedSchedule = nil
+                streetDataManager.nextUpcomingSchedule = nil
+                
+                // Force UI refresh
+                self.objectWillChange.send()
+                vehicleManager.objectWillChange.send()
+                
+                // Post notification for UI components
+                NotificationCenter.default.post(
+                    name: NSNotification.Name("smartParkScheduleRefresh"),
+                    object: nil,
+                    userInfo: [
+                        "schedule": NSNull(),
+                        "coordinate": [
+                            "latitude": coordinate.latitude,
+                            "longitude": coordinate.longitude
+                        ]
+                    ]
+                )
+                
+                print("✅ [Smart Park] Parking location updated with no schedule, UI cleared")
+            }
+        }
     }
     
     
@@ -263,12 +489,24 @@ class VehicleParkingViewModel: ObservableObject {
                         self.selectedScheduleIndex = 0
                         self.detectedSchedule = nil
                         self.scheduleConfidence = 0.0
+                        
+                        // CRITICAL FIX: Clear street data manager schedule when no schedules found
+                        self.streetDataManager.schedule = nil
+                        self.streetDataManager.selectedSchedule = nil
+                        self.streetDataManager.nextUpcomingSchedule = nil
+                        print("🗑️ [Schedule Detection] Cleared all schedule data - no schedules found")
                     }
                 case .failure(_):
                     self.nearbySchedules = []
                     self.selectedScheduleIndex = 0
                     self.detectedSchedule = nil
                     self.scheduleConfidence = 0.0
+                    
+                    // CRITICAL FIX: Clear street data manager schedule on API failure
+                    self.streetDataManager.schedule = nil
+                    self.streetDataManager.selectedSchedule = nil
+                    self.streetDataManager.nextUpcomingSchedule = nil
+                    print("🗑️ [Schedule Detection] Cleared all schedule data - API failure")
                 }
             }
         }
@@ -347,6 +585,12 @@ class VehicleParkingViewModel: ObservableObject {
                         self.detectedSchedule = nil
                         self.scheduleConfidence = 0.0
                         self.hasSelectedSchedule = false
+                        
+                        // CRITICAL FIX: Clear street data manager schedule when no schedules found
+                        self.streetDataManager.schedule = nil
+                        self.streetDataManager.selectedSchedule = nil
+                        self.streetDataManager.nextUpcomingSchedule = nil
+                        print("🗑️ [Schedule Detection w/ Preservation] Cleared all schedule data - no schedules found")
                     }
                 case .failure(_):
                     // API failed, keep current schedules if we have them
@@ -356,6 +600,12 @@ class VehicleParkingViewModel: ObservableObject {
                         self.detectedSchedule = nil
                         self.scheduleConfidence = 0.0
                         self.hasSelectedSchedule = false
+                        
+                        // CRITICAL FIX: Clear street data manager schedule on API failure with no previous data
+                        self.streetDataManager.schedule = nil
+                        self.streetDataManager.selectedSchedule = nil
+                        self.streetDataManager.nextUpcomingSchedule = nil
+                        print("🗑️ [Schedule Detection w/ Preservation] Cleared all schedule data - API failure with no previous data")
                     }
                     // If we have current schedules, don't clear them on API failure
                 }
@@ -364,11 +614,55 @@ class VehicleParkingViewModel: ObservableObject {
     }
     
     func initialSmartSelection(for coordinate: CLLocationCoordinate2D, schedulesWithSides: [SweepScheduleWithSide]) {
-        // Always select the first schedule when new schedules load
+        // CRITICAL FIX: Check if Smart Park already detected the correct schedule and use that
+        if let currentVehicle = vehicleManager.currentVehicle,
+           let parkingLocation = currentVehicle.parkingLocation,
+           let savedSchedule = parkingLocation.selectedSchedule {
+            
+            // Find the matching schedule in the detected schedules list
+            let matchingIndex = schedulesWithSides.firstIndex { scheduleWithSide in
+                let schedule = scheduleWithSide.schedule
+                return schedule.streetName == savedSchedule.streetName &&
+                       schedule.weekday == savedSchedule.weekday &&
+                       schedule.startTime == savedSchedule.startTime &&
+                       schedule.endTime == savedSchedule.endTime
+            }
+            
+            if let index = matchingIndex {
+                print("✅ [Smart Park] Found matching schedule at index \(index): \(savedSchedule.streetName) - \(savedSchedule.weekday)")
+                selectedScheduleIndex = index
+                hasSelectedSchedule = true
+                detectedSchedule = schedulesWithSides[index].schedule
+                scheduleConfidence = 0.9 // High confidence for Smart Park match
+                
+                // Use the saved schedule (which has the correct side)
+                let sweepSchedule = StreetDataService.shared.convertToSweepSchedule(from: savedSchedule)
+                streetDataManager.schedule = sweepSchedule
+                streetDataManager.selectedSchedule = sweepSchedule
+                streetDataManager.nextUpcomingSchedule = streetDataManager.calculateNextScheduleImmediate(for: sweepSchedule)
+                streetDataManager.processNextSchedule(for: sweepSchedule)
+                
+                print("✅ [Smart Park] Using Smart Park detected schedule: \(savedSchedule.streetName) - \(savedSchedule.weekday) \(savedSchedule.startTime)-\(savedSchedule.endTime)")
+                return
+            } else {
+                print("⚠️ [Smart Park] Could not find matching schedule in detected list, falling back to first")
+            }
+        }
+        
+        // Fallback: select the first schedule when no Smart Park match found
         selectedScheduleIndex = 0
         hasSelectedSchedule = true
         detectedSchedule = schedulesWithSides[0].schedule
-        scheduleConfidence = 0.8 // High confidence for auto-selection
+        scheduleConfidence = 0.8 // Lower confidence for fallback
+        
+        // Update StreetDataManager with first detected schedule
+        let selectedSchedule = schedulesWithSides[0].schedule
+        streetDataManager.schedule = selectedSchedule
+        streetDataManager.selectedSchedule = selectedSchedule
+        streetDataManager.nextUpcomingSchedule = streetDataManager.calculateNextScheduleImmediate(for: selectedSchedule)
+        streetDataManager.processNextSchedule(for: selectedSchedule)
+        
+        print("✅ [Smart Park] Updated StreetDataManager with first detected schedule: \(selectedSchedule.streetName)")
     }
     
     func cancelSettingLocation() {

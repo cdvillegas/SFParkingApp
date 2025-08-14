@@ -6,49 +6,82 @@ struct SmartParkSettingsView: View {
     @State private var showingSetupFlow = false
     @State private var smartParkIsEnabled = false
     @State private var requiresLocationConfirmation = true
+    @State private var showingLocationInfo = false
     
     // For preview purposes
     var requirePermissions: Bool = true
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                // Header
-                headerSection
-                    .padding(.horizontal, 20)
-                    .padding(.top, 40)
-                    .padding(.bottom, 24)
-                
-                // Show Smart Park status card
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("STATUS")
-                        .font(.footnote)
-                        .fontWeight(.medium)
-                        .foregroundColor(.secondary)
-                        .padding(.horizontal, 20)
-                    
-                    VStack(spacing: 0) {
-                        smartParkStatusCard
-                            .padding(20)
-                    }
-                    .background(Color.clear)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .stroke(Color.secondary.opacity(0.2), lineWidth: 0.5)
-                    )
-                    .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
-                    .padding(.horizontal, 20)
-                }
+        VStack(spacing: 0) {
+            // Fixed header
+            headerSection
+                .padding(.horizontal, 20)
+                .padding(.top, 40)
                 .padding(.bottom, 24)
-                
-                // Location Update Mode section (only show if Smart Park is configured and enabled)
-                if hasSmartParkConfigured && smartParkIsEnabled {
+            
+            // Scrollable content
+            ScrollView {
+                VStack(spacing: 0) {
+                    // Smart Park status card (now scrollable)
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("LOCATION UPDATE MODE")
+                        Text("STATUS")
                             .font(.footnote)
                             .fontWeight(.medium)
                             .foregroundColor(.secondary)
                             .padding(.horizontal, 20)
+                        
+                        VStack(spacing: 0) {
+                            smartParkStatusCard
+                                .padding(20)
+                        }
+                        .background(Color.clear)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .stroke(Color.secondary.opacity(0.2), lineWidth: 0.5)
+                        )
+                        .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
+                        .padding(.horizontal, 20)
+                    }
+                    .padding(.bottom, 24)
+                    // Location Update Mode section (only show if Smart Park is configured)
+                    if hasSmartParkConfigured {
+                        VStack(alignment: .leading, spacing: 12) {
+                        HStack(spacing: 8) {
+                            Text("LOCATION UPDATE MODE")
+                                .font(.footnote)
+                                .fontWeight(.medium)
+                                .foregroundColor(.secondary)
+                            
+                            Button {
+                                impactFeedbackLight.impactOccurred()
+                                showingLocationInfo = true
+                            } label: {
+                                Image(systemName: "info.circle")
+                                    .font(.footnote)
+                                    .foregroundColor(.secondary)
+                            }
+                            .popover(isPresented: $showingLocationInfo) {
+                                HStack(spacing: 12) {
+                                    Image(systemName: "location.circle.fill")
+                                        .font(.system(size: 24))
+                                        .foregroundColor(.blue)
+                                        .frame(width: 28, height: 28)
+                                    
+                                    Text("Location detection isn't always accurate. Enable confirmation for best results.")
+                                        .font(.system(size: 14))
+                                        .foregroundColor(.primary)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                }
+                                .padding(16)
+                                .frame(maxWidth: 280)
+                                .background(Color(UIColor.secondarySystemBackground))
+                                .presentationCompactAdaptation(.popover)
+                            }
+                            
+                            Spacer()
+                        }
+                        .padding(.horizontal, 20)
                         
                         VStack(spacing: 0) {
                             locationUpdateModeCard
@@ -62,33 +95,64 @@ struct SmartParkSettingsView: View {
                         .padding(.horizontal, 20)
                     }
                     .padding(.bottom, 24)
-                }
-                
-                // How it works section
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("HOW IT WORKS")
-                        .font(.footnote)
-                        .fontWeight(.medium)
-                        .foregroundColor(.secondary)
-                        .padding(.horizontal, 20)
-                    
-                    VStack(spacing: 0) {
-                        howItWorksCard
                     }
-                    .background(Color.clear)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .stroke(Color.secondary.opacity(0.2), lineWidth: 0.5)
-                    )
-                    .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
-                    .padding(.horizontal, 20)
+                    
+                    // How it works section
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("HOW IT WORKS")
+                            .font(.footnote)
+                            .fontWeight(.medium)
+                            .foregroundColor(.secondary)
+                            .padding(.horizontal, 20)
+                        
+                        VStack(spacing: 0) {
+                            howItWorksCard
+                        }
+                        .background(Color.clear)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .stroke(Color.secondary.opacity(0.2), lineWidth: 0.5)
+                        )
+                        .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
+                        .padding(.horizontal, 20)
+                    }
+                    .padding(.bottom, 20)
                 }
-                .padding(.bottom, 20)
-                
-                // Add bottom padding for button space
-                Color.clear
-                    .frame(height: 100)
             }
+            .mask(
+                VStack(spacing: 0) {
+                    // Middle is fully visible (no top fade)
+                    Color.black
+                    
+                    // Bottom fade - from opaque to transparent
+                    LinearGradient(
+                        gradient: Gradient(colors: [Color.black, Color.clear]),
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .frame(height: 40)
+                }
+            )
+            .padding(.bottom, 96)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.clear)
+        .overlay(alignment: .bottom) {
+            // Fixed bottom button
+            VStack(spacing: 0) {
+                if !hasSmartParkConfigured {
+                    // User hasn't set up Smart Park yet
+                    getStartedButton
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 20)
+                } else {
+                    // User has Smart Park configured, show the normal done button
+                    doneButton
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 20)
+                }
+            }
+            .background(Color.clear)
         }
         .sheet(isPresented: $showingSetupFlow) {
             SmartParkSetupView()
@@ -108,38 +172,6 @@ struct SmartParkSettingsView: View {
         }
         .presentationBackground(.thinMaterial)
         .presentationBackgroundInteraction(.enabled)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.clear)
-        .overlay(alignment: .bottom) {
-            // Fixed bottom button with safe area
-            VStack(spacing: 0) {
-                // Add a subtle background for the button area
-                LinearGradient(
-                    colors: [
-                        Color.clear,
-                        Color(UIColor.systemBackground).opacity(0.9),
-                        Color(UIColor.systemBackground)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .frame(height: 20)
-                
-                if !hasSmartParkConfigured {
-                    // User hasn't set up Smart Park yet
-                    getStartedButton
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 8)
-                } else {
-                    // User has Smart Park configured, show the normal done button
-                    doneButton
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 8)
-                }
-            }
-            .background(Color(UIColor.systemBackground))
-            .ignoresSafeArea(edges: .bottom)
-        }
         .onAppear {
             // Initialize toggle state
             loadSmartParkState()
@@ -254,7 +286,7 @@ struct SmartParkSettingsView: View {
                         .foregroundColor(requiresLocationConfirmation ? .secondary : .blue)
                     
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Update my location automatically")
+                        Text("Update Automatically")
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundColor(.primary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -290,7 +322,7 @@ struct SmartParkSettingsView: View {
                         .foregroundColor(requiresLocationConfirmation ? .blue : .secondary)
                     
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Require location confirmation")
+                        Text("Require Confirmation")
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundColor(.primary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -311,22 +343,6 @@ struct SmartParkSettingsView: View {
             }
             .buttonStyle(PlainButtonStyle())
             
-            // Info text
-            HStack(spacing: 8) {
-                Image(systemName: "info.circle.fill")
-                    .font(.system(size: 16))
-                    .foregroundColor(.blue.opacity(0.8))
-                
-                Text("Smart Park will try to detect your location and side of the street, but it's not always accurate. For guaranteed accuracy, use location confirmation.")
-                    .font(.system(size: 14))
-                    .foregroundColor(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color.blue.opacity(0.08))
-            )
         }
         .padding(4)
     }

@@ -280,6 +280,84 @@ class ParkingLocationManager: ObservableObject {
         return parkingLocation
     }
     
+    func saveSmartParkLocationAutomatic(
+        at coordinate: CLLocationCoordinate2D,
+        triggerType: ParkingTriggerType
+    ) async throws -> SmartParkLocation {
+        print("🤖 [Smart Park] Automatic mode - saving location with schedule detection")
+        print("💾 [Smart Park] Coordinates: \(coordinate.latitude), \(coordinate.longitude)")
+        
+        // Validate coordinate
+        guard CLLocationCoordinate2DIsValid(coordinate),
+              coordinate.latitude != 0,
+              coordinate.longitude != 0 else {
+            print("❌ [Smart Park] Invalid coordinates provided")
+            throw IntentError.invalidCoordinates
+        }
+        
+        // Get address for the coordinate
+        let address = await reverseGeocode(coordinate: coordinate)
+        if let address = address {
+            print("🏠 [Smart Park] Geocoded address: \(address)")
+        } else {
+            print("🏠 [Smart Park] No address found for coordinates")
+        }
+        
+        // Detect schedule for the location
+        let detectedSchedule = await detectScheduleForLocation(coordinate)
+        if let schedule = detectedSchedule {
+            print("📅 [Smart Park] Automatically detected schedule: \(schedule.streetName) - \(schedule.weekday) \(schedule.startTime)-\(schedule.endTime)")
+        } else {
+            print("📅 [Smart Park] No schedule detected for this location")
+        }
+        
+        // Create confirmed parking location with detected schedule
+        let parkingLocation = SmartParkLocation(
+            coordinate: coordinate,
+            address: address,
+            triggerType: triggerType.rawValue,
+            bluetoothDeviceName: nil,
+            confirmationStatus: .confirmed,
+            detectedSchedule: detectedSchedule
+        )
+        
+        // Save immediately to vehicle manager with schedule
+        await saveToVehicleManager(parkingLocation)
+        
+        // Notify UI to recenter map on new parking location and include schedule data
+        await MainActor.run {
+            var userInfo: [String: Any] = [
+                "coordinate": [
+                    "latitude": coordinate.latitude,
+                    "longitude": coordinate.longitude
+                ],
+                "address": address ?? ""
+            ]
+            
+            // Include detected schedule in notification for immediate UI update
+            if let schedule = detectedSchedule {
+                userInfo["detectedSchedule"] = [
+                    "streetName": schedule.streetName,
+                    "weekday": schedule.weekday,
+                    "startTime": schedule.startTime,
+                    "endTime": schedule.endTime,
+                    "blockSide": schedule.blockSide
+                ]
+                print("📅 [Smart Park] Including schedule in notification: \(schedule.streetName) - \(schedule.weekday) \(schedule.startTime)-\(schedule.endTime)")
+            }
+            
+            NotificationCenter.default.post(
+                name: .smartParkAutomaticUpdateCompleted,
+                object: nil,
+                userInfo: userInfo
+            )
+        }
+        
+        print("✅ [Smart Park] Location automatically saved with schedule")
+        
+        return parkingLocation
+    }
+    
     func confirmPendingLocation() async {
         print("✅ [Smart Park] Confirming pending location")
         
@@ -415,36 +493,50 @@ class ParkingLocationManager: ObservableObject {
     }
     
     private func formatAddress(from placemark: CLPlacemark) -> String {
-        var components: [String] = []
+        var addressParts: [String] = []
         
+        // Combine street number and street name without comma
+        var streetAddress = ""
         if let streetNumber = placemark.subThoroughfare {
-            components.append(streetNumber)
+            streetAddress += streetNumber
         }
-        
         if let streetName = placemark.thoroughfare {
-            components.append(streetName)
+            if !streetAddress.isEmpty {
+                streetAddress += " " + streetName
+            } else {
+                streetAddress = streetName
+            }
         }
         
-        if components.isEmpty, let name = placemark.name {
-            components.append(name)
+        if !streetAddress.isEmpty {
+            addressParts.append(streetAddress)
+        } else if let name = placemark.name {
+            addressParts.append(name)
         }
         
         if let city = placemark.locality {
-            components.append(city)
+            addressParts.append(city)
         }
         
-        return components.joined(separator: ", ")
+        return addressParts.joined(separator: ", ")
     }
     
     func saveToVehicleManager(_ smartParkLocation: SmartParkLocation) async {
         print("🚙 [Smart Park] Saving to VehicleManager - Address: \(smartParkLocation.address ?? "Unknown")")
         
-        // CRITICAL FIX: Detect schedule for the parking location
-        let selectedSchedule = await detectScheduleForLocation(smartParkLocation.coordinate)
-        if let schedule = selectedSchedule {
-            print("📅 [Smart Park] Found schedule: \(schedule.streetName) - \(schedule.weekday) \(schedule.startTime)-\(schedule.endTime)")
+        // Use already-detected schedule if available, otherwise detect it
+        let selectedSchedule: PersistedSweepSchedule?
+        if let detectedSchedule = smartParkLocation.detectedSchedule {
+            print("📅 [Smart Park] Using already-detected schedule: \(detectedSchedule.streetName) - \(detectedSchedule.weekday) \(detectedSchedule.startTime)-\(detectedSchedule.endTime)")
+            selectedSchedule = detectedSchedule
         } else {
-            print("📅 [Smart Park] No schedule found for this location")
+            print("📅 [Smart Park] No pre-detected schedule, detecting schedule for the parking location")
+            selectedSchedule = await detectScheduleForLocation(smartParkLocation.coordinate)
+            if let schedule = selectedSchedule {
+                print("📅 [Smart Park] Found schedule: \(schedule.streetName) - \(schedule.weekday) \(schedule.startTime)-\(schedule.endTime)")
+            } else {
+                print("📅 [Smart Park] No schedule found for this location")
+            }
         }
         
         // Convert to regular ParkingLocation with schedule information
@@ -909,20 +1001,31 @@ class ParkingLocationManager: ObservableObject {
     
     private func updateStreetDataManager(with selectedSchedule: PersistedSweepSchedule?, at coordinate: CLLocationCoordinate2D) async {
         await MainActor.run {
-            // Get the StreetDataManager instance - we need to find it from the main view hierarchy
-            // For now, we'll trigger schedule fetching which should automatically process the saved schedule
-            
             if let schedule = selectedSchedule {
-                print("📊 [Smart Park] Triggering StreetDataManager updates for schedule processing")
+                print("📊 [Smart Park] Notifying UI to refresh schedule display for: \(schedule.streetName)")
                 
-                // Convert persisted schedule back to SweepSchedule for processing
-                let sweepSchedule = StreetDataService.shared.convertToSweepSchedule(from: schedule)
+                // Post notification to trigger UI refresh with new schedule data
+                NotificationCenter.default.post(
+                    name: .init("smartParkScheduleUpdated"),
+                    object: nil,
+                    userInfo: [
+                        "coordinate": [
+                            "latitude": coordinate.latitude,
+                            "longitude": coordinate.longitude
+                        ],
+                        "selectedSchedule": [
+                            "streetName": schedule.streetName,
+                            "weekday": schedule.weekday,
+                            "startTime": schedule.startTime,
+                            "endTime": schedule.endTime,
+                            "blockSide": schedule.blockSide
+                        ]
+                    ]
+                )
                 
-                // We need to find a way to access the StreetDataManager instance
-                // The schedule will be automatically loaded when the user opens the app
-                // and VehicleParkingView detects the saved parking location with schedule
-                
-                print("✅ [Smart Park] Schedule detection and saving completed")
+                print("✅ [Smart Park] Schedule update notification sent to UI")
+            } else {
+                print("📊 [Smart Park] No schedule to update in UI")
             }
         }
     }

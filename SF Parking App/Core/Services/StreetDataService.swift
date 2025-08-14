@@ -1293,8 +1293,8 @@ final class StreetDataService {
             week5: persisted.week5,
             holidays: nil,
             line: nil,
-            avgSweeperTime: nil,
-            medianSweeperTime: nil
+            avgSweeperTime: persisted.avgSweeperTime,
+            medianSweeperTime: persisted.medianSweeperTime
         )
     }
     

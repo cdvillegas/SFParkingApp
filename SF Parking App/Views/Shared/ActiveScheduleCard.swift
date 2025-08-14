@@ -29,18 +29,13 @@ struct ActiveScheduleCard: View {
                         .foregroundColor(.secondary)
                         .lineLimit(1)
                     
-                    // Line 2.5: Predicted sweep time (optional)
-                    if let estimatedTime = schedule.estimatedSweeperTime {
-                        Text("Typically arrives ~\(estimatedTime)")
-                            .font(.system(size: 13))
-                            .foregroundColor(.orange)
-                    }
-                    
-                    // Line 3: Time remaining (with extra spacing above)
-                    Text(schedule.formatTimeUntil())
-                        .font(.system(size: 15))
+                    // Line 3: Combined time remaining and typical arrival
+                    Text(buildCombinedTimeText(schedule))
+                        .font(.system(size: 15, weight: .medium))
                         .foregroundColor(schedule.urgencyColor)
-                        .padding(.top, 2)
+                        .minimumScaleFactor(0.7)
+                        .lineLimit(1)
+                    .padding(.top, 2)
                 } else {
                     Text("No schedule available")
                         .font(.system(size: 16))
@@ -49,6 +44,16 @@ struct ActiveScheduleCard: View {
             }
             
             Spacer()
+        }
+    }
+    
+    private func buildCombinedTimeText(_ schedule: UpcomingSchedule) -> String {
+        let timeUntil = schedule.formatTimeUntil()
+        
+        if let estimatedTime = schedule.estimatedSweeperTime {
+            return "\(timeUntil) • Usually enforced ~\(estimatedTime)"
+        } else {
+            return timeUntil
         }
     }
 }

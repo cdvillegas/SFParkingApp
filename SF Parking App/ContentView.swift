@@ -19,18 +19,21 @@ struct ContentView: View {
         let pendingSource = parkingDetectionHandler.pendingParkingSource
         
         print("🎯 ContentView body re-evaluated - shouldShowParking: \(shouldShowParking)")
+        print("🎯 ContentView - isSmartParkUpdate: \(parkingDetectionHandler.isSmartParkUpdate)")
         print("🎯 ContentView - pendingLocation: \(pendingLocation?.latitude ?? 0), \(pendingLocation?.longitude ?? 0)")
         print("🎯 ContentView - pendingAddress: \(pendingAddress ?? "nil")")
         print("🎯 ContentView - pendingSource: \(pendingSource?.rawValue ?? "nil")")
         
-        if shouldShowParking {
+        if shouldShowParking && !parkingDetectionHandler.isSmartParkUpdate {
             print("🎯 ContentView - Passing auto parking data to VehicleParkingView")
+        } else if shouldShowParking && parkingDetectionHandler.isSmartParkUpdate {
+            print("🚗 ContentView - Smart Park confirmation detected, not passing through auto-detected flow")
         }
         
         return VehicleParkingView(
-            autoDetectedLocation: shouldShowParking ? pendingLocation : nil,
-            autoDetectedAddress: shouldShowParking ? pendingAddress : nil,
-            autoDetectedSource: shouldShowParking ? pendingSource : nil,
+            autoDetectedLocation: (shouldShowParking && !parkingDetectionHandler.isSmartParkUpdate) ? pendingLocation : nil,
+            autoDetectedAddress: (shouldShowParking && !parkingDetectionHandler.isSmartParkUpdate) ? pendingAddress : nil,
+            autoDetectedSource: (shouldShowParking && !parkingDetectionHandler.isSmartParkUpdate) ? pendingSource : nil,
             onAutoParkingHandled: {
                 parkingDetectionHandler.clearPendingParking()
             }

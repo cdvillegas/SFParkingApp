@@ -93,8 +93,20 @@ struct SF_Parking_AppApp: App {
     }
     
     private func checkForLaunchNotification() {
-        // Check if there's pending notification data stored
-        if let pendingData = UserDefaults.standard.dictionary(forKey: "pendingParkingLocation") {
+        // Check for Smart Park pending confirmation first
+        if UserDefaults.standard.bool(forKey: "smartParkPendingConfirmation") {
+            print("🚗 [Smart Park] Found pending Smart Park confirmation")
+            // Check if there's pending notification data stored
+            if let pendingData = UserDefaults.standard.dictionary(forKey: "pendingParkingLocation") {
+                print("🚗 [Smart Park] Loading Smart Park pending location")
+                // Wait for UI to be ready
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                    self.handleSmartParkPendingData(pendingData)
+                }
+            }
+            // Clear the flag
+            UserDefaults.standard.removeObject(forKey: "smartParkPendingConfirmation")
+        } else if let pendingData = UserDefaults.standard.dictionary(forKey: "pendingParkingLocation") {
             print("🚀 Found pending parking data on app launch")
             // Wait longer for UI to be fully ready - increase delay to ensure view hierarchy is established
             DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
@@ -110,6 +122,34 @@ struct SF_Parking_AppApp: App {
             }
         }
         // Removed the "No pending parking data" log since it's normal
+    }
+    
+    private func handleSmartParkPendingData(_ data: [String: Any]) {
+        print("🚗 [Smart Park] Processing Smart Park pending location")
+        
+        guard let coordinateData = data["coordinate"] as? [String: Double],
+              let latitude = coordinateData["latitude"],
+              let longitude = coordinateData["longitude"],
+              let address = data["address"] as? String else { 
+            print("🚗 [Smart Park] Failed to parse pending data")
+            UserDefaults.standard.removeObject(forKey: "pendingParkingLocation")
+            return 
+        }
+        
+        let coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+        
+        print("🚗 [Smart Park] Showing Smart Park confirmation UI")
+        
+        // Use Smart Park specific source
+        DispatchQueue.main.async {
+            self.parkingDetectionHandler.handleSmartParkDetection(
+                coordinate: coordinate,
+                address: address
+            )
+            
+            // Clear the pending data
+            UserDefaults.standard.removeObject(forKey: "pendingParkingLocation")
+        }
     }
     
     private func handlePendingNotificationData(_ data: [String: Any]) {
@@ -167,6 +207,7 @@ class ParkingDetectionHandler: ObservableObject {
     @Published var pendingParkingAddress: String?
     @Published var pendingParkingSource: ParkingSource?
     @Published var shouldShowParkingConfirmation = false
+    @Published var isSmartParkUpdate = false
     
     func handleParkingDetection(coordinate: CLLocationCoordinate2D, address: String, source: ParkingSource) {
         print("🎯 ParkingDetectionHandler.handleParkingDetection called for: \(address)")
@@ -174,8 +215,21 @@ class ParkingDetectionHandler: ObservableObject {
             self.pendingParkingLocation = coordinate
             self.pendingParkingAddress = address
             self.pendingParkingSource = source
+            self.isSmartParkUpdate = false
             self.shouldShowParkingConfirmation = true
             print("🎯 Set shouldShowParkingConfirmation = true")
+        }
+    }
+    
+    func handleSmartParkDetection(coordinate: CLLocationCoordinate2D, address: String) {
+        print("🚗 [Smart Park] ParkingDetectionHandler.handleSmartParkDetection called for: \(address)")
+        DispatchQueue.main.async {
+            self.pendingParkingLocation = coordinate
+            self.pendingParkingAddress = address
+            self.pendingParkingSource = .smartPark
+            self.isSmartParkUpdate = true
+            self.shouldShowParkingConfirmation = true
+            print("🚗 [Smart Park] Set shouldShowParkingConfirmation = true (Smart Park mode)")
         }
     }
     
@@ -183,6 +237,7 @@ class ParkingDetectionHandler: ObservableObject {
         pendingParkingLocation = nil
         pendingParkingAddress = nil
         pendingParkingSource = nil
+        isSmartParkUpdate = false
         shouldShowParkingConfirmation = false
     }
 }

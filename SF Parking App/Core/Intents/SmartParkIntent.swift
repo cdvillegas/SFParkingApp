@@ -119,19 +119,24 @@ struct SmartParkIntent: AppIntent {
             // Track successful Smart Park usage
             UserDefaults.standard.set(Date(), forKey: "smartParkLastTriggered")
             
-            return .result(dialog: "Please confirm your parking location")
+            // Mark that Smart Park created this pending location
+            UserDefaults.standard.set(true, forKey: "smartParkPendingConfirmation")
+            
+            return .result(dialog: "Smart Park detected your parking location. Please confirm.")
         } else {
-            // Automatic mode - save immediately
-            let savedLocation = try await manager.saveParkingLocation(
+            // Automatic mode - save immediately with schedule detection
+            let savedLocation = try await manager.saveSmartParkLocationAutomatic(
                 at: currentLocation,
-                triggerType: parkingTriggerType,
-                delayConfirmation: false
+                triggerType: parkingTriggerType
             )
             
             // Track successful Smart Park usage
             UserDefaults.standard.set(Date(), forKey: "smartParkLastTriggered")
             
-            return .result(dialog: "Parking location saved")
+            // Send notification about automatic update
+            await NotificationManager.shared.sendSmartParkAutomaticUpdate(for: savedLocation)
+            
+            return .result(dialog: "Smart Park automatically updated your parking location")
         }
     }
 }

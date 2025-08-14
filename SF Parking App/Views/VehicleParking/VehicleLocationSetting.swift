@@ -3,6 +3,7 @@ import MapKit
 
 struct VehicleLocationSetting: View {
     @ObservedObject var viewModel: VehicleParkingViewModel
+    @ObservedObject var parkingDetectionHandler: ParkingDetectionHandler
     @State private var impactFeedbackLight = UIImpactFeedbackGenerator(style: .light)
     @Environment(\.colorScheme) private var colorScheme
     @StateObject private var notificationManager = NotificationManager.shared
@@ -389,9 +390,15 @@ struct VehicleLocationSetting: View {
             // Cancel button
             Button(action: {
                 impactFeedbackLight.impactOccurred()
-                viewModel.cancelSettingLocation()
+                if parkingDetectionHandler.isSmartParkUpdate {
+                    // For Smart Park, completely exit the flow and clear state
+                    parkingDetectionHandler.clearPendingParking()
+                    viewModel.cancelSettingLocation()
+                } else {
+                    viewModel.cancelSettingLocation()
+                }
             }) {
-                Text(viewModel.isSettingLocationForNewVehicle || viewModel.vehicleManager.currentVehicle?.parkingLocation == nil ? "Set Later" : "Cancel")
+                Text(cancelButtonText)
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity)
@@ -407,6 +414,13 @@ struct VehicleLocationSetting: View {
             // Set button
             Button(action: {
                 impactFeedbackLight.impactOccurred()
+                
+                // Clear Smart Park flag when proceeding from location setting
+                if parkingDetectionHandler.isSmartParkUpdate {
+                    parkingDetectionHandler.isSmartParkUpdate = false
+                    print("🚗 [Smart Park] Cleared isSmartParkUpdate flag after proceeding to schedule")
+                }
+                
                 viewModel.proceedToScheduleConfirmation()
             }) {
                 HStack(spacing: 8) {
@@ -443,9 +457,15 @@ struct VehicleLocationSetting: View {
             // Back button
             Button(action: {
                 impactFeedbackLight.impactOccurred()
-                viewModel.goBackToLocationSetting()
+                if parkingDetectionHandler.isSmartParkUpdate {
+                    // For Smart Park, completely exit the flow and clear state
+                    parkingDetectionHandler.clearPendingParking()
+                    viewModel.cancelSettingLocation()
+                } else {
+                    viewModel.goBackToLocationSetting()
+                }
             }) {
-                Text("Back")
+                Text(backButtonText)
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity)
@@ -461,6 +481,13 @@ struct VehicleLocationSetting: View {
             // Confirm button
             Button(action: {
                 impactFeedbackLight.impactOccurred()
+                
+                // Clear Smart Park flag when confirming location
+                if parkingDetectionHandler.isSmartParkUpdate {
+                    parkingDetectionHandler.isSmartParkUpdate = false
+                    print("🚗 [Smart Park] Cleared isSmartParkUpdate flag after confirming location")
+                }
+                
                 viewModel.confirmUnifiedLocation()
             }) {
                 Text("Confirm")
@@ -560,6 +587,24 @@ struct VehicleLocationSetting: View {
             } else {
                 rootViewController.present(activityViewController, animated: true)
             }
+        }
+    }
+    
+    // MARK: - Computed Properties for Smart Park
+    
+    private var cancelButtonText: String {
+        if parkingDetectionHandler.isSmartParkUpdate {
+            return "Cancel"
+        } else {
+            return viewModel.isSettingLocationForNewVehicle || viewModel.vehicleManager.currentVehicle?.parkingLocation == nil ? "Set Later" : "Cancel"
+        }
+    }
+    
+    private var backButtonText: String {
+        if parkingDetectionHandler.isSmartParkUpdate {
+            return "Cancel"
+        } else {
+            return "Back"
         }
     }
 }

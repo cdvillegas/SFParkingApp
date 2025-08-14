@@ -20,6 +20,8 @@ struct PersistedSweepSchedule: Codable, Equatable {
     let week3: String
     let week4: String
     let week5: String
+    let avgSweeperTime: Double?
+    let medianSweeperTime: Double?
     
     init(from schedule: SweepSchedule, side: String) {
         self.streetName = schedule.streetName
@@ -32,6 +34,8 @@ struct PersistedSweepSchedule: Codable, Equatable {
         self.week3 = schedule.week3 ?? ""
         self.week4 = schedule.week4 ?? ""
         self.week5 = schedule.week5 ?? ""
+        self.avgSweeperTime = schedule.avgSweeperTime
+        self.medianSweeperTime = schedule.medianSweeperTime
     }
 }
 
@@ -40,6 +44,7 @@ enum ParkingSource: String, Codable {
     case bluetooth = "bluetooth"
     case carplay = "carplay"
     case carDisconnect = "car_disconnect"
+    case smartPark = "smart_park"
     
     var displayName: String {
         switch self {
@@ -51,6 +56,8 @@ enum ParkingSource: String, Codable {
             return "Auto-detected via CarPlay"
         case .carDisconnect:
             return "Set when Car Disconnected"
+        case .smartPark:
+            return "Smart Park"
         }
     }
 }

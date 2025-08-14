@@ -591,6 +591,57 @@ class NotificationManager: NSObject, ObservableObject {
         }
     }
     
+    func sendSmartParkAutomaticUpdate(for location: SmartParkLocation) async {
+        print("🔔 [Smart Park] Sending automatic update notification for: \(location.address ?? "Unknown")")
+        
+        guard notificationPermissionStatus == .authorized else {
+            print("⚠️ Cannot send Smart Park automatic notification - permission not granted")
+            return
+        }
+        
+        let content = UNMutableNotificationContent()
+        content.title = "Smart Park Updated Your Location"
+        
+        if let address = location.address {
+            if let schedule = location.detectedSchedule {
+                content.body = "Automatically saved at \(address). Street cleaning: \(schedule.weekday) \(schedule.startTime)-\(schedule.endTime)."
+            } else {
+                content.body = "Automatically saved at \(address). No street cleaning restrictions found."
+            }
+        } else {
+            content.body = "Your parking location has been automatically updated by Smart Park."
+        }
+        
+        content.categoryIdentifier = "SMART_PARK_AUTO_UPDATE"
+        content.sound = .default
+        
+        // Add location data to userInfo
+        content.userInfo = [
+            "type": "smart_park_auto_update",
+            "parkingId": location.id,
+            "latitude": location.coordinate.latitude,
+            "longitude": location.coordinate.longitude,
+            "address": location.address ?? "",
+            "triggerType": location.triggerType,
+            "timestamp": location.timestamp.timeIntervalSince1970
+        ]
+        
+        // Use immediate trigger
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 0.1, repeats: false)
+        let request = UNNotificationRequest(
+            identifier: "smart_park_auto_\(location.id)",
+            content: content,
+            trigger: trigger
+        )
+        
+        do {
+            try await center.add(request)
+            print("✅ Smart Park automatic update notification sent for \(location.address ?? "location")")
+        } catch {
+            print("❌ Failed to send Smart Park automatic notification: \(error)")
+        }
+    }
+    
     func sendParkingConfirmationRequired(for location: SmartParkLocation) async {
         print("🔔 [Smart Park] Sending parking confirmation required for: \(location.address ?? "Unknown")")
         
@@ -1320,6 +1371,8 @@ extension Notification.Name {
     static let smartParkLocationSaved = Notification.Name("smartParkLocationSaved")
     static let smartParkLocationUpdate = Notification.Name("smartParkLocationUpdate")
     static let smartParkConfirmationRequired = Notification.Name("smartParkConfirmationRequired")
+    static let smartParkAutomaticUpdateCompleted = Notification.Name("smartParkAutomaticUpdateCompleted")
+    static let smartParkScheduleUpdated = Notification.Name("smartParkScheduleUpdated")
 }
 
 // MARK: - Placeholder Models (assuming these exist in your app)
