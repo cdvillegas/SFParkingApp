@@ -52,6 +52,9 @@ class VehicleParkingViewModel: ObservableObject {
     // Location state (forwarded from LocationManager)
     @Published var userHeading: CLLocationDirection = 0
     
+    // Store original urgency color when setting location
+    @Published var originalUrgencyColor: Color?
+    
     // MARK: - Private Properties
     
     private var detectionDebounceTimer: Timer?
@@ -366,6 +369,14 @@ class VehicleParkingViewModel: ObservableObject {
     
     func startSettingLocation() {
         isSettingLocation = true
+        
+        // Capture the current urgency color before making any changes
+        if let nextSchedule = streetDataManager.nextUpcomingSchedule {
+            let hours = nextSchedule.date.timeIntervalSinceNow / 3600
+            originalUrgencyColor = hours < 24 ? .red : .green
+        } else {
+            originalUrgencyColor = nil
+        }
         
         // Prioritize user location, then vehicle location, then default to SF
         let startCoordinate: CLLocationCoordinate2D
@@ -843,6 +854,7 @@ class VehicleParkingViewModel: ObservableObject {
         lastDetectionCoordinate = nil
         detectionDebounceTimer?.invalidate()
         schedulesLoadedForCurrentLocation = false
+        originalUrgencyColor = nil
         
         // Reset two-step flow state
         confirmedLocation = nil

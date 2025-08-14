@@ -4,7 +4,16 @@ struct VehicleParkingMapMarker: View {
     let vehicle: Vehicle
     let isSelected: Bool
     let streetDataManager: StreetDataManager?
+    let originalUrgencyColor: Color?
     let onTap: () -> Void
+    
+    init(vehicle: Vehicle, isSelected: Bool, streetDataManager: StreetDataManager?, originalUrgencyColor: Color? = nil, onTap: @escaping () -> Void) {
+        self.vehicle = vehicle
+        self.isSelected = isSelected
+        self.streetDataManager = streetDataManager
+        self.originalUrgencyColor = originalUrgencyColor
+        self.onTap = onTap
+    }
 
     @State private var isAnimating = false
 
@@ -66,6 +75,12 @@ struct VehicleParkingMapMarker: View {
     // MARK: - Helper Functions
     
     private func getUrgencyColor(for vehicle: Vehicle) -> Color {
+        // If we have an original urgency color (during location setting), use that
+        if let originalColor = originalUrgencyColor {
+            return originalColor
+        }
+        
+        // Otherwise, calculate based on current schedule
         guard let streetDataManager = streetDataManager,
               let nextSchedule = streetDataManager.nextUpcomingSchedule,
               vehicle.parkingLocation != nil else {
@@ -96,6 +111,7 @@ struct VehicleParkingMapMarker: View {
             return .safe
         }
     }
+    
 }
 
 #Preview("Light Mode") {

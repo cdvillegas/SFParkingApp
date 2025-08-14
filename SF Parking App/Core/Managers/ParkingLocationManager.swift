@@ -114,7 +114,6 @@ class ParkingLocationManager: ObservableObject {
     // MARK: - Public Methods
     
     func getCurrentLocation() async -> CLLocationCoordinate2D? {
-        print("📍 [Smart Park] Getting current location...")
         
         // Request location permission if needed
         if locationManager.authorizationStatus == .notDetermined {
@@ -697,7 +696,7 @@ class ParkingLocationManager: ObservableObject {
         print("     📐 Geometric side detection: Need street line geometry data")
         print("     📍 User location: \(userLocation.latitude), \(userLocation.longitude)")
         
-        // TODO: This requires the actual street line segments from AggregatedSweepSchedule.lineCoordinates
+        // This requires the actual street line segments from AggregatedSweepSchedule.lineCoordinates
         // to calculate which side of the centerline the user is on using cross product math
         
         // For now, we'll use a distance-based heuristic with the offset coordinates
@@ -732,7 +731,6 @@ class ParkingLocationManager: ObservableObject {
         print("📐 [Geometric Detection] User location: \(userLocation.latitude), \(userLocation.longitude)")
         print("📐 [Geometric Detection] Available schedules: \(streetSchedules.count)")
         
-        // DEBUG: Log all available schedules to understand the data
         for (index, schedule) in streetSchedules.enumerated() {
             let days = [
                 ("Mon", schedule.mondayHours),

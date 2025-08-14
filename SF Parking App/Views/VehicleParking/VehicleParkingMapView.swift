@@ -275,6 +275,7 @@ struct VehicleParkingMapView: View {
                         vehicle: vehicle,
                         isSelected: viewModel.vehicleManager.selectedVehicle?.id == vehicle.id,
                         streetDataManager: viewModel.streetDataManager,
+                        originalUrgencyColor: (viewModel.isSettingLocation || viewModel.isConfirmingSchedule) ? viewModel.originalUrgencyColor : nil,
                         onTap: {
                             viewModel.centerMapOnLocation(parkingLocation.coordinate)
                         }
@@ -406,19 +407,28 @@ struct VehicleParkingMapView: View {
     }
     
     private func getMovingPinColor() -> Color {
-        // Always green during "Set Location" step (step 1)
+        // During "Set Location" step (step 1), maintain original urgency color
         if viewModel.isSettingLocation && !viewModel.isConfirmingSchedule {
+            if let originalColor = viewModel.originalUrgencyColor {
+                return originalColor
+            }
+            // Fallback if no original color captured
+            if let nextSchedule = viewModel.streetDataManager.nextUpcomingSchedule {
+                let hours = nextSchedule.date.timeIntervalSinceNow / 3600
+                return hours < 24 ? .red : .green
+            }
             return .green
         }
         
-        // During "Confirm Schedule" step (step 2), use urgency color based on selected schedule
+        // During "Confirm Schedule" step (step 2), use urgency color based on selected/hovered schedule
         if viewModel.isConfirmingSchedule && viewModel.hasSelectedSchedule,
            viewModel.selectedScheduleIndex < viewModel.nearbySchedules.count {
             let selectedSchedule = viewModel.nearbySchedules[viewModel.selectedScheduleIndex].schedule
             return getUrgencyColor(for: selectedSchedule)
         }
         
-        return .green  // Default to green
+        // Default to green if no schedule selected
+        return .green
     }
     
     // Helper function to check if cleaning is today and hasn't ended yet
